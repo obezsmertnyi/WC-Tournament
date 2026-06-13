@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import type { Match, Team } from '../types'
-import { formatKyivTime, STATUS_LABELS } from '../lib/fixtures'
+import { formatKyivTime, statusLabel } from '../lib/fixtures'
 import Flag from './Flag'
 
 function StatusChip({ status }: { status: Match['status'] }) {
+  useTranslation()
   if (status === 'live') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-accent">
@@ -11,7 +13,7 @@ function StatusChip({ status }: { status: Match['status'] }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
         </span>
-        {STATUS_LABELS.live}
+        {statusLabel('live')}
       </span>
     )
   }
@@ -19,14 +21,14 @@ function StatusChip({ status }: { status: Match['status'] }) {
   if (status === 'finished') {
     return (
       <span className="rounded-full border border-hairline bg-white/[0.03] px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted">
-        {STATUS_LABELS.finished}
+        {statusLabel('finished')}
       </span>
     )
   }
 
   return (
     <span className="rounded-full border border-hairline bg-white/[0.03] px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted/80">
-      {STATUS_LABELS.scheduled}
+      {statusLabel('scheduled')}
     </span>
   )
 }
@@ -42,8 +44,9 @@ interface TeamRowProps {
 }
 
 function TeamRow({ team, placeholder, score, live, finished, winner }: TeamRowProps) {
+  const { t } = useTranslation()
   const showScore = (finished || live) && score !== null
-  const name = team?.name ?? placeholder ?? 'TBD'
+  const name = team?.name ?? placeholder ?? t('fixture.tbd')
   const isTbd = !team
 
   return (

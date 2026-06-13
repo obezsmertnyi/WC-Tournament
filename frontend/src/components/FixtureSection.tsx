@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Match } from '../types'
 import { formatKyivDate, kyivDayKey } from '../lib/fixtures'
 import FixtureCard from './FixtureCard'
@@ -33,6 +34,8 @@ function bucketByDay(matches: Match[]): DayBucket[] {
 }
 
 export default function FixtureSection({ title, eyebrow, matches }: FixtureSectionProps) {
+  // Subscribe to language changes so day labels re-localize.
+  useTranslation()
   if (matches.length === 0) return null
   const days = bucketByDay(matches)
 

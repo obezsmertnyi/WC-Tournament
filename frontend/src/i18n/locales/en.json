@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "calendar": "Calendar",
+    "leaderboard": "Leaderboard",
+    "bracket": "Bracket"
+  },
+  "language": {
+    "label": "Language",
+    "uk": "UA",
+    "en": "EN"
+  },
+  "backend": {
+    "checking": "Checking",
+    "online": "Online",
+    "offline": "Offline",
+    "title": "Backend {{status}}"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Times shown in Kyiv · Europe/Kyiv",
+    "phaseGroup": "Group stage",
+    "phaseKnockout": "Knockout",
+    "group": "Group",
+    "groupNamed": "Group {{letter}}"
+  },
+  "stage": {
+    "group": "Group stage",
+    "r32": "Round of 32",
+    "r16": "Round of 16",
+    "qf": "Quarter-finals",
+    "sf": "Semi-finals",
+    "third": "Third-place play-off",
+    "final": "Final"
+  },
+  "status": {
+    "scheduled": "Scheduled",
+    "live": "LIVE",
+    "finished": "FT"
+  },
+  "fixture": {
+    "tbd": "TBD"
+  },
+  "states": {
+    "empty": {
+      "title": "Syncing the calendar…",
+      "body": "Matches will appear as soon as the data arrives from FIFA. Check back shortly."
+    },
+    "error": {
+      "title": "Couldn’t load the calendar",
+      "body": "Check your connection and try again.",
+      "retry": "Retry"
+    }
+  },
+  "comingSoon": {
+    "eyebrow": "Coming soon",
+    "leaderboard": {
+      "title": "Leaderboard",
+      "description": "The leaderboard will appear once the matches kick off and the first predictions come in."
+    },
+    "bracket": {
+      "title": "Bracket",
+      "description": "The interactive knockout bracket opens after the group stage wraps up."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The link may be out of date. Head back to the calendar."
+    }
+  }
+}

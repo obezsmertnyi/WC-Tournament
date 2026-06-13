@@ -6,6 +6,7 @@ import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
 import 'flag-icons/css/flag-icons.min.css'
 import './index.css'
+import './i18n'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

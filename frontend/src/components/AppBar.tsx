@@ -1,11 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import BackendBadge from './BackendBadge'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const TABS = [
-  { to: '/', label: 'Календар', end: true },
-  { to: '/leaderboard', label: 'Лідери', end: false },
-  { to: '/bracket', label: 'Сітка', end: false },
+  { to: '/', labelKey: 'nav.calendar', end: true },
+  { to: '/leaderboard', labelKey: 'nav.leaderboard', end: false },
+  { to: '/bracket', labelKey: 'nav.bracket', end: false },
 ] as const
 
 function Wordmark() {
@@ -52,6 +54,8 @@ function Tab({ to, label, end }: { to: string; label: string; end: boolean }) {
 }
 
 export default function AppBar() {
+  const { t } = useTranslation()
+
   return (
     <header className="sticky top-0 z-30 border-b border-hairline bg-bg/70 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
@@ -59,12 +63,15 @@ export default function AppBar() {
 
         {/* Desktop / tablet tabs */}
         <nav className="hidden items-center gap-6 sm:flex">
-          {TABS.map((t) => (
-            <Tab key={t.to} {...t} />
+          {TABS.map((tab) => (
+            <Tab key={tab.to} to={tab.to} end={tab.end} label={t(tab.labelKey)} />
           ))}
         </nav>
 
-        <BackendBadge />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
+          <BackendBadge />
+        </div>
       </div>
     </header>
   )
@@ -72,14 +79,16 @@ export default function AppBar() {
 
 /** Bottom navigation shown only on mobile (< sm). */
 export function BottomNav() {
+  const { t } = useTranslation()
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-bg/80 backdrop-blur-xl sm:hidden">
       <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {TABS.map((t) => (
+        {TABS.map((tab) => (
           <NavLink
-            key={t.to}
-            to={t.to}
-            end={t.end}
+            key={tab.to}
+            to={tab.to}
+            end={tab.end}
             className={({ isActive }) =>
               `relative flex flex-1 flex-col items-center gap-1 py-3 text-[0.7rem] font-medium transition-colors ${
                 isActive ? 'text-accent' : 'text-muted'
@@ -95,7 +104,7 @@ export function BottomNav() {
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
-                {t.label}
+                {t(tab.labelKey)}
               </>
             )}
           </NavLink>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 /** Single shimmering placeholder card. */
 function SkeletonCard() {
@@ -41,6 +42,7 @@ export function FixturesSkeleton() {
 }
 
 export function EmptyState() {
+  const { t } = useTranslation()
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -51,15 +53,16 @@ export function EmptyState() {
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-hairline bg-white/[0.03]">
         <span className="h-2 w-2 animate-pulse rounded-full bg-accent shadow-[0_0_10px_2px_rgba(201,162,75,0.55)]" />
       </div>
-      <p className="text-sm font-medium text-text">Календар синхронізується…</p>
+      <p className="text-sm font-medium text-text">{t('states.empty.title')}</p>
       <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-muted">
-        Матчі з’являться, щойно дані надійдуть із FIFA. Завітайте трохи згодом.
+        {t('states.empty.body')}
       </p>
     </motion.div>
   )
 }
 
 export function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation()
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -70,16 +73,16 @@ export function ErrorState({ onRetry }: { onRetry: () => void }) {
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/[0.06]">
         <span className="h-2 w-2 rounded-full bg-red-500/70" />
       </div>
-      <p className="text-sm font-medium text-text">Не вдалося завантажити календар</p>
+      <p className="text-sm font-medium text-text">{t('states.error.title')}</p>
       <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-muted">
-        Перевірте з’єднання та спробуйте ще раз.
+        {t('states.error.body')}
       </p>
       <button
         type="button"
         onClick={onRetry}
         className="mt-5 rounded-full border border-hairline bg-white/[0.04] px-5 py-2 text-xs font-medium uppercase tracking-[0.14em] text-text transition-colors hover:border-accent/40 hover:text-accent"
       >
-        Повторити
+        {t('states.error.retry')}
       </button>
     </motion.div>
   )

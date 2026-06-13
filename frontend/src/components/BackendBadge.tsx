@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { fetchHealth, type HealthState } from '../lib/api'
 
 /**
@@ -6,6 +7,7 @@ import { fetchHealth, type HealthState } from '../lib/api'
  * Shows a dot only on mobile; expands to a label on larger screens.
  */
 export default function BackendBadge() {
+  const { t } = useTranslation()
   const [state, setState] = useState<HealthState>('loading')
 
   useEffect(() => {
@@ -19,7 +21,11 @@ export default function BackendBadge() {
   }, [])
 
   const label =
-    state === 'loading' ? 'Перевірка' : state === 'online' ? 'Online' : 'Offline'
+    state === 'loading'
+      ? t('backend.checking')
+      : state === 'online'
+        ? t('backend.online')
+        : t('backend.offline')
 
   const dotClass =
     state === 'online'
@@ -31,7 +37,7 @@ export default function BackendBadge() {
   return (
     <div
       className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-2.5 py-1.5 backdrop-blur-md"
-      title={`Backend ${label}`}
+      title={t('backend.title', { status: label })}
     >
       <span className="relative flex h-1.5 w-1.5">
         {state === 'online' && (

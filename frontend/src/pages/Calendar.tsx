@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Match } from '../types'
 import { fetchMatches } from '../lib/api'
-import { groupFixtures } from '../lib/fixtures'
+import { groupFixtures, stageLabel } from '../lib/fixtures'
 import FixtureSection from '../components/FixtureSection'
 import { EmptyState, ErrorState, FixturesSkeleton } from '../components/states'
 
@@ -11,6 +12,7 @@ type LoadState =
   | { phase: 'ready'; matches: Match[] }
 
 export default function Calendar() {
+  const { t } = useTranslation()
   const [state, setState] = useState<LoadState>({ phase: 'loading' })
 
   const load = useCallback((signal?: AbortSignal) => {
@@ -34,11 +36,9 @@ export default function Calendar() {
     <div className="mx-auto w-full max-w-5xl">
       <header className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          Календар
+          {t('calendar.title')}
         </h1>
-        <p className="mt-1 text-sm text-muted">
-          Час показано за Києвом · Europe/Kyiv
-        </p>
+        <p className="mt-1 text-sm text-muted">{t('calendar.subtitle')}</p>
       </header>
 
       {state.phase === 'loading' && <FixturesSkeleton />}
@@ -51,6 +51,7 @@ export default function Calendar() {
 }
 
 function Fixtures({ matches }: { matches: Match[] }) {
+  const { t } = useTranslation()
   if (matches.length === 0) return <EmptyState />
 
   const { groupStage, knockout } = groupFixtures(matches)
@@ -60,8 +61,12 @@ function Fixtures({ matches }: { matches: Match[] }) {
       {groupStage.map((section) => (
         <FixtureSection
           key={`group-${section.key}`}
-          eyebrow="Груповий етап"
-          title={section.title}
+          eyebrow={t('calendar.phaseGroup')}
+          title={
+            section.letter === '—'
+              ? t('calendar.group')
+              : t('calendar.groupNamed', { letter: section.letter })
+          }
           matches={section.matches}
         />
       ))}
@@ -69,8 +74,8 @@ function Fixtures({ matches }: { matches: Match[] }) {
       {knockout.map((section) => (
         <FixtureSection
           key={`ko-${section.key}`}
-          eyebrow="Плей-оф"
-          title={section.title}
+          eyebrow={t('calendar.phaseKnockout')}
+          title={stageLabel(section.key)}
           matches={section.matches}
         />
       ))}

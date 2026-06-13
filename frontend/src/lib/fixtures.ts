@@ -1,19 +1,37 @@
 import type { Match, Stage } from '../types'
+import i18n from '../i18n'
 
 const KYIV_TZ = 'Europe/Kyiv'
 
-const dateFmt = new Intl.DateTimeFormat('uk-UA', {
-  timeZone: KYIV_TZ,
-  weekday: 'short',
-  day: 'numeric',
-  month: 'long',
-})
+/** Intl locale to use for weekday/month names, derived from the UI language. */
+function intlLocale(): string {
+  return i18n.resolvedLanguage === 'en' ? 'en-GB' : 'uk-UA'
+}
 
-const timeFmt = new Intl.DateTimeFormat('uk-UA', {
-  timeZone: KYIV_TZ,
-  hour: '2-digit',
-  minute: '2-digit',
-})
+/**
+ * Date/time formatters are rebuilt whenever the language changes (timezone is
+ * always Europe/Kyiv — the pool's fixed zone — only the locale switches).
+ */
+let dateFmt: Intl.DateTimeFormat
+let timeFmt: Intl.DateTimeFormat
+
+function rebuildFormatters() {
+  const locale = intlLocale()
+  dateFmt = new Intl.DateTimeFormat(locale, {
+    timeZone: KYIV_TZ,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  })
+  timeFmt = new Intl.DateTimeFormat(locale, {
+    timeZone: KYIV_TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+rebuildFormatters()
+i18n.on('languageChanged', rebuildFormatters)
 
 /** A short date key (YYYY-MM-DD in Kyiv) used to group fixtures by day. */
 const dayKeyFmt = new Intl.DateTimeFormat('en-CA', {
@@ -38,32 +56,25 @@ export function kyivDayKey(iso: string): string {
 /** Knockout stages in the canonical bracket order. */
 export const KNOCKOUT_ORDER: Stage[] = ['r32', 'r16', 'qf', 'sf', 'third', 'final']
 
-export const STAGE_LABELS: Record<Stage, string> = {
-  group: 'Груповий етап',
-  r32: '1/16 фіналу',
-  r16: '1/8 фіналу',
-  qf: 'Чвертьфінали',
-  sf: 'Півфінали',
-  third: 'Матч за 3-тє місце',
-  final: 'Фінал',
+/** Localized label for a tournament stage. */
+export function stageLabel(stage: Stage): string {
+  return i18n.t(`stage.${stage}`)
 }
 
-export const STATUS_LABELS: Record<Match['status'], string> = {
-  scheduled: 'Заплановано',
-  live: 'LIVE',
-  finished: 'FT',
+/** Localized label for a match status chip. */
+export function statusLabel(status: Match['status']): string {
+  return i18n.t(`status.${status}`)
 }
 
 export interface GroupSection {
   key: string
-  /** Display title, e.g. "Група A". */
-  title: string
+  /** Group letter ("A"), or "—" when missing. The display title is derived in the UI. */
+  letter: string
   matches: Match[]
 }
 
 export interface KnockoutSection {
   key: Stage
-  title: string
   matches: Match[]
 }
 
@@ -81,7 +92,7 @@ function byKickoff(a: Match, b: Match): number {
 /**
  * Split matches into the group stage (sectioned by group letter, A→Z) and the
  * knockout phase (sectioned by stage in bracket order). Matches inside each
- * section are sorted by kickoff time.
+ * section are sorted by kickoff time. Display titles are localized in the UI.
  */
 export function groupFixtures(matches: Match[]): GroupedFixtures {
   const groupMap = new Map<string, Match[]>()
@@ -105,7 +116,7 @@ export function groupFixtures(matches: Match[]): GroupedFixtures {
     .sort((a, b) => a.localeCompare(b, 'uk'))
     .map((key) => ({
       key,
-      title: key === '—' ? 'Група' : `Група ${key}`,
+      letter: key,
       matches: (groupMap.get(key) ?? []).slice().sort(byKickoff),
     }))
 
@@ -113,7 +124,6 @@ export function groupFixtures(matches: Match[]): GroupedFixtures {
     knockoutMap.has(stage),
   ).map((stage) => ({
     key: stage,
-    title: STAGE_LABELS[stage],
     matches: (knockoutMap.get(stage) ?? []).slice().sort(byKickoff),
   }))
 

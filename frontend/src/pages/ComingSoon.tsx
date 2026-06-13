@@ -1,11 +1,17 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
+
+type ComingSoonSection = 'leaderboard' | 'bracket' | 'notFound'
 
 interface ComingSoonProps {
-  title: string
-  description: string
+  section: ComingSoonSection
 }
 
-export default function ComingSoon({ title, description }: ComingSoonProps) {
+export default function ComingSoon({ section }: ComingSoonProps) {
+  const { t } = useTranslation()
+  const title = t(`comingSoon.${section}.title`)
+  const description = t(`comingSoon.${section}.description`)
+
   return (
     <div className="mx-auto w-full max-w-5xl">
       <header className="mb-8">
@@ -19,7 +25,7 @@ export default function ComingSoon({ title, description }: ComingSoonProps) {
         className="flex flex-col items-center rounded-2xl border border-hairline bg-surface px-6 py-20 text-center backdrop-blur-md"
       >
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-accent">
-          Скоро
+          {t('comingSoon.eyebrow')}
         </p>
         <p className="mt-4 text-lg font-semibold text-text">{title}</p>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{description}</p>

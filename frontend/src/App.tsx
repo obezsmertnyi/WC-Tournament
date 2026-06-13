@@ -10,30 +10,15 @@ const router = createBrowserRouter([
       { index: true, element: <Calendar /> },
       {
         path: 'leaderboard',
-        element: (
-          <ComingSoon
-            title="Лідери"
-            description="Таблиця лідерів зʼявиться, щойно почнуться матчі та надійдуть перші прогнози."
-          />
-        ),
+        element: <ComingSoon section="leaderboard" />,
       },
       {
         path: 'bracket',
-        element: (
-          <ComingSoon
-            title="Турнірна сітка"
-            description="Інтерактивна сітка плей-оф відкриється після завершення групового етапу."
-          />
-        ),
+        element: <ComingSoon section="bracket" />,
       },
       {
         path: '*',
-        element: (
-          <ComingSoon
-            title="Сторінку не знайдено"
-            description="Можливо, посилання застаріло. Поверніться до календаря."
-          />
-        ),
+        element: <ComingSoon section="notFound" />,
       },
     ],
   },
