@@ -124,6 +124,49 @@ func defaultRole(r string) string {
 	return r
 }
 
+// CreatePlayer inserts a new role='player' account by nickname and returns the
+// created row. It is the admin-provisioned roster entry point (no google_sub,
+// no email). A duplicate nickname surfaces as a Postgres unique violation
+// (SQLSTATE 23505) for the handler to map to 409.
+func (s *Store) CreatePlayer(ctx context.Context, nickname string) (User, error) {
+	return s.CreateUser(ctx, User{Nickname: nickname, Role: "player"})
+}
+
+// DeleteUserCascade deletes a user and all of their derived rows (predictions,
+// materialized points, and tournament picks) in a single transaction. It
+// returns ErrNotFound when no user with the id exists. Callers must ensure the
+// target is not an admin before invoking.
+func (s *Store) DeleteUserCascade(ctx context.Context, id int64) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("delete user cascade: begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	for _, q := range []string{
+		`DELETE FROM predictions WHERE user_id = $1`,
+		`DELETE FROM points WHERE user_id = $1`,
+		`DELETE FROM tournament_picks WHERE user_id = $1`,
+	} {
+		if _, err := tx.Exec(ctx, q, id); err != nil {
+			return fmt.Errorf("delete user cascade: %w", err)
+		}
+	}
+
+	tag, err := tx.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete user cascade: users: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("delete user cascade: commit: %w", err)
+	}
+	return nil
+}
+
 // UpdateUserProfile patches nickname/favoriteTeamCode/avatarUrl when the
 // corresponding pointer is non-nil. Returns the updated row.
 func (s *Store) UpdateUserProfile(ctx context.Context, id int64, nickname, favoriteTeamCode, avatarURL *string) (User, error) {

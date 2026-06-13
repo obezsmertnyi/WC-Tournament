@@ -18,14 +18,24 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'locked' | 'error'
 interface PredictionsValue {
   /** matchId → the user's current prediction (optimistic). */
   byMatch: Map<number, MyPrediction>
-  saveStateOf: (matchId: number) => SaveState
-  /** Queue a debounced save for a match (called on input change/blur). */
+  saveStateOf: (matchId: number, forUserId?: string) => SaveState
+  /**
+   * Queue a debounced save for a match (called on input change/blur).
+   * When `input.forUserId` is set (admin acting on behalf of a player), the
+   * save is sent with that id, the kickoff lock is bypassed by the backend,
+   * and the admin's own optimistic `byMatch` is left untouched.
+   */
   save: (matchId: number, input: PredictionInput) => void
 }
 
 const PredictionsContext = createContext<PredictionsValue | null>(null)
 
 const DEBOUNCE_MS = 600
+
+/** Save-state / timer key — per match, and per target user when admin-writing. */
+function keyOf(matchId: number, forUserId?: string): string {
+  return forUserId ? `${matchId}:${forUserId}` : `${matchId}`
+}
 
 /**
  * Holds the signed-in user's predictions and debounced PUT saves. Prefilled
@@ -34,10 +44,10 @@ const DEBOUNCE_MS = 600
 export function PredictionsProvider({ children }: { children: ReactNode }) {
   const { status } = useAuth()
   const [byMatch, setByMatch] = useState<Map<number, MyPrediction>>(new Map())
-  const [saveStates, setSaveStates] = useState<Map<number, SaveState>>(new Map())
+  const [saveStates, setSaveStates] = useState<Map<string, SaveState>>(new Map())
 
-  const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
-  const savedTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
+  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const savedTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   // Load (or clear) predictions when auth status changes.
   useEffect(() => {
@@ -68,33 +78,34 @@ export function PredictionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const setSaveState = useCallback((matchId: number, s: SaveState) => {
+  const setSaveState = useCallback((key: string, s: SaveState) => {
     setSaveStates((prev) => {
       const next = new Map(prev)
-      next.set(matchId, s)
+      next.set(key, s)
       return next
     })
   }, [])
 
   const flush = useCallback(
     (matchId: number, input: PredictionInput) => {
-      setSaveState(matchId, 'saving')
+      const key = keyOf(matchId, input.forUserId)
+      setSaveState(key, 'saving')
       savePrediction(matchId, input)
         .then(() => {
-          setSaveState(matchId, 'saved')
+          setSaveState(key, 'saved')
           // Auto-fade the "saved" affordance after a moment.
-          const prev = savedTimers.current.get(matchId)
+          const prev = savedTimers.current.get(key)
           if (prev) clearTimeout(prev)
           savedTimers.current.set(
-            matchId,
-            setTimeout(() => setSaveState(matchId, 'idle'), 1800),
+            key,
+            setTimeout(() => setSaveState(key, 'idle'), 1800),
           )
         })
         .catch((err) => {
           if (err instanceof ApiError && err.status === 409) {
-            setSaveState(matchId, 'locked')
+            setSaveState(key, 'locked')
           } else {
-            setSaveState(matchId, 'error')
+            setSaveState(key, 'error')
           }
         })
     },
@@ -103,24 +114,29 @@ export function PredictionsProvider({ children }: { children: ReactNode }) {
 
   const save = useCallback(
     (matchId: number, input: PredictionInput) => {
-      // Optimistic local update so inputs stay responsive.
-      setByMatch((prev) => {
-        const next = new Map(prev)
-        next.set(matchId, {
-          matchId,
-          home: input.home,
-          away: input.away,
-          winnerPickTeamId: input.winnerPickTeamId ?? null,
+      // Optimistic local update so inputs stay responsive — but only for the
+      // signed-in user's own predictions. Admin writes for another player must
+      // not clobber the admin's own pick in `byMatch`.
+      if (!input.forUserId) {
+        setByMatch((prev) => {
+          const next = new Map(prev)
+          next.set(matchId, {
+            matchId,
+            home: input.home,
+            away: input.away,
+            winnerPickTeamId: input.winnerPickTeamId ?? null,
+          })
+          return next
         })
-        return next
-      })
+      }
 
-      const existing = timers.current.get(matchId)
+      const key = keyOf(matchId, input.forUserId)
+      const existing = timers.current.get(key)
       if (existing) clearTimeout(existing)
       timers.current.set(
-        matchId,
+        key,
         setTimeout(() => {
-          timers.current.delete(matchId)
+          timers.current.delete(key)
           flush(matchId, input)
         }, DEBOUNCE_MS),
       )
@@ -129,7 +145,8 @@ export function PredictionsProvider({ children }: { children: ReactNode }) {
   )
 
   const saveStateOf = useCallback(
-    (matchId: number): SaveState => saveStates.get(matchId) ?? 'idle',
+    (matchId: number, forUserId?: string): SaveState =>
+      saveStates.get(keyOf(matchId, forUserId)) ?? 'idle',
     [saveStates],
   )
 

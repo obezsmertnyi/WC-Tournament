@@ -59,6 +59,15 @@ export interface User {
   role: Role
 }
 
+/** A player as returned by the admin roster endpoint (`GET /api/admin/users`). */
+export interface AdminPlayer {
+  id: string
+  nickname: string
+  avatarUrl: string | null
+  favoriteTeamCode: string | null
+  role: Role
+}
+
 /** A user's own prediction for one match. */
 export interface MyPrediction {
   matchId: number

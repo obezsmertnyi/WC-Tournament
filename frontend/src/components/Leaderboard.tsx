@@ -79,6 +79,9 @@ export default function Leaderboard({ entries }: LeaderboardProps) {
           })}
         </tbody>
       </table>
+      <p className="border-t border-hairline px-3 py-2 text-[0.62rem] leading-relaxed text-muted/60 sm:px-4">
+        {t('competition.legend')}
+      </p>
     </div>
   )
 }

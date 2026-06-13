@@ -2,6 +2,7 @@ import type {
   Match,
   GroupStanding,
   User,
+  AdminPlayer,
   MyPrediction,
   MatchReveal,
   LeaderboardEntry,
@@ -144,6 +145,11 @@ export interface PredictionInput {
   home: number
   away: number
   winnerPickTeamId?: number | null
+  /**
+   * Admin-only: write this prediction on behalf of the given player. When set,
+   * the backend bypasses the kickoff lock. Ignored (and rejected) for non-admins.
+   */
+  forUserId?: string
 }
 
 /** Upsert a prediction for a match. Throws ApiError(409) when locked. */
@@ -157,6 +163,42 @@ export async function savePrediction(
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+}
+
+// ── Admin: player roster ─────────────────────────────────────────────────────
+
+/** List all players (admin only). Returns `[{ id, nickname, … }]`. */
+export async function fetchAdminUsers(signal?: AbortSignal): Promise<AdminPlayer[]> {
+  const res = await fetch('/api/admin/users', { ...withCreds, signal })
+  if (!res.ok) throw new ApiError(res.status)
+  const data = (await res.json()) as unknown
+  return Array.isArray(data) ? (data as AdminPlayer[]) : []
+}
+
+/** Create a player by nickname (admin only). */
+export async function createPlayer(
+  nickname: string,
+  signal?: AbortSignal,
+): Promise<AdminPlayer> {
+  const res = await fetch('/api/admin/users', {
+    ...withCreds,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nickname }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as AdminPlayer
+}
+
+/** Delete a player by id (admin only). */
+export async function deletePlayer(id: string, signal?: AbortSignal): Promise<void> {
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+    ...withCreds,
+    method: 'DELETE',
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)

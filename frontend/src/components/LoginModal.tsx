@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { GOOGLE_LOGIN_URL } from '../lib/api'
+import { ApiError, GOOGLE_LOGIN_URL } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
 
 interface LoginModalProps {
@@ -20,7 +20,8 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   const { loginDev, loginAdmin } = useAuth()
   const [nickname, setNickname] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(false)
+  // null = no error; 'notFound' = unknown nickname (404); 'failed' = other.
+  const [error, setError] = useState<null | 'notFound' | 'failed'>(null)
   const [adminMode, setAdminMode] = useState(false)
   const [password, setPassword] = useState('')
   const [adminBusy, setAdminBusy] = useState(false)
@@ -29,7 +30,7 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
 
   useEffect(() => {
     if (!open) return
-    setError(false)
+    setError(null)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
@@ -62,13 +63,14 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     const name = nickname.trim()
     if (!name || busy) return
     setBusy(true)
-    setError(false)
+    setError(null)
     try {
       await loginDev(name)
       setNickname('')
       onClose()
-    } catch {
-      setError(true)
+    } catch (err) {
+      // 404 → nickname no longer auto-creates an account; ask an admin.
+      setError(err instanceof ApiError && err.status === 404 ? 'notFound' : 'failed')
     } finally {
       setBusy(false)
     }
@@ -123,7 +125,10 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                   className="h-11 w-full rounded-xl border border-hairline bg-white/[0.04] px-3.5 text-sm text-text outline-none transition-colors placeholder:text-muted/50 focus:border-accent focus:shadow-[0_0_0_3px_rgba(201,162,75,0.18)]"
                 />
               </label>
-              {error && <p className="text-xs text-red-400/90">{t('auth.failed')}</p>}
+              {error === 'notFound' && (
+                <p className="text-xs text-accent/90">{t('auth.noSuchPlayer')}</p>
+              )}
+              {error === 'failed' && <p className="text-xs text-red-400/90">{t('auth.failed')}</p>}
               <button
                 type="submit"
                 disabled={busy || nickname.trim() === ''}

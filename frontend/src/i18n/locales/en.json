@@ -21,6 +21,7 @@
     "adminPassword": "Admin password",
     "adminLogin": "Sign in as admin",
     "adminFailed": "Wrong password.",
+    "noSuchPlayer": "No such player — ask an admin to add you.",
     "profile": "Profile",
     "logout": "Log out",
     "close": "Close"
@@ -46,7 +47,28 @@
     "locked": "Locked",
     "error": "Error",
     "noPick": "No prediction made",
-    "pointsBadge": "{{points}} pts"
+    "pointsBadge": "{{points}} pts",
+    "asPlayer": "as",
+    "asMyself": "Myself",
+    "selectPlayer": "Predict on behalf of a player",
+    "editingFor": "Editing for {{player}}"
+  },
+  "admin": {
+    "eyebrow": "Admin",
+    "players": "Players",
+    "playersSubtitle": "Add or remove players who can sign in and predict.",
+    "addPlayer": "Add a player",
+    "nicknamePlaceholder": "Player nickname",
+    "add": "Add",
+    "adding": "Adding…",
+    "addError": "Couldn’t add that player.",
+    "loadError": "Couldn’t load players.",
+    "empty": "No players yet.",
+    "removePlayer": "Remove {{player}}",
+    "remove": "Remove",
+    "removing": "Removing…",
+    "removeConfirm": "Remove {{player}}? This deletes their predictions.",
+    "removeError": "Couldn’t remove that player."
   },
   "competition": {
     "title": "Competition",
@@ -58,6 +80,7 @@
     "player": "Player",
     "points": "Pts",
     "exact": "Exact",
+    "legend": "Exact — number of exact-score guesses · Pts — total points",
     "leaderboardEmpty": "No scores yet — predictions reveal as matches kick off.",
     "vs": "vs",
     "revealLocked": "Hidden until kickoff",

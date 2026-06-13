@@ -60,16 +60,18 @@ func RegisterRoutes(r gin.IRouter, store UserStore) {
 
 // roleForNewUser always returns 'player'. Admin accounts are never provisioned
 // implicitly (no admin-by-count); they exist only via the password-gated
-// admin-login path.
+// admin-login path. Used by the Google OAuth upsert path.
 func roleForNewUser(_ context.Context, _ UserStore) (string, error) {
 	return "player", nil
 }
 
-// devLoginHandler self-identifies a PLAYER by nickname (Friends-PoC trust
-// model). It finds or creates a fresh player account and sets the session
-// cookie. It REFUSES (403) to log in as any account that is an admin or is
-// linked to Google, so this path can never impersonate a privileged or
-// federated identity and never issues an admin token.
+// devLoginHandler logs in an EXISTING player by nickname (Friends-PoC trust
+// model). It is LOGIN-ONLY: it never creates an account, so random names and
+// typos can no longer spawn junk accounts — the player roster is provisioned
+// by an admin via POST /api/admin/users. An unknown nickname returns 404. It
+// REFUSES (403) to log in as any account that is an admin or is linked to
+// Google, so this path can never impersonate a privileged or federated
+// identity and never issues an admin token.
 func devLoginHandler(store UserStore) gin.HandlerFunc {
 	type req struct {
 		Nickname string `json:"nickname"`
@@ -90,17 +92,10 @@ func devLoginHandler(store UserStore) gin.HandlerFunc {
 		user, err := store.GetUserByNickname(ctx, nickname)
 		switch {
 		case errors.Is(err, storage.ErrNotFound):
-			// Fresh sign-up: always a player.
-			role, rerr := roleForNewUser(ctx, store)
-			if rerr != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
-				return
-			}
-			user, err = store.CreateUser(ctx, storage.User{Nickname: nickname, Role: role})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
-				return
-			}
+			// No auto-create: unknown nicknames are rejected so an admin must
+			// add the player to the roster first.
+			c.JSON(http.StatusNotFound, gin.H{"error": "no such player — ask an admin to add you"})
+			return
 		case err != nil:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
 			return

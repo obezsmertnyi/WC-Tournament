@@ -6,6 +6,7 @@ import { teamName } from '../lib/teamNames'
 import { useAuth } from '../auth/AuthContext'
 import Avatar from './../components/Avatar'
 import Flag from '../components/Flag'
+import AdminPlayers from '../components/AdminPlayers'
 
 /** Team codes offered as favorite picks — every code with a known flag. */
 const TEAM_CODES = Object.keys(FIFA_TO_ISO).sort()
@@ -163,6 +164,8 @@ export default function Profile() {
           </div>
         </form>
       </div>
+
+      {user.role === 'admin' && <AdminPlayers />}
     </div>
   )
 }

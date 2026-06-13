@@ -103,15 +103,18 @@ func post(r *gin.Engine, path, body string) *httptest.ResponseRecorder {
 	return rec
 }
 
-func TestDevLogin_NewPlayer(t *testing.T) {
+func TestDevLogin_UnknownNickname404NoCreate(t *testing.T) {
 	setTestSecret(t)
 	store := newFakeUserStore()
 	rec := post(newRouter(store), "/api/auth/dev-login", `{"nickname":"newbie"}`)
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d (%s)", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("unknown nickname must be 404, got %d (%s)", rec.Code, rec.Body.String())
 	}
-	if len(store.created) != 1 || store.created[0].Role != "player" {
-		t.Fatalf("new dev-login user must be a player, got %+v", store.created)
+	if len(store.created) != 0 {
+		t.Fatalf("dev-login must not create any user, got %+v", store.created)
+	}
+	if !strings.Contains(rec.Body.String(), "ask an admin") {
+		t.Fatalf("expected admin-roster hint, got %s", rec.Body.String())
 	}
 }
 

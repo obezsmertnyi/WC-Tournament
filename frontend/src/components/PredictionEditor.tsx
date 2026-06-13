@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Match } from '../types'
+import type { AdminPlayer, Match } from '../types'
 import { hasKickedOff } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
+import { fetchAdminUsers } from '../lib/api'
+import { useAuth } from '../auth/AuthContext'
 import { usePredictions, type SaveState } from '../predictions/PredictionsContext'
 
 /** Clamp a raw input value into the 0–30 score range, or null when empty. */
@@ -67,26 +69,69 @@ interface PredictionEditorProps {
  * match hasn't kicked off. Score inputs (0–30) plus, for knockout ties, an
  * advancer pick. Saves are debounced via the predictions context. Once the
  * match kicks off this collapses to a read-only summary with a points badge.
+ *
+ * Admins additionally get an "as [player ▾]" selector that lets them write a
+ * prediction on behalf of any player (bypassing the kickoff lock). While a
+ * player is selected the editor edits that player's pick — never the admin's.
  */
 export default function PredictionEditor({ match }: PredictionEditorProps) {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const { byMatch, save, saveStateOf } = usePredictions()
-  const existing = byMatch.get(match.id)
+  const isAdmin = user?.role === 'admin'
 
-  const [home, setHome] = useState<number | null>(existing?.home ?? null)
-  const [away, setAway] = useState<number | null>(existing?.away ?? null)
-  const [winner, setWinner] = useState<number | null>(existing?.winnerPickTeamId ?? null)
+  // ── Admin "predict as player" selection ────────────────────────────────────
+  const [players, setPlayers] = useState<AdminPlayer[]>([])
+  // '' means the admin is editing their own prediction (default).
+  const [asPlayerId, setAsPlayerId] = useState<string>('')
 
-  // Reconcile when predictions arrive/refresh from the server.
   useEffect(() => {
-    setHome(existing?.home ?? null)
-    setAway(existing?.away ?? null)
-    setWinner(existing?.winnerPickTeamId ?? null)
-  }, [existing?.home, existing?.away, existing?.winnerPickTeamId])
+    if (!isAdmin) return
+    const controller = new AbortController()
+    fetchAdminUsers(controller.signal)
+      .then((list) => {
+        if (controller.signal.aborted) return
+        // Hide admins from the roster of pickable players (predict for users).
+        setPlayers(list.filter((p) => p.role !== 'admin' || p.id !== user?.id))
+      })
+      .catch(() => {
+        /* leave empty; selector simply offers no players */
+      })
+    return () => controller.abort()
+  }, [isAdmin, user?.id])
 
-  const locked = hasKickedOff(match)
+  const actingFor = asPlayerId
+    ? players.find((p) => p.id === asPlayerId) ?? null
+    : null
+  const forUserId = actingFor ? actingFor.id : undefined
+
+  // The admin's own prediction lives in `byMatch`; another player's does not
+  // (we never prefetch it), so the editor starts blank when a player is chosen.
+  const own = byMatch.get(match.id)
+
+  const [home, setHome] = useState<number | null>(own?.home ?? null)
+  const [away, setAway] = useState<number | null>(own?.away ?? null)
+  const [winner, setWinner] = useState<number | null>(own?.winnerPickTeamId ?? null)
+
+  // Reconcile when the source prediction changes: either the admin's own
+  // prediction refreshes from the server, or the acting-for player switches.
+  useEffect(() => {
+    if (forUserId) {
+      setHome(null)
+      setAway(null)
+      setWinner(null)
+    } else {
+      setHome(own?.home ?? null)
+      setAway(own?.away ?? null)
+      setWinner(own?.winnerPickTeamId ?? null)
+    }
+  }, [forUserId, own?.home, own?.away, own?.winnerPickTeamId])
+
+  const kickedOff = hasKickedOff(match)
+  // Admins acting for a player bypass the lock; their own picks still lock.
+  const locked = kickedOff && !forUserId
   const isKnockout = match.stage !== 'group'
-  const saveState = saveStateOf(match.id)
+  const saveState = saveStateOf(match.id, forUserId)
 
   const homeId = (match.home as { id?: number } | null)?.id ?? null
   const awayId = (match.away as { id?: number } | null)?.id ?? null
@@ -103,46 +148,73 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
       home: nextHome,
       away: nextAway,
       winnerPickTeamId: isKnockout ? nextWinner : null,
+      forUserId,
     })
   }
 
-  // ── Locked (kicked off): read-only summary of the user's own pick ──────────
+  // Compact admin selector — "as [player ▾]".
+  const adminSelector = isAdmin && (
+    <div className="mb-2 flex items-center gap-2">
+      <span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-accent/70">
+        {t('predict.asPlayer')}
+      </span>
+      <select
+        aria-label={t('predict.selectPlayer')}
+        value={asPlayerId}
+        onChange={(e) => setAsPlayerId(e.target.value)}
+        className="h-7 max-w-[10rem] flex-1 truncate rounded-md border border-hairline bg-white/[0.04] px-2 text-xs text-text outline-none transition-colors focus:border-accent"
+      >
+        <option value="">{t('predict.asMyself')}</option>
+        {players.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nickname}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+
+  // ── Locked (kicked off, editing own pick): read-only summary ───────────────
   if (locked) {
-    if (!existing) {
-      return (
-        <div className="mt-3 border-t border-hairline pt-2.5">
+    const scored = own && typeof (own as { points?: number }).points === 'number'
+    return (
+      <div className="mt-3 border-t border-hairline pt-2.5">
+        {adminSelector}
+        {!own ? (
           <p className="text-[0.65rem] uppercase tracking-[0.14em] text-muted/60">
             {t('predict.noPick')}
           </p>
-        </div>
-      )
-    }
-    const scored = existing && typeof (existing as { points?: number }).points === 'number'
-    return (
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-hairline pt-2.5">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-muted/70">
-          {t('predict.yourPick')}
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="tabular-nums text-sm font-bold text-text">
-            {existing.home}–{existing.away}
-          </span>
-          {scored && (
-            <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[0.6rem] font-semibold text-accent">
-              ✓ {t('predict.pointsBadge', { points: (existing as { points?: number }).points })}
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-muted/70">
+              {t('predict.yourPick')}
             </span>
-          )}
-        </span>
+            <span className="flex items-center gap-2">
+              <span className="tabular-nums text-sm font-bold text-text">
+                {own.home}–{own.away}
+              </span>
+              {scored && (
+                <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[0.6rem] font-semibold text-accent">
+                  ✓ {t('predict.pointsBadge', { points: (own as { points?: number }).points })}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     )
   }
 
-  // ── Editable (before kickoff) ──────────────────────────────────────────────
+  // ── Editable (before kickoff, or admin acting for a player) ────────────────
   return (
     <div className="mt-3 border-t border-hairline pt-3">
+      {adminSelector}
+
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-accent/80">
-          {t('predict.yourPick')}
+        <span className="truncate text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-accent/80">
+          {actingFor
+            ? t('predict.editingFor', { player: actingFor.nickname })
+            : t('predict.yourPick')}
         </span>
         <SaveBadge state={saveState} />
       </div>
