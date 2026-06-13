@@ -177,11 +177,15 @@ function RevealsSection() {
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <Flag code={m.home!.code} flagUrl={m.home!.flagUrl} label={homeName} className="h-[0.95rem] w-5" />
                 <span className="truncate text-sm font-medium text-text">{homeName}</span>
-                <span className="shrink-0 text-xs text-muted/60">
-                  {m.status === 'finished' && m.homeScore !== null && m.awayScore !== null
-                    ? `${m.homeScore}–${m.awayScore}`
-                    : t('competition.vs')}
-                </span>
+                {m.status === 'finished' && m.homeScore !== null && m.awayScore !== null ? (
+                  <span className="shrink-0 rounded-md bg-accent/15 px-1.5 py-0.5 text-sm font-bold tabular-nums text-accent ring-1 ring-accent/25">
+                    {m.homeScore}–{m.awayScore}
+                  </span>
+                ) : (
+                  <span className="shrink-0 text-[0.65rem] uppercase tracking-wide text-muted/50">
+                    {t('competition.vs')}
+                  </span>
+                )}
                 <span className="truncate text-sm font-medium text-text">{awayName}</span>
                 <Flag code={m.away!.code} flagUrl={m.away!.flagUrl} label={awayName} className="h-[0.95rem] w-5" />
               </div>
