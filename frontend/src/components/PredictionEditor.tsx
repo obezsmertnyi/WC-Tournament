@@ -128,8 +128,10 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
   }, [forUserId, own?.home, own?.away, own?.winnerPickTeamId])
 
   const kickedOff = hasKickedOff(match)
-  // Admins acting for a player bypass the lock; their own picks still lock.
-  const locked = kickedOff && !forUserId
+  // Admins are never locked — they may set/correct any prediction (their own or,
+  // via the selector, any player's) at any time; the backend audits it. Regular
+  // players lock at kickoff.
+  const locked = kickedOff && !isAdmin
   const isKnockout = match.stage !== 'group'
   const saveState = saveStateOf(match.id, forUserId)
 
