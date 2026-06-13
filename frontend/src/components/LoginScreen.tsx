@@ -97,13 +97,32 @@ export default function LoginScreen() {
               WORLD CUP <span className="text-accent tabular-nums">2026</span>
             </h1>
             <p className="mt-1.5 text-sm text-muted">{t('auth.subtitle')}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted/70">{t('auth.about')}</p>
           </header>
+
+          {/* Google is the primary, legitimate sign-in path. */}
+          <a
+            href={GOOGLE_LOGIN_URL}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-semibold uppercase tracking-[0.14em] text-bg transition-opacity hover:opacity-90"
+          >
+            <GoogleGlyph />
+            {t('auth.google')}
+          </a>
+
+          <div className="my-4 flex items-center gap-3">
+            <span className="h-px flex-1 bg-hairline" />
+            <span className="text-[0.6rem] uppercase tracking-[0.16em] text-muted/60">
+              {t('auth.or')}
+            </span>
+            <span className="h-px flex-1 bg-hairline" />
+          </div>
 
           <form onSubmit={submitDev} className="space-y-3">
             <input
               type="text"
               value={nickname}
               maxLength={40}
+              autoComplete="off"
               onChange={(e) => setNickname(e.target.value)}
               placeholder={t('auth.nicknamePlaceholder')}
               className="h-12 w-full rounded-xl border border-hairline bg-white/[0.04] px-3.5 text-sm text-text outline-none transition-colors placeholder:text-muted/50 focus:border-accent focus:shadow-[0_0_0_3px_rgba(201,162,75,0.18)]"
@@ -115,27 +134,11 @@ export default function LoginScreen() {
             <button
               type="submit"
               disabled={busy || nickname.trim() === ''}
-              className="h-12 w-full rounded-xl bg-accent text-sm font-semibold uppercase tracking-[0.14em] text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="h-12 w-full rounded-xl border border-hairline bg-white/[0.04] text-sm font-semibold uppercase tracking-[0.14em] text-text transition-colors hover:border-white/20 hover:bg-white/[0.07] disabled:opacity-40"
             >
               {busy ? t('auth.signingIn') : t('auth.devLogin')}
             </button>
           </form>
-
-          <div className="my-4 flex items-center gap-3">
-            <span className="h-px flex-1 bg-hairline" />
-            <span className="text-[0.6rem] uppercase tracking-[0.16em] text-muted/60">
-              {t('auth.or')}
-            </span>
-            <span className="h-px flex-1 bg-hairline" />
-          </div>
-
-          <a
-            href={GOOGLE_LOGIN_URL}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-hairline bg-white/[0.04] text-sm font-medium text-text transition-colors hover:border-white/20 hover:bg-white/[0.07]"
-          >
-            <GoogleGlyph />
-            {t('auth.google')}
-          </a>
 
           {!adminMode ? (
             <button
@@ -153,7 +156,7 @@ export default function LoginScreen() {
               <input
                 type="password"
                 value={password}
-                autoComplete="current-password"
+                autoComplete="off"
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="h-11 w-full rounded-xl border border-hairline bg-white/[0.04] px-3.5 text-sm text-text outline-none transition-colors placeholder:text-muted/40 focus:border-accent focus:shadow-[0_0_0_3px_rgba(201,162,75,0.18)]"
