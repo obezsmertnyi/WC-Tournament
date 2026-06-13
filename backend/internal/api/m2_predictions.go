@@ -235,8 +235,12 @@ func matchPredictionsHandler(store PredictionStore) gin.HandlerFunc {
 			return
 		}
 
+		// Admins manage predictions, so they may view them at any time. For
+		// everyone else the reveal stays locked until kickoff (anti-cheat).
+		claims, ok := auth.Current(c)
+		isAdmin := ok && claims.Role == "admin"
 		kickedOff := match.KickoffAt != nil && !time.Now().UTC().Before(match.KickoffAt.UTC())
-		if !kickedOff {
+		if !kickedOff && !isAdmin {
 			c.JSON(http.StatusOK, gin.H{"locked": true, "predictions": []revealPredictionDTO{}})
 			return
 		}

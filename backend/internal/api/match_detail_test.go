@@ -57,8 +57,8 @@ func TestMatchDetail_Contract(t *testing.T) {
 			TeamName: "Mexico", Formation: "4-1-2-3",
 			Players: []results.LivePlayer{{Name: "Raul Jimenez", ShirtNumber: intp(9), Position: "Forward", Captain: true, PictureURL: "https://pic/p1.png"}},
 		},
-		Goals: []results.LiveGoal{{TeamFifaID: "43922", ScorerName: "Raul Jimenez", AssistName: "Hirving Lozano", Minute: "23'", Type: intp(0)}},
-		Cards: []results.LiveCard{{TeamFifaID: "43922", PlayerName: "Hirving Lozano", Minute: "67'", Card: intp(1)}},
+		Goals:         []results.LiveGoal{{TeamFifaID: "43922", ScorerName: "Raul Jimenez", AssistName: "Hirving Lozano", Minute: "23'", Type: intp(0)}},
+		Cards:         []results.LiveCard{{TeamFifaID: "43922", PlayerName: "Hirving Lozano", Minute: "67'", Card: intp(1)}},
 		Substitutions: []results.LiveSubstitution{{TeamFifaID: "43922", PlayerIn: "Santiago Gimenez", PlayerOut: "Raul Jimenez", Minute: "75'"}},
 		Officials:     []results.LiveOfficial{{Name: "Cesar Ramos", Type: intp(1)}},
 	}}
