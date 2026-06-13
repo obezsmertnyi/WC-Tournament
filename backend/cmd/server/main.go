@@ -25,6 +25,12 @@ const (
 )
 
 func main() {
+	// `server healthcheck` probes the local /healthz endpoint and exits 0/1.
+	// Used as the container HEALTHCHECK since the distroless image has no shell/curl.
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		os.Exit(healthcheck())
+	}
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
@@ -32,6 +38,26 @@ func main() {
 		logger.Error("server exited with error", slog.Any("error", err))
 		os.Exit(1)
 	}
+}
+
+// healthcheck performs a self-probe against /healthz and returns a process exit code.
+func healthcheck() int {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:" + port + "/healthz")
+	if err != nil {
+		return 1
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
 }
 
 func run(logger *slog.Logger) error {

@@ -1,21 +1,39 @@
+name: wc2026
+
+# Shared log rotation so containers can't fill the disk.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:17
+    container_name: wc2026-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-wc}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wc}
       POSTGRES_DB: ${POSTGRES_DB:-wc2026}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks: [wc2026-net]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wc} -d ${POSTGRES_DB:-wc2026}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    security_opt: ["no-new-privileges:true"]
+    logging: *default-logging
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
 
   backend:
     build: ./backend
+    image: wc2026-backend:latest
+    container_name: wc2026-backend
     environment:
       PORT: "8080"
       DATABASE_URL: ${DATABASE_URL:-postgres://wc:wc@db:5432/wc2026?sslmode=disable}
@@ -23,17 +41,52 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks: [wc2026-net]
     ports:
       - "8081:8080"   # direct backend access for debugging
+    healthcheck:
+      test: ["CMD", "/server", "healthcheck"]   # self-probe; distroless has no shell/curl
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *default-logging
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 256M }
 
   frontend:
     build: ./frontend
+    image: wc2026-frontend:latest
+    container_name: wc2026-frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks: [wc2026-net]
     ports:
-      - "8080:80"     # app entrypoint; nginx proxies /api → backend:8080
+      - "8080:80"     # app entrypoint; nginx serves SPA + proxies /api → backend:8080
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    security_opt: ["no-new-privileges:true"]
+    logging: *default-logging
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128M }
+
+networks:
+  wc2026-net:
+    name: wc2026-net
+    driver: bridge
 
 volumes:
   pgdata:
+    name: wc2026-pgdata
