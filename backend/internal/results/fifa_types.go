@@ -39,8 +39,8 @@ type fifaLivePlayer struct {
 	Captain       bool            `json:"Captain"`
 	PlayerName    []fifaLocalized `json:"PlayerName"`
 	ShortName     []fifaLocalized `json:"ShortName"`
-	Position      string          `json:"Position"`
-	PlayerPicture string          `json:"PlayerPicture"`
+	Position      int             `json:"Position"`
+	PlayerPicture any             `json:"PlayerPicture"` // sometimes object, sometimes string — ignored
 	FieldStatus   *int            `json:"FieldStatus"`
 }
 
@@ -72,7 +72,8 @@ type fifaLiveSubstitution struct {
 // fifaLiveCoach is a team coach.
 type fifaLiveCoach struct {
 	Name []fifaLocalized `json:"Name"`
-	Role string          `json:"Role"`
+	// Role is omitted: FIFA returns it as a number for some matches and a
+	// string for others, and the parser doesn't use it.
 }
 
 // fifaLiveTeam is one side of the live match.

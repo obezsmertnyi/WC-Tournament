@@ -186,10 +186,25 @@ func mapLineup(t *fifaLiveTeam) *LiveLineup {
 			FifaID:      p.IdPlayer,
 			Name:        name,
 			ShirtNumber: p.ShirtNumber,
-			Position:    p.Position,
+			Position:    positionLabel(p.Position),
 			Captain:     p.Captain,
-			PictureURL:  p.PlayerPicture,
 		})
 	}
 	return l
+}
+
+// positionLabel maps FIFA's numeric position code to a readable label.
+func positionLabel(code int) string {
+	switch code {
+	case 0:
+		return "Goalkeeper"
+	case 1:
+		return "Defender"
+	case 2:
+		return "Midfielder"
+	case 3:
+		return "Forward"
+	default:
+		return ""
+	}
 }

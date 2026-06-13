@@ -41,8 +41,8 @@
         "IdPlayer": "P1",
         "ShirtNumber": 9,
         "Captain": true,
-        "Position": "Forward",
-        "PlayerPicture": "https://pic/p1.png",
+        "Position": 3,
+        "PlayerPicture": { "Url": "https://pic/p1.png" },
         "PlayerName": [ { "Locale": "en-GB", "Description": "Raul Jimenez" } ],
         "ShortName": [ { "Locale": "en-GB", "Description": "R. Jimenez" } ]
       },
@@ -50,7 +50,7 @@
         "IdPlayer": "P2",
         "ShirtNumber": 8,
         "Captain": false,
-        "Position": "Midfield",
+        "Position": 2,
         "PlayerPicture": "",
         "PlayerName": [ { "Locale": "en-GB", "Description": "Hirving Lozano" } ],
         "ShortName": [ { "Locale": "en-GB", "Description": "H. Lozano" } ]
