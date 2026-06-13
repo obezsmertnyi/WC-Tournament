@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wc}
+      POSTGRES_DB: ${POSTGRES_DB:-wc2026}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wc} -d ${POSTGRES_DB:-wc2026}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: "8080"
+      DATABASE_URL: ${DATABASE_URL:-postgres://wc:wc@db:5432/wc2026?sslmode=disable}
+      APP_TZ: ${APP_TZ:-Europe/Kyiv}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:8080"   # direct backend access for debugging
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"     # app entrypoint; nginx proxies /api → backend:8080
+    restart: unless-stopped
+
+volumes:
+  pgdata:

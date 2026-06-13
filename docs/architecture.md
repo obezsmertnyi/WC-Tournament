@@ -77,7 +77,7 @@ Pages:
 - **Activity / Audit (public)** — chronological feed visible to all players: who placed/changed a prediction and when (the score itself appears only after that match's kickoff), plus every admin action (result overrides with old→new, rule changes, bracket edits, user creation). Read-only, filterable by player/match/action.
 - **Profile** — player sets a **nickname**, uploads a **photo** (overrides the Google avatar), picks a **favorite-team flag**, links **Telegram** (for reminders), and makes the enabled **bonus picks** (champion / finalist / top scorer). Shows the player's badges.
 - **Admin** — enter/override results, manage users, trigger sync, edit scoring rules. Every action here is written to the public audit feed.
-Football theme: pitch-green palette, team flags, card-based fixtures.
+Visual language: dark, premium-minimal "expensive" theme — near-black charcoal + spotlight glow, champagne-gold accent (`#C9A24B`), glass cards, subtle framer-motion, mobile-first. Team flags everywhere. (ADR-0003)
 
 ## 4. Data model (Postgres)
 

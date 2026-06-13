@@ -1,0 +1,24 @@
+# VCS
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Build artifacts
+/server
+*.exe
+*.out
+
+# Local / editor
+.env
+.env.*
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Test / coverage
+coverage.out
+*.test
