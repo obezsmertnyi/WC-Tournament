@@ -126,7 +126,15 @@
     "wrong": "Wrong result",
     "knockout": "Knockout match: you also pick who advances (extra time / penalties count)",
     "knockoutExample": "Knockout example: predict 1:1 in regular time AND that France advance → 3 (exact score) + 1 (advancer) = 4 points.",
-    "championBonus": "Champion bonus: pick the tournament winner below — choosing during the group stage is worth more than after it (time-tiered)."
+    "championBonus": "Champion bonus: pick the tournament winner below — choosing during the group stage is worth more than after it (time-tiered).",
+    "bonusTitle": "Tournament bonuses",
+    "bonusPick": "Pick",
+    "tierGroupCol": "Group stage",
+    "tierPostCol": "After groups · until R16",
+    "bonusChampion": "Tournament champion",
+    "bonusFinalist": "Finalist (the other team in the final)",
+    "bonusTopScorer": "Top scorer",
+    "bonusNote": "Bonuses are awarded ONLY if your pick is correct, and only once the outcome is known. Picking earlier is worth more: full points during the group stage, fewer after groups. You can change a pick until the Round of 16 kicks off — then it locks."
   },
   "audit": {
     "title": "Audit",
