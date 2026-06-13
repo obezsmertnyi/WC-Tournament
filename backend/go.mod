@@ -5,9 +5,11 @@ go 1.26.0
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/jackc/pgx/v5 v5.10.0
+	golang.org/x/oauth2 v0.36.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

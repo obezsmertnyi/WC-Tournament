@@ -20,7 +20,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/api"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/auth"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
 	syncpkg "github.com/obezsmertnyi/WC-Tournament/backend/internal/sync"
 )
@@ -49,6 +51,15 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "sync" {
 		if err := runSyncOnce(logger); err != nil {
 			logger.Error("sync failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
+	// `server recompute-scores` re-materializes points for all scored matches.
+	if len(os.Args) > 1 && os.Args[1] == "recompute-scores" {
+		if err := runRecomputeScores(logger); err != nil {
+			logger.Error("recompute-scores failed", slog.Any("error", err))
 			os.Exit(1)
 		}
 		return
@@ -118,7 +129,32 @@ func runSyncOnce(logger *slog.Logger) error {
 
 	syncer := syncpkg.New(results.NewFIFAClient(), store, logger)
 	_, err = syncer.Run(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+	// Re-materialize points after the result refresh (idempotent).
+	return scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(ctx)
+}
+
+// runRecomputeScores re-materializes points for every match with a result.
+func runRecomputeScores(logger *slog.Logger) error {
+	ctx, cancel := context.WithTimeout(context.Background(), syncCmdTimeout)
+	defer cancel()
+
+	store, err := openStore(ctx, logger)
+	if err != nil {
+		return err
+	}
+	if store == nil {
+		return errors.New("DATABASE_URL is required for recompute-scores")
+	}
+	defer store.Close()
+
+	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(ctx); err != nil {
+		return err
+	}
+	logger.Info("recompute-scores complete")
+	return nil
 }
 
 func run(logger *slog.Logger) error {
@@ -145,8 +181,18 @@ func run(logger *slog.Logger) error {
 
 	api.RegisterHealthRoutes(engine)
 	if store != nil {
+		recomputer := scoring.NewRecomputer(store, scoring.DefaultRules())
+
 		api.RegisterReadRoutes(engine, store)
 		api.RegisterStandingsRoutes(engine, store)
+
+		// M2: auth, profile, predictions, leaderboard, bonus, audit.
+		auth.RegisterRoutes(engine, store)
+		api.RegisterProfileRoutes(engine, store)
+		api.RegisterPredictionRoutes(engine, store, recomputer)
+		api.RegisterLeaderboardRoutes(engine, store)
+		api.RegisterBonusRoutes(engine, store)
+		api.RegisterAuditRoutes(engine, store)
 	}
 
 	srv := &http.Server{
@@ -203,6 +249,11 @@ func bootSync(ctx context.Context, store *storage.Store, logger *slog.Logger) {
 	syncer := syncpkg.New(results.NewFIFAClient(), store, logger)
 	if _, err := syncer.Run(syncCtx); err != nil {
 		logger.Warn("boot fifa sync failed (continuing)", slog.Any("error", err))
+		return
+	}
+	// Best-effort re-score after the boot sync (idempotent).
+	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
+		logger.Warn("boot recompute failed (continuing)", slog.Any("error", err))
 	}
 }
 

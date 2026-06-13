@@ -111,7 +111,7 @@ func TestComputeStandings_SkipsCrossGroupAndIncomplete(t *testing.T) {
 		{ID: 2, Name: "Bravo", GroupLabel: "Group B"},
 	}
 	finished := []Match{
-		m(1, 2, 5, 0),                                              // cross-group: must be ignored
+		m(1, 2, 5, 0), // cross-group: must be ignored
 		{HomeTeamID: i64(1), AwayTeamID: i64(1), HomeScore: ip(1)}, // missing away score: ignored
 	}
 	got := ComputeStandings(teams, finished)
@@ -126,13 +126,13 @@ func TestComputeStandings_SkipsCrossGroupAndIncomplete(t *testing.T) {
 
 func TestBareGroup(t *testing.T) {
 	cases := map[string]string{
-		"Group A": "A",
-		"group b": "b",
-		"GROUP C": "C",
+		"Group A":     "A",
+		"group b":     "b",
+		"GROUP C":     "C",
 		"  Group D  ": "D",
-		"A":       "A",
-		"":        "",
-		"Grouping": "Grouping", // not the prefix "group "
+		"A":           "A",
+		"":            "",
+		"Grouping":    "Grouping", // not the prefix "group "
 	}
 	for in, want := range cases {
 		if got := bareGroup(in); got != want {
