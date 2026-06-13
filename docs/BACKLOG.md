@@ -50,7 +50,7 @@ Parallelize across non-overlapping areas (backend vs frontend; worktrees if same
 - ⬜ One-time audited backfill window (scoring from match #1)
 - ⬜ Scoring engine: exact 3 / outcome 1 / KO winner +1 (penalties count for the pick)
 - ⬜ Public, immutable audit feed (predictions masked until kickoff + admin actions)
-- ⬜ Telegram reminders (4 types, friendly Ukrainian copy) — token in `.env`
+- ⬜ Telegram reminders (4 types, friendly Ukrainian copy) — `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in `.env`. NB: group/supergroup chat IDs are **negative** (e.g. `-…`, supergroups `-100…`) — read as int64/string, never strip the minus.
 - ⬜ Live-updating leaderboard
 - ⬜ Achievements + per-matchday winner
 
