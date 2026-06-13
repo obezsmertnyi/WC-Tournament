@@ -454,6 +454,31 @@ func (s *Store) ListUsersMissingPrediction(ctx context.Context, matchID int64) (
 	return out, rows.Err()
 }
 
+// GetAppState reads a key from the app_state kv table. Returns ("",false,nil)
+// when the key is absent.
+func (s *Store) GetAppState(ctx context.Context, key string) (string, bool, error) {
+	var v string
+	err := s.pool.QueryRow(ctx, `SELECT value FROM app_state WHERE key = $1`, key).Scan(&v)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("get app state %q: %w", key, err)
+	}
+	return v, true, nil
+}
+
+// SetAppState upserts a key/value into the app_state kv table.
+func (s *Store) SetAppState(ctx context.Context, key, value string) error {
+	const sql = `
+		INSERT INTO app_state (key, value, updated_at) VALUES ($1, $2, now())
+		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`
+	if _, err := s.pool.Exec(ctx, sql, key, value); err != nil {
+		return fmt.Errorf("set app state %q: %w", key, err)
+	}
+	return nil
+}
+
 // MarkMatchReminded stamps reminded_at=now() so the pre-match reminder fires once.
 func (s *Store) MarkMatchReminded(ctx context.Context, id int64) error {
 	if _, err := s.pool.Exec(ctx,

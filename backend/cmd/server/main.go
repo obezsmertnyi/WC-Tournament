@@ -15,14 +15,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+	_ "time/tzdata" // embed the tz database so Europe/Kyiv resolves in distroless
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/announce"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/api"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/auth"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/digest"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/notify"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/remind"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
@@ -30,6 +33,20 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
 	syncpkg "github.com/obezsmertnyi/WC-Tournament/backend/internal/sync"
 )
+
+// Kyiv is the display/scheduling timezone for the digest. Falls back to UTC if
+// the zone can't be loaded.
+var kyivLoc = mustLoadKyiv()
+
+func mustLoadKyiv() *time.Location {
+	loc, err := time.LoadLocation("Europe/Kyiv")
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+}
+
+const digestStateKey = "last_digest_day"
 
 // Background loop cadences: light DB-only tasks (announce results, pre-match
 // reminders) run often; the FIFA sync runs hourly to avoid hammering the API.
@@ -89,6 +106,15 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "remind" {
 		if err := runRemind(logger); err != nil {
 			logger.Error("remind failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
+	// `server digest` posts the morning summary (results + table + today) and exits.
+	if len(os.Args) > 1 && os.Args[1] == "digest" {
+		if err := runDigest(logger); err != nil {
+			logger.Error("digest failed", slog.Any("error", err))
 			os.Exit(1)
 		}
 		return
@@ -238,6 +264,32 @@ func runRemind(logger *slog.Logger) error {
 		return err
 	}
 	logger.Info("remind complete", slog.Int("sent", sent))
+	return nil
+}
+
+// runDigest posts the morning digest once and exits (manual / cron use).
+func runDigest(logger *slog.Logger) error {
+	ctx, cancel := context.WithTimeout(context.Background(), syncCmdTimeout)
+	defer cancel()
+
+	store, err := openStore(ctx, logger)
+	if err != nil {
+		return err
+	}
+	if store == nil {
+		return errors.New("DATABASE_URL is required for digest")
+	}
+	defer store.Close()
+
+	tg, err := notify.TelegramFromEnv()
+	if err != nil {
+		return err
+	}
+	sent, err := digest.New(store, tg, kyivLoc, logger).Run(ctx)
+	if err != nil {
+		return err
+	}
+	logger.Info("digest complete", slog.Bool("posted", sent))
 	return nil
 }
 
@@ -405,9 +457,56 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 			} else if n > 0 {
 				logger.Info("periodic announce posted", slog.Int("posted", n))
 			}
+
+			// Once per day, at/after the configured Kyiv hour, post the digest.
+			maybeDailyDigest(jobCtx, store, tg, logger)
 			cancel()
 		}
 	}
+}
+
+// maybeDailyDigest posts the morning digest at most once per Kyiv calendar day,
+// firing on the first tick at/after DIGEST_HOUR_KYIV (default 10), within a short
+// window so a late server start doesn't post at an odd hour. The "last sent day"
+// is persisted in app_state so it survives restarts.
+func maybeDailyDigest(ctx context.Context, store *storage.Store, tg *notify.Telegram, logger *slog.Logger) {
+	hour := envInt("DIGEST_HOUR_KYIV", 10)
+	now := time.Now().In(kyivLoc)
+	// Only within [hour, hour+3) so a restart at, say, 18:00 waits for tomorrow.
+	if now.Hour() < hour || now.Hour() >= hour+3 {
+		return
+	}
+	today := now.Format("2006-01-02")
+	last, _, err := store.GetAppState(ctx, digestStateKey)
+	if err != nil {
+		logger.Warn("digest: read state failed (continuing)", slog.Any("error", err))
+		return
+	}
+	if last == today {
+		return // already done today
+	}
+	sent, err := digest.New(store, tg, kyivLoc, logger).Run(ctx)
+	if err != nil {
+		logger.Warn("digest failed (continuing)", slog.Any("error", err))
+		return // don't stamp; retry next tick
+	}
+	// Stamp the day even when nothing was sent (quiet/rest day) so we don't retry.
+	if err := store.SetAppState(ctx, digestStateKey, today); err != nil {
+		logger.Warn("digest: write state failed (continuing)", slog.Any("error", err))
+	}
+	if sent {
+		logger.Info("daily digest posted", slog.String("day", today))
+	}
+}
+
+// envInt reads an int env var, falling back to def when unset/invalid.
+func envInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
 }
 
 // requestLogger is a minimal Gin middleware that logs each request via slog.
