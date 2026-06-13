@@ -21,6 +21,7 @@ type PredictionStore interface {
 	UpsertPrediction(ctx context.Context, p storage.Prediction) (storage.Prediction, error)
 	ListPredictionsByUser(ctx context.Context, userID int64) ([]storage.Prediction, error)
 	ListPredictionsByMatch(ctx context.Context, matchID int64) ([]storage.MatchPrediction, error)
+	UserExists(ctx context.Context, id int64) (bool, error)
 	AppendAudit(ctx context.Context, e storage.AuditEntry) error
 }
 
@@ -71,6 +72,7 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 		Home             int    `json:"home"`
 		Away             int    `json:"away"`
 		WinnerPickTeamID *int64 `json:"winnerPickTeamId"`
+		ForUserID        *int64 `json:"forUserId"`
 	}
 	return func(c *gin.Context) {
 		claims, _ := auth.Current(c)
@@ -92,6 +94,31 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 			return
 		}
 
+		isAdmin := claims.Role == "admin"
+
+		// Admin on-behalf-of: when forUserId is present the caller MUST be admin
+		// and the prediction is written for that target user. The target must
+		// exist. Non-admins are forbidden from setting forUserId.
+		targetUserID := claims.Sub
+		onBehalf := false
+		if body.ForUserID != nil {
+			if !isAdmin {
+				c.JSON(http.StatusForbidden, gin.H{"error": "admin required to predict for another user"})
+				return
+			}
+			exists, err := store.UserExists(ctx, *body.ForUserID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to validate target user"})
+				return
+			}
+			if !exists {
+				c.JSON(http.StatusNotFound, gin.H{"error": "target user not found"})
+				return
+			}
+			targetUserID = *body.ForUserID
+			onBehalf = true
+		}
+
 		match, err := store.GetMatchForScoring(ctx, matchID)
 		if err != nil {
 			if errors.Is(err, storage.ErrNotFound) {
@@ -103,7 +130,6 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 		}
 
 		// Winner pick: only for knockout matches and must be one of the two teams.
-		isAdmin := claims.Role == "admin"
 		if body.WinnerPickTeamID != nil {
 			if match.Stage == "group" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "winner pick only allowed on knockout matches"})
@@ -116,18 +142,22 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 		}
 
 		// Lock: now (UTC) >= kickoff => 409 unless admin (logged override).
+		// Admins may write regardless of the kickoff lock; this also covers the
+		// admin on-behalf-of path.
 		locked := match.KickoffAt != nil && !time.Now().UTC().Before(match.KickoffAt.UTC())
 		action := "prediction_update"
-		if locked {
-			if !isAdmin {
-				c.JSON(http.StatusConflict, gin.H{"error": "predictions are locked for this match"})
-				return
-			}
+		switch {
+		case onBehalf:
+			action = "prediction_for_user"
+		case locked && !isAdmin:
+			c.JSON(http.StatusConflict, gin.H{"error": "predictions are locked for this match"})
+			return
+		case locked:
 			action = "admin_override"
 		}
 
 		_, err = store.UpsertPrediction(ctx, storage.Prediction{
-			UserID:           claims.Sub,
+			UserID:           targetUserID,
 			MatchID:          matchID,
 			HomePred:         body.Home,
 			AwayPred:         body.Away,
@@ -138,14 +168,20 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 			return
 		}
 
-		// Audit (actions only — never the predicted values).
+		// Audit (actions only — never the predicted values). For on-behalf-of
+		// writes record actor=admin and target_user_id=forUserId.
 		actorUser := claims.Sub
-		_ = store.AppendAudit(ctx, storage.AuditEntry{
+		entry := storage.AuditEntry{
 			ActorUserID: &actorUser,
 			ActorRole:   claims.Role,
 			Action:      action,
 			MatchID:     &matchID,
-		})
+		}
+		if onBehalf {
+			t := targetUserID
+			entry.TargetUserID = &t
+		}
+		_ = store.AppendAudit(ctx, entry)
 
 		// Recompute points if the match already has a result (admin override
 		// after kickoff, or late result correction).

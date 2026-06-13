@@ -48,6 +48,36 @@ func (s *Store) GetUserByID(ctx context.Context, id int64) (User, error) {
 	return u, nil
 }
 
+// UserExists reports whether a user with the given id exists. Used to validate
+// an admin's on-behalf-of target before writing a prediction.
+func (s *Store) UserExists(ctx context.Context, id int64) (bool, error) {
+	var exists bool
+	err := s.pool.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM users WHERE id = $1)`, id).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("user exists: %w", err)
+	}
+	return exists, nil
+}
+
+// ListUsers returns all users ordered by nickname for the admin picker.
+func (s *Store) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := s.pool.Query(ctx, `SELECT `+userCols+` FROM users ORDER BY nickname ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("list users: %w", err)
+	}
+	defer rows.Close()
+	var out []User
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan user: %w", err)
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
+}
+
 // GetUserByNickname looks up a user by nickname. Returns ErrNotFound when absent.
 func (s *Store) GetUserByNickname(ctx context.Context, nickname string) (User, error) {
 	u, err := scanUser(s.pool.QueryRow(ctx, `SELECT `+userCols+` FROM users WHERE nickname = $1`, nickname))

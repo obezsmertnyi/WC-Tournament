@@ -25,6 +25,9 @@ type fakePredStore struct {
 	byMatch  []storage.MatchPrediction
 	upserts  []storage.Prediction
 	audits   []storage.AuditEntry
+	// existingUsers is the set of user ids UserExists reports true for. A nil
+	// map means every id exists (keeps existing tests unaffected).
+	existingUsers map[int64]bool
 }
 
 func (f *fakePredStore) GetMatchForScoring(_ context.Context, _ int64) (storage.MatchScoringRow, error) {
@@ -44,6 +47,12 @@ func (f *fakePredStore) ListPredictionsByMatch(_ context.Context, _ int64) ([]st
 func (f *fakePredStore) AppendAudit(_ context.Context, e storage.AuditEntry) error {
 	f.audits = append(f.audits, e)
 	return nil
+}
+func (f *fakePredStore) UserExists(_ context.Context, id int64) (bool, error) {
+	if f.existingUsers == nil {
+		return true, nil
+	}
+	return f.existingUsers[id], nil
 }
 
 // setTestSecret installs an ephemeral random 32+ byte JWT_SECRET for the test.
@@ -250,6 +259,114 @@ func TestMatchPredictions_RevealGating(t *testing.T) {
 	}
 	if len(revealed) != 1 || revealed[0]["home"] != float64(2) || revealed[0]["points"] != float64(3) {
 		t.Fatalf("post-kickoff reveal mismatch: %s", rec2.Body.String())
+	}
+}
+
+func TestPutPrediction_AdminForUser(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	future := time.Now().UTC().Add(time.Hour)
+	store := &fakePredStore{
+		match:         storage.MatchScoringRow{ID: 9, Stage: "group", KickoffAt: tp(future)},
+		existingUsers: map[int64]bool{42: true},
+	}
+	r := gin.New()
+	RegisterPredictionRoutes(r, store, nil)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/predictions/9",
+		strings.NewReader(`{"home":2,"away":1,"forUserId":42}`))
+	req.Header.Set("Cookie", sessionCookie(t, 1, "admin"))
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("admin-for-user expected 200, got %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(store.upserts) != 1 || store.upserts[0].UserID != 42 {
+		t.Fatalf("expected upsert for user 42, got %+v", store.upserts)
+	}
+	if len(store.audits) != 1 || store.audits[0].Action != "prediction_for_user" {
+		t.Fatalf("expected prediction_for_user audit, got %+v", store.audits)
+	}
+	if store.audits[0].TargetUserID == nil || *store.audits[0].TargetUserID != 42 {
+		t.Fatalf("expected audit target_user_id=42, got %+v", store.audits[0])
+	}
+	if store.audits[0].ActorUserID == nil || *store.audits[0].ActorUserID != 1 {
+		t.Fatalf("expected audit actor=1, got %+v", store.audits[0])
+	}
+}
+
+func TestPutPrediction_NonAdminForUserForbidden(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	future := time.Now().UTC().Add(time.Hour)
+	store := &fakePredStore{
+		match:         storage.MatchScoringRow{ID: 9, Stage: "group", KickoffAt: tp(future)},
+		existingUsers: map[int64]bool{42: true},
+	}
+	r := gin.New()
+	RegisterPredictionRoutes(r, store, nil)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/predictions/9",
+		strings.NewReader(`{"home":2,"away":1,"forUserId":42}`))
+	req.Header.Set("Cookie", sessionCookie(t, 7, "player"))
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("non-admin forUserId expected 403, got %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(store.upserts) != 0 {
+		t.Fatalf("forbidden write must not persist, got %+v", store.upserts)
+	}
+}
+
+func TestPutPrediction_AdminForUserPastKickoff(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	past := time.Now().UTC().Add(-time.Hour)
+	store := &fakePredStore{
+		match:         storage.MatchScoringRow{ID: 5, Stage: "group", KickoffAt: tp(past)},
+		existingUsers: map[int64]bool{42: true},
+	}
+	r := gin.New()
+	RegisterPredictionRoutes(r, store, nil)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/predictions/5",
+		strings.NewReader(`{"home":3,"away":0,"forUserId":42}`))
+	req.Header.Set("Cookie", sessionCookie(t, 1, "admin"))
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("admin-for-user past kickoff expected 200, got %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(store.upserts) != 1 || store.upserts[0].UserID != 42 {
+		t.Fatalf("expected upsert for user 42, got %+v", store.upserts)
+	}
+	if len(store.audits) != 1 || store.audits[0].Action != "prediction_for_user" {
+		t.Fatalf("expected prediction_for_user audit, got %+v", store.audits)
+	}
+}
+
+func TestPutPrediction_AdminForMissingUser(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	future := time.Now().UTC().Add(time.Hour)
+	store := &fakePredStore{
+		match:         storage.MatchScoringRow{ID: 9, Stage: "group", KickoffAt: tp(future)},
+		existingUsers: map[int64]bool{}, // nobody exists
+	}
+	r := gin.New()
+	RegisterPredictionRoutes(r, store, nil)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/predictions/9",
+		strings.NewReader(`{"home":1,"away":1,"forUserId":99}`))
+	req.Header.Set("Cookie", sessionCookie(t, 1, "admin"))
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("missing target user expected 404, got %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(store.upserts) != 0 {
+		t.Fatalf("missing-target write must not persist, got %+v", store.upserts)
 	}
 }
 

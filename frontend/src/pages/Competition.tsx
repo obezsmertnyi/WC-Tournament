@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { LeaderboardEntry, Match } from '../types'
 import { fetchLeaderboard, fetchMatches } from '../lib/api'
-import { formatKyivTime, formatKyivDayMonth, hasKickedOff, stageLabel } from '../lib/fixtures'
+import { formatKyivTime, formatKyivDayMonth, stageLabel } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import Leaderboard from '../components/Leaderboard'
 import MatchRevealPanel from '../components/MatchRevealPanel'
@@ -160,7 +160,6 @@ function RevealsSection() {
     <div className="space-y-2">
       {ordered.map((m) => {
         const open = openId === m.id
-        const kicked = hasKickedOff(m)
         const homeName = teamName(m.home!.code, m.home!.name, i18n.resolvedLanguage)
         const awayName = teamName(m.away!.code, m.away!.name, i18n.resolvedLanguage)
         const badge = m.stage === 'group' && m.group ? t('calendar.groupNamed', { letter: m.group }) : stageLabel(m.stage)
@@ -191,7 +190,7 @@ function RevealsSection() {
                   {badge}
                 </span>
                 <span className="text-[0.65rem] tabular-nums text-muted/70">
-                  {kicked ? formatKyivDayMonth(m.kickoffAt) : formatKyivTime(m.kickoffAt)}
+                  {formatKyivDayMonth(m.kickoffAt)} · {formatKyivTime(m.kickoffAt)}
                 </span>
                 <Chevron open={open} />
               </div>
