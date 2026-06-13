@@ -189,16 +189,21 @@ func run(logger *slog.Logger) error {
 	if store != nil {
 		recomputer := scoring.NewRecomputer(store, scoring.DefaultRules())
 
-		api.RegisterReadRoutes(engine, store)
-		api.RegisterStandingsRoutes(engine, store)
-
-		// M2: auth, profile, predictions, leaderboard, bonus, audit.
+		// Auth endpoints stay public (login/logout/Google); health is public too.
 		auth.RegisterRoutes(engine, store)
+
+		// Auth wall: ALL data reads require a logged-in user. Anonymous callers
+		// get 401 (the SPA shows the login screen). health + auth stay public.
+		authed := engine.Group("", auth.RequireUser())
+		api.RegisterReadRoutes(authed, store)      // /api/matches, /api/teams
+		api.RegisterStandingsRoutes(authed, store) // /api/standings
+		api.RegisterLeaderboardRoutes(authed, store)
+		api.RegisterAuditRoutes(authed, store)
+
+		// These self-gate per-route (RequireUser / RequireAdmin) internally.
 		api.RegisterProfileRoutes(engine, store)
 		api.RegisterPredictionRoutes(engine, store, recomputer)
-		api.RegisterLeaderboardRoutes(engine, store)
 		api.RegisterBonusRoutes(engine, store)
-		api.RegisterAuditRoutes(engine, store)
 		api.RegisterAdminRoutes(engine, store)
 	}
 

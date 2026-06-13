@@ -2,10 +2,26 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import AppBar, { BottomNav } from './AppBar'
 import Spotlight from './Spotlight'
+import LoginScreen from './LoginScreen'
+import { useAuth } from '../auth/AuthContext'
 
 export default function Layout() {
   const location = useLocation()
   const reduce = useReducedMotion()
+  const { status } = useAuth()
+
+  // Auth wall: the whole app requires login. Anonymous → login screen only;
+  // logout flips status to anonymous → this renders the login screen again.
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg to-bg-end">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-hairline border-t-accent" />
+      </div>
+    )
+  }
+  if (status !== 'authenticated') {
+    return <LoginScreen />
+  }
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-bg to-bg-end">
