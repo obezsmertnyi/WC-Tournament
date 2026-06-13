@@ -179,6 +179,46 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 	return out, rows.Err()
 }
 
+// ListFinishedGroupMatches returns finished group-stage matches that have both
+// teams assigned and both scores recorded. Used to compute group standings.
+func (s *Store) ListFinishedGroupMatches(ctx context.Context) ([]Match, error) {
+	const sql = `
+		SELECT m.id, m.home_team_id, m.away_team_id, m.home_score, m.away_score
+		FROM matches m
+		WHERE m.status = 'finished'
+		  AND m.stage = 'group'
+		  AND m.home_team_id IS NOT NULL
+		  AND m.away_team_id IS NOT NULL
+		  AND m.home_score IS NOT NULL
+		  AND m.away_score IS NOT NULL
+		ORDER BY m.id ASC`
+
+	rows, err := s.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("query finished group matches: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Match
+	for rows.Next() {
+		var (
+			m              Match
+			homeID, awayID *int64
+		)
+		if err := rows.Scan(&m.ID, &homeID, &awayID, &m.HomeScore, &m.AwayScore); err != nil {
+			return nil, fmt.Errorf("scan finished group match: %w", err)
+		}
+		if homeID != nil {
+			m.Home = &Team{ID: *homeID}
+		}
+		if awayID != nil {
+			m.Away = &Team{ID: *awayID}
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 // ListTeams returns all teams ordered by group then name.
 func (s *Store) ListTeams(ctx context.Context) ([]Team, error) {
 	const sql = `

@@ -25,3 +25,24 @@ export interface Match {
   placeholderHome: string | null
   placeholderAway: string | null
 }
+
+export interface StandingRow {
+  teamId: number
+  name: string
+  code: string
+  flagUrl: string
+  played: number
+  win: number
+  draw: number
+  loss: number
+  gf: number
+  ga: number
+  gd: number
+  points: number
+  rank: number
+}
+
+export interface GroupStanding {
+  group: string
+  rows: StandingRow[]
+}

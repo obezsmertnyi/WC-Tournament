@@ -161,6 +161,20 @@ func mapTeam(t *fifaTeam) FixtureTeam {
 		FifaID:  t.IdTeam,
 		Name:    localized(t.TeamName),
 		Code:    code,
-		FlagURL: t.PictureUrl,
+		FlagURL: resolveFlagURL(t.PictureUrl),
 	}
+}
+
+// flagURLReplacer substitutes the literal {format}/{size} tokens FIFA embeds in
+// flag picture URLs (e.g. ".../flags-{format}-{size}/MEX") with concrete values
+// so the stored URL is directly usable: {format}->sq (square), {size}->4.
+var flagURLReplacer = strings.NewReplacer("{format}", "sq", "{size}", "4")
+
+// resolveFlagURL renders a FIFA flag URL template into a usable URL. URLs
+// without tokens (or empty strings) pass through unchanged.
+func resolveFlagURL(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	return flagURLReplacer.Replace(raw)
 }

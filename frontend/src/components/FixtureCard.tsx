@@ -1,14 +1,17 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { Match, Team } from '../types'
-import { formatKyivTime, statusLabel } from '../lib/fixtures'
+import { formatKyivTime, statusLabel, stageLabel, venueCaption } from '../lib/fixtures'
+import { teamName } from '../lib/teamNames'
+import { useMountAnimation } from '../lib/motion'
 import Flag from './Flag'
 
 function StatusChip({ status }: { status: Match['status'] }) {
+  // Subscribe to language changes so labels re-localize.
   useTranslation()
   if (status === 'live') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-accent">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/45 bg-accent/10 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-accent shadow-[0_0_12px_-2px_rgba(201,162,75,0.5)]">
         <span className="relative flex h-1.5 w-1.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -27,7 +30,7 @@ function StatusChip({ status }: { status: Match['status'] }) {
   }
 
   return (
-    <span className="rounded-full border border-hairline bg-white/[0.03] px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted/80">
+    <span className="rounded-full border border-hairline bg-white/[0.02] px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-muted/75">
       {statusLabel('scheduled')}
     </span>
   )
@@ -44,9 +47,11 @@ interface TeamRowProps {
 }
 
 function TeamRow({ team, placeholder, score, live, finished, winner }: TeamRowProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const showScore = (finished || live) && score !== null
-  const name = team?.name ?? placeholder ?? t('fixture.tbd')
+  const name = team
+    ? teamName(team.code, team.name, i18n.resolvedLanguage)
+    : (placeholder ?? t('fixture.tbd'))
   const isTbd = !team
 
   return (
@@ -55,23 +60,27 @@ function TeamRow({ team, placeholder, score, live, finished, winner }: TeamRowPr
         code={team?.code}
         flagUrl={team?.flagUrl}
         label={name}
-        className="h-4 w-6 shrink-0"
+        className="h-[1.15rem] w-7"
       />
       <span
-        className={`min-w-0 flex-1 truncate text-[0.95rem] ${
+        className={`min-w-0 flex-1 truncate text-[0.975rem] leading-tight ${
           isTbd
             ? 'italic text-muted'
             : finished && !winner
               ? 'text-muted'
-              : 'font-medium text-text'
+              : 'font-semibold text-text'
         }`}
       >
         {name}
       </span>
       {showScore && (
         <span
-          className={`tabular-nums text-lg font-semibold tracking-tight ${
-            live ? 'text-accent' : winner ? 'text-text' : 'text-muted'
+          className={`tabular-nums text-xl font-bold leading-none tracking-tight ${
+            live
+              ? 'animate-pulse text-accent'
+              : winner
+                ? 'text-text'
+                : 'text-muted'
           }`}
         >
           {score}
@@ -84,9 +93,12 @@ function TeamRow({ team, placeholder, score, live, finished, winner }: TeamRowPr
 interface FixtureCardProps {
   match: Match
   index?: number
+  /** Show a faint group/stage badge in the header (default true). */
+  showBadge?: boolean
 }
 
-export default function FixtureCard({ match, index = 0 }: FixtureCardProps) {
+export default function FixtureCard({ match, index = 0, showBadge = true }: FixtureCardProps) {
+  const { t } = useTranslation()
   const { home, away, homeScore, awayScore, status, venue, placeholderHome, placeholderAway } =
     match
 
@@ -96,24 +108,41 @@ export default function FixtureCard({ match, index = 0 }: FixtureCardProps) {
   const homeWins = finished && homeScore !== null && awayScore !== null && homeScore > awayScore
   const awayWins = finished && homeScore !== null && awayScore !== null && awayScore > homeScore
 
+  const badge =
+    match.stage === 'group'
+      ? match.group
+        ? t('calendar.groupNamed', { letter: match.group })
+        : null
+      : stageLabel(match.stage)
+
+  // Self-completing mount animation; collapses to the final state under
+  // prefers-reduced-motion so cards always render (headless/screenshots).
+  const mount = useMountAnimation(14, Math.min(index, 8) * 0.04)
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.45, delay: Math.min(index, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+      initial={mount.initial}
+      animate={mount.animate}
+      transition={mount.transition}
       whileHover={{ y: -3 }}
-      className={`group rounded-2xl border bg-surface p-4 backdrop-blur-md transition-colors ${
+      className={`group relative overflow-hidden rounded-2xl border p-4 backdrop-blur-md transition-colors ${
         live
-          ? 'border-accent/30 shadow-[0_0_22px_-6px_rgba(201,162,75,0.45)]'
-          : 'border-hairline hover:border-white/15'
+          ? 'border-accent/30 bg-gradient-to-b from-accent/[0.06] to-white/[0.02] shadow-[0_8px_30px_-12px_rgba(201,162,75,0.45)]'
+          : 'border-hairline bg-gradient-to-b from-white/[0.055] to-white/[0.015] shadow-[0_8px_24px_-16px_rgba(0,0,0,0.8)] hover:border-white/15 hover:from-white/[0.08]'
       }`}
     >
-      {/* Header: kickoff time + status */}
-      <header className="mb-3 flex items-center justify-between">
-        <time className="text-xs font-medium tabular-nums tracking-wide text-muted">
-          {formatKyivTime(match.kickoffAt)}
-        </time>
+      {/* Header: kickoff time + status, with optional group/stage badge */}
+      <header className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <time className="text-xs font-semibold tabular-nums tracking-wide text-text/90">
+            {formatKyivTime(match.kickoffAt)}
+          </time>
+          {showBadge && badge && (
+            <span className="truncate rounded-md border border-hairline bg-white/[0.03] px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.12em] text-muted/80">
+              {badge}
+            </span>
+          )}
+        </div>
         <StatusChip status={status} />
       </header>
 
@@ -127,6 +156,7 @@ export default function FixtureCard({ match, index = 0 }: FixtureCardProps) {
           finished={finished}
           winner={homeWins}
         />
+        <div className="h-px bg-gradient-to-r from-transparent via-hairline to-transparent" />
         <TeamRow
           team={away}
           placeholder={placeholderAway}
@@ -137,10 +167,16 @@ export default function FixtureCard({ match, index = 0 }: FixtureCardProps) {
         />
       </div>
 
-      {/* Venue */}
-      <footer className="mt-3.5 border-t border-hairline pt-2.5">
-        <p className="truncate text-[0.7rem] uppercase tracking-[0.1em] text-muted/70">
-          {venue.city} · {venue.stadium}
+      {/* Venue — host-country flag + caption */}
+      <footer className="mt-3.5 flex items-center gap-1.5 border-t border-hairline pt-2.5">
+        <Flag
+          code={venue.country}
+          flagUrl={undefined}
+          label={venue.country}
+          className="h-[0.7rem] w-[1.05rem]"
+        />
+        <p className="min-w-0 truncate text-[0.7rem] uppercase tracking-[0.1em] text-muted/70">
+          {venueCaption(venue.city, venue.stadium)}
         </p>
       </footer>
     </motion.article>

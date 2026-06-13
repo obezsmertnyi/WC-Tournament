@@ -146,6 +146,7 @@ func run(logger *slog.Logger) error {
 	api.RegisterHealthRoutes(engine)
 	if store != nil {
 		api.RegisterReadRoutes(engine, store)
+		api.RegisterStandingsRoutes(engine, store)
 	}
 
 	srv := &http.Server{

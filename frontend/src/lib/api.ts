@@ -1,18 +1,31 @@
-import type { Match } from '../types'
+import type { Match, GroupStanding } from '../types'
 
 /**
  * Fetch all tournament matches.
- * The dev proxy maps /api -> backend (stripping the /api prefix), so the
- * browser-facing path is /api/matches.
+ * The backend owns the /api namespace and returns `{ "matches": [...] }`.
  */
 export async function fetchMatches(signal?: AbortSignal): Promise<Match[]> {
   const res = await fetch('/api/matches', { signal })
   if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
-  const data = (await res.json()) as unknown
-  if (!Array.isArray(data)) {
-    throw new Error('Unexpected response shape: expected an array of matches')
+  const data = (await res.json()) as { matches?: unknown }
+  if (!data || !Array.isArray(data.matches)) {
+    throw new Error('Unexpected response shape: expected { matches: [...] }')
   }
-  return data as Match[]
+  return data.matches as Match[]
+}
+
+/**
+ * Fetch computed group-stage standings.
+ * The backend returns `{ "groups": [{ group, rows: [...] }] }`.
+ */
+export async function fetchStandings(signal?: AbortSignal): Promise<GroupStanding[]> {
+  const res = await fetch('/api/standings', { signal })
+  if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
+  const data = (await res.json()) as { groups?: unknown }
+  if (!data || !Array.isArray(data.groups)) {
+    throw new Error('Unexpected response shape: expected { groups: [...] }')
+  }
+  return data.groups as GroupStanding[]
 }
 
 export type HealthState = 'loading' | 'online' | 'offline'

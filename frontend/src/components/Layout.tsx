@@ -1,11 +1,12 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import AppBar, { BottomNav } from './AppBar'
 import Spotlight from './Spotlight'
 import Trophy from './Trophy'
 
 export default function Layout() {
   const location = useLocation()
+  const reduce = useReducedMotion()
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-bg to-bg-end">
@@ -18,10 +19,10 @@ export default function Layout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
+            initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            exit={reduce ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: reduce ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <Outlet />
           </motion.div>

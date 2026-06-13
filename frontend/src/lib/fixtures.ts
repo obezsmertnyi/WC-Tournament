@@ -14,6 +14,9 @@ function intlLocale(): string {
  */
 let dateFmt: Intl.DateTimeFormat
 let timeFmt: Intl.DateTimeFormat
+let weekdayFmt: Intl.DateTimeFormat
+let dayMonthFmt: Intl.DateTimeFormat
+let fullDateFmt: Intl.DateTimeFormat
 
 function rebuildFormatters() {
   const locale = intlLocale()
@@ -27,6 +30,24 @@ function rebuildFormatters() {
     timeZone: KYIV_TZ,
     hour: '2-digit',
     minute: '2-digit',
+  })
+  // Short weekday for the date-strip chips ("Mon" / "пн").
+  weekdayFmt = new Intl.DateTimeFormat(locale, {
+    timeZone: KYIV_TZ,
+    weekday: 'short',
+  })
+  // Day + short month for the date-strip chips ("14 Jun" / "14 черв.").
+  dayMonthFmt = new Intl.DateTimeFormat(locale, {
+    timeZone: KYIV_TZ,
+    day: 'numeric',
+    month: 'short',
+  })
+  // Long, human heading for the selected day.
+  fullDateFmt = new Intl.DateTimeFormat(locale, {
+    timeZone: KYIV_TZ,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
   })
 }
 
@@ -51,6 +72,83 @@ export function formatKyivTime(iso: string): string {
 
 export function kyivDayKey(iso: string): string {
   return dayKeyFmt.format(new Date(iso))
+}
+
+/** Today's day key in the Kyiv timezone (YYYY-MM-DD). */
+export function todayKyivKey(): string {
+  return dayKeyFmt.format(new Date())
+}
+
+/** Short weekday for a date-strip chip, e.g. "Mon" / "пн". */
+export function formatKyivWeekday(iso: string): string {
+  return weekdayFmt.format(new Date(iso))
+}
+
+/** Day + short month for a date-strip chip, e.g. "14 Jun" / "14 черв.". */
+export function formatKyivDayMonth(iso: string): string {
+  return dayMonthFmt.format(new Date(iso))
+}
+
+/** Long localized heading for the selected day, e.g. "Sunday, 14 June". */
+export function formatKyivFullDate(iso: string): string {
+  return fullDateFmt.format(new Date(iso))
+}
+
+/** A single match-day bucket for the day-centric calendar. */
+export interface MatchDay {
+  /** YYYY-MM-DD day key in Kyiv. */
+  key: string
+  /** Representative ISO timestamp (first kickoff of the day) for formatting. */
+  iso: string
+  matches: Match[]
+}
+
+/**
+ * Group matches into chronologically ordered match-days (Kyiv tz). Matches
+ * within a day are sorted by kickoff. Matches without a kickoff time are
+ * skipped (they have no day to belong to).
+ */
+export function buildMatchDays(matches: Match[]): MatchDay[] {
+  const map = new Map<string, Match[]>()
+  for (const m of matches) {
+    if (!m.kickoffAt) continue
+    const key = kyivDayKey(m.kickoffAt)
+    const arr = map.get(key) ?? []
+    arr.push(m)
+    map.set(key, arr)
+  }
+  return [...map.keys()].sort().map((key) => {
+    const dayMatches = (map.get(key) ?? []).slice().sort(byKickoff)
+    return { key, iso: dayMatches[0].kickoffAt, matches: dayMatches }
+  })
+}
+
+/**
+ * Pick the default selected day key: today if it has matches, else the nearest
+ * upcoming match-day, else the first match-day. Returns undefined when empty.
+ */
+export function defaultMatchDayKey(days: MatchDay[]): string | undefined {
+  if (days.length === 0) return undefined
+  const today = todayKyivKey()
+  const exact = days.find((d) => d.key === today)
+  if (exact) return exact.key
+  const upcoming = days.find((d) => d.key >= today)
+  return (upcoming ?? days[0]).key
+}
+
+/**
+ * Compose a venue caption without duplicating the city when the stadium name
+ * already leads with it (e.g. "Mexico City" + "Mexico City Stadium" →
+ * "Mexico City Stadium", not "Mexico City · Mexico City Stadium").
+ */
+export function venueCaption(city: string, stadium: string): string {
+  const c = city.trim()
+  const s = stadium.trim()
+  if (!c) return s
+  if (!s) return c
+  const norm = (v: string) => v.toLowerCase()
+  if (norm(s) === norm(c) || norm(s).startsWith(norm(c))) return s
+  return `${c} · ${s}`
 }
 
 /** Knockout stages in the canonical bracket order. */

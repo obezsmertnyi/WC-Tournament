@@ -36,7 +36,7 @@ func TestListMatches_Contract(t *testing.T) {
 	reader := &fakeReader{
 		matches: []storage.Match{
 			{
-				ID: 1, Stage: "group", GroupLabel: "A", MatchNumber: intp(1),
+				ID: 1, Stage: "group", GroupLabel: "Group A", MatchNumber: intp(1),
 				KickoffAt: &kick, Status: "scheduled",
 				Home:         &storage.Team{Name: "Mexico", Code: "MEX", FlagURL: "https://flag/MEX"},
 				Away:         &storage.Team{Name: "South Africa", Code: "RSA", FlagURL: "https://flag/RSA"},

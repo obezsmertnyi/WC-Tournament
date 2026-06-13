@@ -3,16 +3,22 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import BackendBadge from './BackendBadge'
 import LanguageSwitcher from './LanguageSwitcher'
+import Trophy from './Trophy'
 
 const TABS = [
   { to: '/', labelKey: 'nav.calendar', end: true },
+  { to: '/groups', labelKey: 'nav.groups', end: false },
   { to: '/leaderboard', labelKey: 'nav.leaderboard', end: false },
   { to: '/bracket', labelKey: 'nav.bracket', end: false },
 ] as const
 
 function Wordmark() {
   return (
-    <NavLink to="/" className="flex items-baseline gap-1 select-none">
+    <NavLink to="/" className="flex items-center gap-2 select-none">
+      <Trophy
+        variant="solid"
+        className="h-5 w-5 shrink-0 drop-shadow-[0_0_6px_rgba(201,162,75,0.35)]"
+      />
       <span className="text-sm font-semibold uppercase tracking-[0.22em] text-text">
         WC
       </span>

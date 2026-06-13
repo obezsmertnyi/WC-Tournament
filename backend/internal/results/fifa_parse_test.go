@@ -56,8 +56,8 @@ func TestParseCalendar_Mapping(t *testing.T) {
 	if m1.Home.Name != "Mexico" || m1.Home.Code != "MEX" {
 		t.Errorf("m1 home: got %+v", m1.Home)
 	}
-	if m1.Home.FlagURL != "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX" {
-		t.Errorf("m1 home flag: got %q", m1.Home.FlagURL)
+	if m1.Home.FlagURL != "https://api.fifa.com/api/v3/picture/flags-sq-4/MEX" {
+		t.Errorf("m1 home flag (tokens should be substituted): got %q", m1.Home.FlagURL)
 	}
 	if m1.Away.Name != "South Africa" || m1.Away.Code != "RSA" {
 		t.Errorf("m1 away: got %+v", m1.Away)
@@ -145,6 +145,38 @@ func TestMapStage(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("mapStage(%q,%q): got %q want %q", tc.id, tc.name, got, tc.want)
 		}
+	}
+}
+
+func TestResolveFlagURL(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"empty passthrough", "", ""},
+		{
+			"substitute both tokens",
+			"https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX",
+			"https://api.fifa.com/api/v3/picture/flags-sq-4/MEX",
+		},
+		{
+			"no tokens passthrough",
+			"https://api.fifa.com/api/v3/picture/flags-sq-4/MEX",
+			"https://api.fifa.com/api/v3/picture/flags-sq-4/MEX",
+		},
+		{
+			"only format token",
+			"https://x/flags-{format}/RSA",
+			"https://x/flags-sq/RSA",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := resolveFlagURL(tc.in); got != tc.want {
+				t.Errorf("resolveFlagURL(%q): got %q want %q", tc.in, got, tc.want)
+			}
+		})
 	}
 }
 

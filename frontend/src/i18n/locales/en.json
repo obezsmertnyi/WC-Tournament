@@ -1,6 +1,7 @@
 {
   "nav": {
     "calendar": "Calendar",
+    "groups": "Groups",
     "leaderboard": "Leaderboard",
     "bracket": "Bracket"
   },
@@ -21,7 +22,35 @@
     "phaseGroup": "Group stage",
     "phaseKnockout": "Knockout",
     "group": "Group",
-    "groupNamed": "Group {{letter}}"
+    "groupNamed": "Group {{letter}}",
+    "matchCount_one": "{{count}} match",
+    "matchCount_other": "{{count}} matches"
+  },
+  "dateStrip": {
+    "today": "Today",
+    "prev": "Previous day",
+    "next": "Next day"
+  },
+  "groups": {
+    "title": "Groups",
+    "subtitle": "All 12 groups · standings update as matches finish",
+    "detailSubtitle": "Standings and fixtures",
+    "matches": "Matches",
+    "back": "All groups",
+    "empty": "No standings yet",
+    "noMatches": "No matches scheduled yet"
+  },
+  "table": {
+    "standings": "Standings",
+    "team": "Team",
+    "p": "P",
+    "w": "W",
+    "d": "D",
+    "l": "L",
+    "gf": "GF",
+    "ga": "GA",
+    "gd": "GD",
+    "pts": "Pts"
   },
   "stage": {
     "group": "Group stage",
@@ -39,6 +68,9 @@
   },
   "fixture": {
     "tbd": "TBD"
+  },
+  "stars": {
+    "heading": "Stars to watch"
   },
   "states": {
     "empty": {

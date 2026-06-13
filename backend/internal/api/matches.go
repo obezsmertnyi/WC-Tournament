@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -103,7 +104,7 @@ func toMatchDTO(m storage.Match) matchDTO {
 	dto := matchDTO{
 		ID:              m.ID,
 		Stage:           m.Stage,
-		Group:           emptyToNil(m.GroupLabel),
+		Group:           emptyToNil(stripGroupPrefix(m.GroupLabel)),
 		MatchNumber:     m.MatchNumber,
 		Status:          m.Status,
 		HomeScore:       m.HomeScore,
@@ -131,4 +132,18 @@ func emptyToNil(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+// stripGroupPrefix returns the bare group letter for a stored group_label.
+// The DB stores the verbatim FIFA label (e.g. "Group A"); the API contract is
+// the bare letter ("A") so the frontend can compose its own label without
+// duplicating the word. A leading "Group " prefix is removed case-insensitively;
+// any surrounding whitespace is trimmed. Empty input returns "".
+func stripGroupPrefix(label string) string {
+	s := strings.TrimSpace(label)
+	const prefix = "group "
+	if len(s) >= len(prefix) && strings.EqualFold(s[:len(prefix)], prefix) {
+		s = strings.TrimSpace(s[len(prefix):])
+	}
+	return s
 }

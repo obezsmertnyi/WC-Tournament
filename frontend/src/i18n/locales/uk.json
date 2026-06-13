@@ -1,6 +1,7 @@
 {
   "nav": {
     "calendar": "Календар",
+    "groups": "Групи",
     "leaderboard": "Лідери",
     "bracket": "Сітка"
   },
@@ -21,7 +22,37 @@
     "phaseGroup": "Груповий етап",
     "phaseKnockout": "Плей-оф",
     "group": "Група",
-    "groupNamed": "Група {{letter}}"
+    "groupNamed": "Група {{letter}}",
+    "matchCount_one": "{{count}} матч",
+    "matchCount_few": "{{count}} матчі",
+    "matchCount_many": "{{count}} матчів",
+    "matchCount_other": "{{count}} матчу"
+  },
+  "dateStrip": {
+    "today": "Сьогодні",
+    "prev": "Попередній день",
+    "next": "Наступний день"
+  },
+  "groups": {
+    "title": "Групи",
+    "subtitle": "Усі 12 груп · таблиці оновлюються після матчів",
+    "detailSubtitle": "Турнірна таблиця та матчі",
+    "matches": "Матчі",
+    "back": "Усі групи",
+    "empty": "Поки немає таблиці",
+    "noMatches": "Матчі ще не заплановані"
+  },
+  "table": {
+    "standings": "Турнірна таблиця",
+    "team": "Команда",
+    "p": "І",
+    "w": "В",
+    "d": "Н",
+    "l": "П",
+    "gf": "ЗМ",
+    "ga": "ПМ",
+    "gd": "РМ",
+    "pts": "О"
   },
   "stage": {
     "group": "Груповий етап",
@@ -39,6 +70,9 @@
   },
   "fixture": {
     "tbd": "TBD"
+  },
+  "stars": {
+    "heading": "Зірки турніру"
   },
   "states": {
     "empty": {
