@@ -206,6 +206,22 @@ export function formatRelativeTime(iso: string): string {
   return rtf.format(0, 'second')
 }
 
+/**
+ * Audit-feed timestamp: a relative string for recent events (< 24h, e.g.
+ * "2 хв тому") and an absolute Kyiv date + time for older ones (e.g.
+ * "13 черв. · 22:00"), so the feed stays readable as it ages.
+ */
+export function formatAuditTime(iso: string): string {
+  const ageMs = Date.now() - new Date(iso).getTime()
+  if (ageMs < 24 * 3600 * 1000) return formatRelativeTime(iso)
+  return `${formatKyivDayMonth(iso)} · ${formatKyivTime(iso)}`
+}
+
+/** Full Kyiv date + time for a tooltip, e.g. "13 черв. · 22:00". */
+export function formatKyivDateTime(iso: string): string {
+  return `${formatKyivDayMonth(iso)} · ${formatKyivTime(iso)}`
+}
+
 export interface GroupSection {
   key: string
   /** Group letter ("A"), or "—" when missing. The display title is derived in the UI. */

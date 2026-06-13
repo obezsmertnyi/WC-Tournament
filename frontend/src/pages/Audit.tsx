@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { AuditEntry } from '../types'
 import { fetchAudit } from '../lib/api'
-import { formatRelativeTime } from '../lib/fixtures'
+import { formatAuditTime, formatKyivDateTime } from '../lib/fixtures'
 import { ErrorState } from '../components/states'
 
 const POLL_MS = 30_000
@@ -98,8 +98,11 @@ export default function Audit() {
               >
                 <span className="absolute -left-[1.32rem] top-3.5 h-1.5 w-1.5 rounded-full bg-accent/70 shadow-[0_0_6px_1px_rgba(201,162,75,0.5)]" />
                 <p className="text-sm leading-snug text-text">{describe(t, e)}</p>
-                <p className="mt-0.5 text-[0.65rem] uppercase tracking-[0.12em] text-muted/60">
-                  {formatRelativeTime(e.createdAt)}
+                <p
+                  className="mt-0.5 text-[0.65rem] uppercase tracking-[0.12em] text-muted/60"
+                  title={formatKyivDateTime(e.createdAt)}
+                >
+                  {formatAuditTime(e.createdAt)}
                 </p>
               </motion.li>
             ))}
