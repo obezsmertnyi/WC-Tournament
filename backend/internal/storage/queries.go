@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -362,6 +363,104 @@ func (s *Store) ListUnannouncedFinishedMatches(ctx context.Context) ([]Match, er
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// ListUpcomingUnremindedMatches returns scheduled matches with both teams known
+// whose kickoff is within the next `window` (and still in the future), that have
+// not yet had a pre-match reminder sent. Team data is joined. Oldest kickoff first.
+func (s *Store) ListUpcomingUnremindedMatches(ctx context.Context, window time.Duration) ([]Match, error) {
+	cutoff := time.Now().UTC().Add(window)
+	const sql = `
+		SELECT
+			m.id, m.fifa_id, m.stage, COALESCE(m.group_label, ''), m.match_number,
+			m.kickoff_at, m.status, m.home_score, m.away_score,
+			COALESCE(m.venue_stadium, ''), COALESCE(m.venue_city, ''), COALESCE(m.venue_country, ''),
+			COALESCE(m.placeholder_home, ''), COALESCE(m.placeholder_away, ''),
+			m.result_source, m.updated_at,
+			ht.id, COALESCE(ht.name, ''), COALESCE(ht.code, ''), COALESCE(ht.flag_url, ''),
+			at.id, COALESCE(at.name, ''), COALESCE(at.code, ''), COALESCE(at.flag_url, '')
+		FROM matches m
+		LEFT JOIN teams ht ON ht.id = m.home_team_id
+		LEFT JOIN teams at ON at.id = m.away_team_id
+		WHERE m.status = 'scheduled'
+		  AND m.reminded_at IS NULL
+		  AND m.home_team_id IS NOT NULL
+		  AND m.away_team_id IS NOT NULL
+		  AND m.kickoff_at IS NOT NULL
+		  AND m.kickoff_at > now()
+		  AND m.kickoff_at <= $1
+		ORDER BY m.kickoff_at ASC, m.id ASC`
+
+	rows, err := s.pool.Query(ctx, sql, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("query upcoming unreminded matches: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Match
+	for rows.Next() {
+		var (
+			m                   Match
+			homeID, awayID      *int64
+			hName, hCode, hFlag string
+			aName, aCode, aFlag string
+		)
+		if err := rows.Scan(
+			&m.ID, &m.FifaID, &m.Stage, &m.GroupLabel, &m.MatchNumber,
+			&m.KickoffAt, &m.Status, &m.HomeScore, &m.AwayScore,
+			&m.VenueStadium, &m.VenueCity, &m.VenueCountry,
+			&m.PlaceholderHome, &m.PlaceholderAway,
+			&m.ResultSource, &m.UpdatedAt,
+			&homeID, &hName, &hCode, &hFlag,
+			&awayID, &aName, &aCode, &aFlag,
+		); err != nil {
+			return nil, fmt.Errorf("scan upcoming match: %w", err)
+		}
+		if homeID != nil {
+			m.Home = &Team{ID: *homeID, Name: hName, Code: hCode, FlagURL: hFlag, GroupLabel: m.GroupLabel}
+		}
+		if awayID != nil {
+			m.Away = &Team{ID: *awayID, Name: aName, Code: aCode, FlagURL: aFlag, GroupLabel: m.GroupLabel}
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// ListUsersMissingPrediction returns the nicknames of non-admin users who have
+// NOT submitted a prediction for the given match. Used by the pre-match reminder.
+func (s *Store) ListUsersMissingPrediction(ctx context.Context, matchID int64) ([]string, error) {
+	const sql = `
+		SELECT u.nickname
+		FROM users u
+		WHERE u.role <> 'admin'
+		  AND NOT EXISTS (
+		      SELECT 1 FROM predictions p WHERE p.user_id = u.id AND p.match_id = $1
+		  )
+		ORDER BY u.nickname ASC`
+	rows, err := s.pool.Query(ctx, sql, matchID)
+	if err != nil {
+		return nil, fmt.Errorf("query users missing prediction: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			return nil, fmt.Errorf("scan missing predictor: %w", err)
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
+// MarkMatchReminded stamps reminded_at=now() so the pre-match reminder fires once.
+func (s *Store) MarkMatchReminded(ctx context.Context, id int64) error {
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE matches SET reminded_at = now() WHERE id = $1`, id); err != nil {
+		return fmt.Errorf("mark match reminded %d: %w", id, err)
+	}
+	return nil
 }
 
 // MarkMatchAnnounced stamps announced_at=now() so the result is not posted again.

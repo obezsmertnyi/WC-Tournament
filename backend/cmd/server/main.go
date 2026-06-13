@@ -24,10 +24,18 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/api"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/auth"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/notify"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/remind"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
 	syncpkg "github.com/obezsmertnyi/WC-Tournament/backend/internal/sync"
+)
+
+// Background loop cadences: light DB-only tasks (announce results, pre-match
+// reminders) run often; the FIFA sync runs hourly to avoid hammering the API.
+const (
+	fastTickInterval = 5 * time.Minute
+	syncEvery        = time.Hour
 )
 
 const (
@@ -72,6 +80,15 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "announce" {
 		if err := runAnnounce(logger); err != nil {
 			logger.Error("announce failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
+	// `server remind` posts pre-match "you haven't predicted" nudges and exits.
+	if len(os.Args) > 1 && os.Args[1] == "remind" {
+		if err := runRemind(logger); err != nil {
+			logger.Error("remind failed", slog.Any("error", err))
 			os.Exit(1)
 		}
 		return
@@ -198,6 +215,32 @@ func runAnnounce(logger *slog.Logger) error {
 	return nil
 }
 
+// runRemind sends pre-match reminders to players who haven't predicted, and exits.
+func runRemind(logger *slog.Logger) error {
+	ctx, cancel := context.WithTimeout(context.Background(), syncCmdTimeout)
+	defer cancel()
+
+	store, err := openStore(ctx, logger)
+	if err != nil {
+		return err
+	}
+	if store == nil {
+		return errors.New("DATABASE_URL is required for remind")
+	}
+	defer store.Close()
+
+	tg, err := notify.TelegramFromEnv()
+	if err != nil {
+		return err
+	}
+	sent, err := remind.New(store, tg, logger).Run(ctx)
+	if err != nil {
+		return err
+	}
+	logger.Info("remind complete", slog.Int("sent", sent))
+	return nil
+}
+
 func run(logger *slog.Logger) error {
 	// Fail closed: the server must never start with a missing/weak signing key.
 	if err := auth.ValidateSecret(); err != nil {
@@ -261,9 +304,11 @@ func run(logger *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// Best-effort sync on boot so the calendar populates. Non-fatal on error.
+	// Best-effort sync on boot so the calendar populates, then a periodic loop
+	// keeps results fresh and drives Telegram announcements/reminders. Non-fatal.
 	if store != nil {
 		go bootSync(ctx, store, logger)
+		go backgroundLoop(ctx, store, logger)
 	}
 
 	serverErr := make(chan error, 1)
@@ -317,6 +362,51 @@ func bootSync(ctx context.Context, store *storage.Store, logger *slog.Logger) {
 		logger.Warn("boot announce failed (continuing)", slog.Any("error", err))
 	} else if sent > 0 {
 		logger.Info("boot announce posted results", slog.Int("posted", sent))
+	}
+}
+
+// backgroundLoop drives the recurring jobs while the server runs. Every
+// fastTickInterval it posts pre-match reminders and freshly-finished results to
+// Telegram (cheap, DB-only); every syncEvery it also runs a FIFA sync + rescore
+// to keep the calendar/results current. All steps are best-effort and never
+// crash the server. Stops when ctx is cancelled (shutdown).
+func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logger) {
+	tg, _ := notify.TelegramFromEnv() // nil-safe: a disabled notifier no-ops
+	ticker := time.NewTicker(fastTickInterval)
+	defer ticker.Stop()
+	lastSync := time.Now()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// Hourly: refresh data from FIFA, then rescore.
+			if time.Since(lastSync) >= syncEvery {
+				lastSync = time.Now()
+				syncCtx, cancel := context.WithTimeout(ctx, bootSyncTimeout)
+				if _, err := syncpkg.New(results.NewFIFAClient(), store, logger).Run(syncCtx); err != nil {
+					logger.Warn("periodic sync failed (continuing)", slog.Any("error", err))
+				} else if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
+					logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
+				}
+				cancel()
+			}
+
+			// Every tick: pre-match reminders + result announcements.
+			jobCtx, cancel := context.WithTimeout(ctx, syncCmdTimeout)
+			if n, err := remind.New(store, tg, logger).Run(jobCtx); err != nil {
+				logger.Warn("periodic remind failed (continuing)", slog.Any("error", err))
+			} else if n > 0 {
+				logger.Info("periodic remind sent", slog.Int("sent", n))
+			}
+			if n, err := announce.New(store, tg, logger).Run(jobCtx); err != nil {
+				logger.Warn("periodic announce failed (continuing)", slog.Any("error", err))
+			} else if n > 0 {
+				logger.Info("periodic announce posted", slog.Int("posted", n))
+			}
+			cancel()
+		}
 	}
 }
 
