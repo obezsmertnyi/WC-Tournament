@@ -1,6 +1,7 @@
 import type {
   Match,
   MatchStatus,
+  MatchDetail,
   GroupStanding,
   User,
   AdminPlayer,
@@ -266,6 +267,28 @@ export async function fetchMatchReveal(
   if (Array.isArray(data)) return data as MatchReveal
   // Locked shape: { locked: true, predictions: [] }
   return { locked: true, predictions: [] }
+}
+
+/**
+ * Fetch FIFA match statistics for a single match
+ * (`GET /api/matches/{id}/detail`, RequireUser). The backend answers either
+ * `{ available: false }` (no stats published yet) or the full statistics
+ * payload (`{ available: true, … }`). Callers branch on the `available`
+ * discriminant. Retries once on a transient failure (see `withRetry`).
+ */
+export async function fetchMatchDetail(
+  matchId: number,
+  signal?: AbortSignal,
+): Promise<MatchDetail> {
+  return withRetry(async () => {
+    const res = await fetch(`/api/matches/${matchId}/detail`, { ...withCreds, signal })
+    if (!res.ok) throw new ApiError(res.status)
+    const data = (await res.json()) as unknown
+    if (!data || typeof data !== 'object' || !('available' in data)) {
+      throw new Error('Unexpected response shape: expected { available: … }')
+    }
+    return data as MatchDetail
+  }, signal)
 }
 
 // ── Competition / audit ─────────────────────────────────────────────────────

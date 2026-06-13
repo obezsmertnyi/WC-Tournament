@@ -221,6 +221,29 @@
     "tbd": "TBD",
     "whoPredicted": "Who predicted what"
   },
+  "matchDetail": {
+    "title": "Match detail",
+    "open": "Open match detail",
+    "details": "Details",
+    "possession": "Possession",
+    "goals": "Goals",
+    "cards": "Cards",
+    "subs": "Substitutions",
+    "lineups": "Lineups",
+    "formation": "Formation",
+    "officials": "Officials",
+    "venue": "Venue",
+    "stadium": "Stadium",
+    "attendance": "Attendance",
+    "predictions": "Predictions",
+    "penalties": "pens",
+    "aggregate": "Aggregate {{home}}–{{away}}",
+    "notAvailable": "Stats not available yet",
+    "notAvailableBody": "Match statistics appear here once the data arrives from FIFA. Check back after kickoff.",
+    "errorTitle": "Couldn’t load match detail",
+    "errorBody": "Check your connection and try again.",
+    "retry": "Retry"
+  },
   "states": {
     "empty": {
       "title": "Syncing the calendar…",

@@ -149,3 +149,85 @@ export interface BonusPick {
   tierPoints: number | null
   lockedAt: string | null
 }
+
+// ── Match detail (FIFA statistics) ───────────────────────────────────────────
+
+/** A single player entry in a lineup. */
+export interface DetailPlayer {
+  name: string
+  shirtNumber: number
+  position: string
+  captain: boolean
+  pictureUrl?: string
+}
+
+/** One team's lineup (formation + players). */
+export interface DetailLineup {
+  teamName: string
+  formation: string
+  players: DetailPlayer[]
+}
+
+/** Which side a match event belongs to. */
+export type DetailSide = 'home' | 'away'
+
+export interface DetailGoal {
+  team: DetailSide
+  scorer: string
+  assist?: string
+  minute: string
+  type: string
+}
+
+export interface DetailCard {
+  team: DetailSide
+  player: string
+  minute: string
+  /** Card colour, e.g. "yellow" | "red" (free-form from the FIFA feed). */
+  card: string
+}
+
+export interface DetailSubstitution {
+  team: DetailSide
+  playerIn: string
+  playerOut: string
+  minute: string
+}
+
+export interface DetailOfficial {
+  name: string
+  type: string
+}
+
+/** Ball possession split (percentages summing to ~100). */
+export interface DetailPossession {
+  home: number
+  away: number
+}
+
+/**
+ * FIFA match statistics for a single match
+ * (`GET /api/matches/{id}/detail`). When stats have not been published yet the
+ * backend returns `{ available: false }`; otherwise `available: true` with the
+ * full payload below. Use the `available` discriminant to branch.
+ */
+export type MatchDetail =
+  | { available: false }
+  | {
+      available: true
+      matchTime: string
+      attendance: string
+      stadium: string
+      winnerTeamId: string
+      possession: DetailPossession | null
+      homeLineup: DetailLineup | null
+      awayLineup: DetailLineup | null
+      goals: DetailGoal[]
+      cards: DetailCard[]
+      substitutions: DetailSubstitution[]
+      officials: DetailOfficial[]
+      homePenaltyScore?: number
+      awayPenaltyScore?: number
+      aggregateHomeScore?: number
+      aggregateAwayScore?: number
+    }

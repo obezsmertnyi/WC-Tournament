@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext'
 import Flag from './Flag'
 import PredictionEditor from './PredictionEditor'
 import MatchRevealPanel from './MatchRevealPanel'
+import MatchDetailModal from './MatchDetailModal'
 
 function StatusChip({ status }: { status: Match['status'] }) {
   // Subscribe to language changes so labels re-localize.
@@ -107,6 +108,8 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
 
   // Expandable "who predicted what" panel (reveal is kickoff-gated server-side).
   const [showReveal, setShowReveal] = useState(false)
+  // Drill-in modal with FIFA statistics + predictions for this match.
+  const [showDetail, setShowDetail] = useState(false)
 
   // Results come exclusively from the FIFA sync — never set manually here.
   const { home, away, venue, placeholderHome, placeholderAway } = match
@@ -158,8 +161,14 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
         <StatusChip status={status} />
       </header>
 
-      {/* Teams */}
-      <div className="space-y-2.5">
+      {/* Teams — tapping opens the match-detail drill-in (stats + predictions) */}
+      <button
+        type="button"
+        onClick={() => setShowDetail(true)}
+        aria-haspopup="dialog"
+        aria-label={t('matchDetail.open')}
+        className="block w-full space-y-2.5 rounded-xl text-left outline-none transition-colors hover:bg-white/[0.02] focus-visible:ring-2 focus-visible:ring-accent/50"
+      >
         <TeamRow
           team={home}
           placeholder={placeholderHome}
@@ -177,7 +186,24 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
           finished={finished}
           winner={awayWins}
         />
-      </div>
+      </button>
+
+      {/* Explicit drill-in affordance */}
+      <button
+        type="button"
+        onClick={() => setShowDetail(true)}
+        aria-haspopup="dialog"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/30 bg-accent/[0.06] py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-accent transition-colors hover:border-accent/50 hover:bg-accent/10"
+      >
+        {t('matchDetail.details')}
+        <span aria-hidden="true">›</span>
+      </button>
+
+      <MatchDetailModal
+        match={{ ...match, homeScore, awayScore, status }}
+        open={showDetail}
+        onClose={() => setShowDetail(false)}
+      />
 
       {/* Prediction entry / read-only pick — only for signed-in users with both
           real teams known (no TBD placeholders to predict against). Admins also
