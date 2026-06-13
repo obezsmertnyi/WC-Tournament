@@ -12,7 +12,7 @@ import {
 } from '../lib/api'
 import { teamName } from '../lib/teamNames'
 import { useAuth } from '../auth/AuthContext'
-import { STARS } from '../lib/stars'
+import { TOP_SCORERS } from '../lib/topScorers'
 import { formatKyivDayMonth, formatKyivTime } from '../lib/fixtures'
 import Flag from './Flag'
 import { ErrorState } from './states'
@@ -309,18 +309,19 @@ function TopScorerCard({ title, tierValue, pick, onSaved }: TopScorerCardProps) 
     setValue(pick?.pickRef ?? '')
   }, [pick?.pickRef])
 
-  const dirty = value.trim() !== '' && value.trim() !== (pick?.pickRef ?? '')
+  const current = pick?.pickRef ?? ''
+  const dirty = value.trim() !== '' && value.trim() !== current
 
-  const submit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault()
-      const name = value.trim()
-      if (!name || busy || locked) return
+  const commit = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim()
+      if (!trimmed || busy || locked) return
       setBusy(true)
       setSaveError(false)
       try {
-        const saved = await saveTopScorerBonus(name)
+        const saved = await saveTopScorerBonus(trimmed)
         onSaved('top_scorer', saved)
+        setValue(trimmed)
       } catch (err) {
         if (err instanceof ApiError && err.status === 409) setLocked(true)
         else setSaveError(true)
@@ -328,7 +329,15 @@ function TopScorerCard({ title, tierValue, pick, onSaved }: TopScorerCardProps) 
         setBusy(false)
       }
     },
-    [value, busy, locked, onSaved],
+    [busy, locked, onSaved],
+  )
+
+  const submit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      void commit(value)
+    },
+    [commit, value],
   )
 
   return (
@@ -365,29 +374,56 @@ function TopScorerCard({ title, tierValue, pick, onSaved }: TopScorerCardProps) 
       )}
 
       {!locked && (
-        <form onSubmit={submit} className="mt-3 flex gap-2 border-t border-hairline pt-3">
-          <input
-            type="text"
-            list="topscorer-suggestions"
-            value={value}
-            maxLength={80}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={t('bonus.scorerPlaceholder')}
-            className="h-10 min-w-0 flex-1 rounded-xl border border-hairline bg-white/[0.04] px-3 text-sm text-text outline-none transition-colors placeholder:text-muted/50 focus:border-accent"
-          />
-          <datalist id="topscorer-suggestions">
-            {STARS.map((s) => (
-              <option key={s.name} value={s.name} />
-            ))}
-          </datalist>
-          <button
-            type="submit"
-            disabled={!dirty || busy}
-            className="h-10 shrink-0 rounded-xl bg-accent px-4 text-sm font-semibold uppercase tracking-[0.12em] text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {busy ? t('bonus.saving') : t('bonus.save')}
-          </button>
-        </form>
+        <div className="mt-3 border-t border-hairline pt-3">
+          {/* Quick-pick chips — top Golden Boot contenders; tap to select & save */}
+          <div className="flex flex-wrap gap-1.5">
+            {TOP_SCORERS.map((s) => {
+              const active = current === s.name
+              return (
+                <button
+                  key={s.name}
+                  type="button"
+                  onClick={() => void commit(s.name)}
+                  disabled={busy}
+                  aria-pressed={active}
+                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-40 ${
+                    active
+                      ? 'border-accent/60 bg-accent/10 text-accent'
+                      : 'border-hairline bg-white/[0.03] text-muted/85 hover:border-white/20 hover:text-text'
+                  }`}
+                >
+                  <Flag code={s.teamCode} flagUrl={undefined} label={s.name} className="h-[0.8rem] w-[1.15rem]" />
+                  {s.name}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Free-text entry for anyone not in the shortlist */}
+          <form onSubmit={submit} className="mt-2.5 flex gap-2">
+            <input
+              type="text"
+              list="topscorer-suggestions"
+              value={value}
+              maxLength={80}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={t('bonus.scorerPlaceholder')}
+              className="h-10 min-w-0 flex-1 rounded-xl border border-hairline bg-white/[0.04] px-3 text-sm text-text outline-none transition-colors placeholder:text-muted/50 focus:border-accent"
+            />
+            <datalist id="topscorer-suggestions">
+              {TOP_SCORERS.map((s) => (
+                <option key={s.name} value={s.name} />
+              ))}
+            </datalist>
+            <button
+              type="submit"
+              disabled={!dirty || busy}
+              className="h-10 shrink-0 rounded-xl bg-accent px-4 text-sm font-semibold uppercase tracking-[0.12em] text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {busy ? t('bonus.saving') : t('bonus.save')}
+            </button>
+          </form>
+        </div>
       )}
 
       {saveError && (
