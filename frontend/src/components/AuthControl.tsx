@@ -94,7 +94,7 @@ export default function AuthControl() {
               role="menuitem"
               onClick={() => {
                 setMenuOpen(false)
-                void logout()
+                void logout().then(() => navigate('/'))
               }}
               className="block w-full rounded-xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-white/[0.06] hover:text-text"
             >
