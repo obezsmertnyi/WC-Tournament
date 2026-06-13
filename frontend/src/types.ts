@@ -176,15 +176,16 @@ export interface DetailGoal {
   scorer: string
   assist?: string
   minute: string
-  type: string
+  /** FIFA goal type — numeric code (0=goal, etc.) or a label. */
+  type: string | number
 }
 
 export interface DetailCard {
   team: DetailSide
   player: string
   minute: string
-  /** Card colour, e.g. "yellow" | "red" (free-form from the FIFA feed). */
-  card: string
+  /** FIFA card — numeric code (1=yellow, 2/3=red) or a colour label. */
+  card: string | number
 }
 
 export interface DetailSubstitution {

@@ -486,7 +486,7 @@ function GoalRow({
       <span className="min-w-0 flex-1 truncate text-sm text-text">
         <span className="font-medium">{goal.scorer}</span>
         {goal.assist && <span className="text-muted"> ({goal.assist})</span>}
-        {goal.type && goal.type.toLowerCase() !== 'goal' && (
+        {typeof goal.type === 'string' && goal.type.toLowerCase() !== 'goal' && goal.type !== '' && (
           <span className="text-muted/70"> · {goal.type}</span>
         )}
         <span className="sr-only">{sideName(goal.team, homeName, awayName)}</span>
@@ -504,7 +504,11 @@ function CardRow({
   homeName: string
   awayName: string
 }) {
-  const red = card.card.toLowerCase().includes('red')
+  // FIFA `card` is numeric (1=yellow, 2/3=red) but may be a string elsewhere.
+  const red =
+    typeof card.card === 'string'
+      ? card.card.toLowerCase().includes('red')
+      : Number(card.card) >= 2
   return (
     <EventRow team={card.team}>
       <Minute value={card.minute} />
