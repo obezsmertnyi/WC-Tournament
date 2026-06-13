@@ -41,10 +41,7 @@ export default function Calendar() {
     <div className="mx-auto w-full max-w-5xl">
       {/* Hero: trophy mark paired with the title. */}
       <header className="mb-6 flex items-center gap-3 sm:gap-4">
-        <Trophy
-          variant="solid"
-          className="h-11 w-11 shrink-0 drop-shadow-[0_0_12px_rgba(201,162,75,0.4)] sm:h-14 sm:w-14"
-        />
+        <Trophy className="h-12 w-12 rounded-xl sm:h-16 sm:w-16" />
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
             {t('calendar.title')}

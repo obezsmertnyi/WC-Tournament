@@ -15,10 +15,7 @@ const TABS = [
 function Wordmark() {
   return (
     <NavLink to="/" className="flex items-center gap-2 select-none">
-      <Trophy
-        variant="solid"
-        className="h-5 w-5 shrink-0 drop-shadow-[0_0_6px_rgba(201,162,75,0.35)]"
-      />
+      <Trophy className="h-[22px] w-[22px] rounded-lg" />
       <span className="text-sm font-semibold uppercase tracking-[0.22em] text-text">
         WC
       </span>

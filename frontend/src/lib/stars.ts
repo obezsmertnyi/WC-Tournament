@@ -2,16 +2,13 @@
  * Featured-players ("stars") configuration for the Calendar hero band.
  *
  * Each entry renders as a refined circular portrait with a champagne-gold ring.
- * When `imageUrl` is empty the UI shows a tasteful monogram placeholder built
- * from the player's initials — never a broken image — so the band looks polished
- * even with no photos configured.
+ * Portraits are real, locally-hosted photos from Wikimedia Commons under
+ * CC BY / CC BY-SA licenses — see `public/img/ATTRIBUTION.md` for the source,
+ * author, and license of every file. If a portrait fails to load at runtime the
+ * UI hides that entry entirely (no placeholder, no monogram).
  *
- * IMPORTANT: image URLs are intentionally left EMPTY. Do NOT scrape or hardcode
- * copyrighted photographs.
- *
- * TODO: owner to provide licensed player image URLs (or local files under
- * /public and reference them as e.g. "/stars/messi.jpg"). Leave empty to keep
- * the elegant monogram placeholders.
+ * To add a player: download a clean CC-licensed head/upper-body shot into
+ * `public/img/stars/`, record it in ATTRIBUTION.md, and add an entry here.
  */
 
 export interface Star {
@@ -19,22 +16,15 @@ export interface Star {
   name: string
   /** Country code (FIFA-3) for the small flag accent; optional. */
   code?: string
-  /** Licensed portrait URL. Empty → monogram placeholder. */
+  /** Local portrait path under /public (e.g. "/img/stars/messi.jpg"). */
   imageUrl: string
 }
 
 export const STARS: Star[] = [
-  { name: 'Lionel Messi', code: 'ARG', imageUrl: '' },
-  { name: 'Cristiano Ronaldo', code: 'POR', imageUrl: '' },
-  { name: 'Kylian Mbappé', code: 'FRA', imageUrl: '' },
-  { name: 'Vinícius Júnior', code: 'BRA', imageUrl: '' },
-  { name: 'Jude Bellingham', code: 'ENG', imageUrl: '' },
+  { name: 'Lionel Messi', code: 'ARG', imageUrl: '/img/stars/messi.jpg' },
+  { name: 'Cristiano Ronaldo', code: 'POR', imageUrl: '/img/stars/ronaldo.jpg' },
+  { name: 'Kylian Mbappé', code: 'FRA', imageUrl: '/img/stars/mbappe.jpg' },
+  { name: 'Vinícius Júnior', code: 'BRA', imageUrl: '/img/stars/vinicius.jpg' },
+  { name: 'Harry Kane', code: 'ENG', imageUrl: '/img/stars/kane.jpg' },
+  { name: 'Erling Haaland', code: 'NOR', imageUrl: '/img/stars/haaland.jpg' },
 ]
-
-/** Initials for the monogram placeholder, e.g. "Lionel Messi" → "LM". */
-export function starInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '★'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}

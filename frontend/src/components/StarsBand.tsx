@@ -1,41 +1,31 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { STARS, starInitials, type Star } from '../lib/stars'
+import { STARS, type Star } from '../lib/stars'
 import Flag from './Flag'
 
 /**
- * Subtle "stars" hero band for the Calendar landing — a row of refined circular
- * portrait frames with champagne-gold rings. Works fully with placeholder data:
- * when a star has no licensed image we render an elegant monogram, never a
- * broken <img>. The whole band is skippable and looks intentional even with
- * all-placeholder portraits.
+ * Subtle "stars" hero band for the Calendar landing — a row of real player
+ * portraits in circular champagne-gold frames with a small country-flag badge
+ * and a name caption. Portraits are locally-hosted CC-licensed photos (see
+ * public/img/ATTRIBUTION.md). If an image fails to load we hide that portrait
+ * entirely — never a broken <img>, never a monogram placeholder.
  */
 function StarPortrait({ star }: { star: Star }) {
   const [imgFailed, setImgFailed] = useState(false)
-  const showImage = star.imageUrl.trim() !== '' && !imgFailed
+  if (imgFailed || star.imageUrl.trim() === '') return null
 
   return (
     <li className="flex flex-col items-center gap-1.5">
       <div className="relative h-14 w-14 sm:h-16 sm:w-16">
-        {/* champagne-gold ring */}
+        <img
+          src={star.imageUrl}
+          alt={star.name}
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+          className="h-full w-full rounded-full object-cover object-top shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]"
+        />
+        {/* champagne-gold ring drawn on top so it always reads crisply */}
         <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-accent/60 shadow-[0_0_16px_-4px_rgba(201,162,75,0.55)]" />
-        {showImage ? (
-          <img
-            src={star.imageUrl}
-            alt={star.name}
-            loading="lazy"
-            onError={() => setImgFailed(true)}
-            className="h-full w-full rounded-full object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-white/[0.1] to-white/[0.02] text-sm font-semibold tracking-wide text-accent/85"
-            role="img"
-            aria-label={star.name}
-          >
-            {starInitials(star.name)}
-          </div>
-        )}
         {star.code && (
           <span className="absolute -bottom-1 left-1/2 -translate-x-1/2">
             <Flag
