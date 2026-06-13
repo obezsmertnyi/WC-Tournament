@@ -19,7 +19,7 @@ import { STARS, type Star } from '../lib/stars'
  * If an image fails to load it is dropped silently (no broken <img>).
  */
 
-const DUOTONE_FILTER = 'grayscale(0.3) contrast(1.04) brightness(0.82)'
+const DUOTONE_FILTER = 'grayscale(0.2) contrast(1.04) brightness(0.85)'
 
 function HeroImage({
   star,
@@ -52,22 +52,23 @@ function HeroImage({
 function HeroOverlays() {
   return (
     <>
-      {/* Gold duotone wash — multiply keeps the charcoal shadows, lifts gold. */}
+      {/* Subtle gold wash — keep it light so the photos stay clearly visible. */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0 mix-blend-multiply"
         style={{
           background:
-            'linear-gradient(115deg, rgba(201,162,75,0.34) 0%, rgba(201,162,75,0.10) 38%, rgba(11,12,14,0) 70%)',
+            'linear-gradient(115deg, rgba(201,162,75,0.16) 0%, rgba(201,162,75,0.05) 40%, rgba(11,12,14,0) 72%)',
         }}
       />
-      {/* Bottom + left scrim so any text above remains legible. */}
+      {/* Scrim weighted to the LEFT (under the title) + a soft bottom blend;
+          the right side stays bright so the players read clearly. */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'linear-gradient(to top, #0B0C0E 4%, rgba(11,12,14,0.55) 42%, rgba(11,12,14,0) 100%), linear-gradient(to right, #0B0C0E 0%, rgba(11,12,14,0.35) 34%, rgba(11,12,14,0) 78%)',
+            'linear-gradient(to right, #0B0C0E 0%, rgba(11,12,14,0.6) 28%, rgba(11,12,14,0) 72%), linear-gradient(to bottom, rgba(11,12,14,0) 58%, #0B0C0E 100%)',
         }}
       />
       {/* Hairline gold seam at the very bottom for a premium edge. */}
@@ -135,9 +136,8 @@ export default function StarHero({
       className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
       style={{
         WebkitMaskImage:
-          'linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,0) 100%)',
-        maskImage:
-          'linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,0) 100%)',
+          'linear-gradient(to bottom, #000 0%, #000 70%, rgba(0,0,0,0) 100%)',
+        maskImage: 'linear-gradient(to bottom, #000 0%, #000 70%, rgba(0,0,0,0) 100%)',
       }}
     >
       <div className="absolute inset-0 flex justify-end">
@@ -147,9 +147,9 @@ export default function StarHero({
             star={star}
             className="relative h-full flex-1"
             imgClassName="h-full w-full object-cover object-top"
-            // Visible portraits (like the login hero), brightest toward the
-            // right; the left/bottom scrim in HeroOverlays keeps the title legible.
-            style={{ opacity: 0.5 + i * 0.07 }}
+            // Visible portraits like the login hero; the left/bottom scrim in
+            // HeroOverlays keeps the title legible.
+            style={{ opacity: 0.82 + i * 0.03 }}
           />
         ))}
       </div>

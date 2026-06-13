@@ -30,17 +30,36 @@ export class ApiError extends Error {
 }
 
 /**
+ * Run `fn`, and on a transient failure (network error / 5xx / bad shape) wait
+ * briefly and retry once. Auth/validation errors (<500) and aborts are not
+ * retried. This self-heals brief blips (e.g. a backend redeploy) so pages don't
+ * fall into an error state that needs a manual refresh.
+ */
+async function withRetry<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  try {
+    return await fn()
+  } catch (err) {
+    if (signal?.aborted) throw err
+    if (err instanceof ApiError && err.status < 500) throw err
+    await new Promise((r) => setTimeout(r, 700))
+    return await fn()
+  }
+}
+
+/**
  * Fetch all tournament matches.
  * The backend owns the /api namespace and returns `{ "matches": [...] }`.
  */
 export async function fetchMatches(signal?: AbortSignal): Promise<Match[]> {
-  const res = await fetch('/api/matches', { ...withCreds, signal })
-  if (!res.ok) throw new ApiError(res.status)
-  const data = (await res.json()) as { matches?: unknown }
-  if (!data || !Array.isArray(data.matches)) {
-    throw new Error('Unexpected response shape: expected { matches: [...] }')
-  }
-  return data.matches as Match[]
+  return withRetry(async () => {
+    const res = await fetch('/api/matches', { ...withCreds, signal })
+    if (!res.ok) throw new ApiError(res.status)
+    const data = (await res.json()) as { matches?: unknown }
+    if (!data || !Array.isArray(data.matches)) {
+      throw new Error('Unexpected response shape: expected { matches: [...] }')
+    }
+    return data.matches as Match[]
+  }, signal)
 }
 
 /**
@@ -48,13 +67,15 @@ export async function fetchMatches(signal?: AbortSignal): Promise<Match[]> {
  * The backend returns `{ "groups": [{ group, rows: [...] }] }`.
  */
 export async function fetchStandings(signal?: AbortSignal): Promise<GroupStanding[]> {
-  const res = await fetch('/api/standings', { ...withCreds, signal })
-  if (!res.ok) throw new ApiError(res.status)
-  const data = (await res.json()) as { groups?: unknown }
-  if (!data || !Array.isArray(data.groups)) {
-    throw new Error('Unexpected response shape: expected { groups: [...] }')
-  }
-  return data.groups as GroupStanding[]
+  return withRetry(async () => {
+    const res = await fetch('/api/standings', { ...withCreds, signal })
+    if (!res.ok) throw new ApiError(res.status)
+    const data = (await res.json()) as { groups?: unknown }
+    if (!data || !Array.isArray(data.groups)) {
+      throw new Error('Unexpected response shape: expected { groups: [...] }')
+    }
+    return data.groups as GroupStanding[]
+  }, signal)
 }
 
 export type HealthState = 'loading' | 'online' | 'offline'
