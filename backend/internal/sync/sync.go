@@ -72,6 +72,7 @@ func (s *Syncer) Run(ctx context.Context) (Result, error) {
 		for _, f := range fixtures {
 			if err := s.store.UpsertMatch(ctx, tx, storage.UpsertMatch{
 				FifaID:          f.FifaID,
+				FifaStageID:     f.FifaStageID,
 				Stage:           string(f.Stage),
 				GroupLabel:      f.GroupLabel,
 				MatchNumber:     f.MatchNumber,

@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import type { Match, MatchStatus, Team } from '../types'
+import type { Match, Team } from '../types'
 import { formatKyivTime, statusLabel, stageLabel, venueCaption } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
 import { useAuth } from '../auth/AuthContext'
 import Flag from './Flag'
 import PredictionEditor from './PredictionEditor'
-import AdminResultEditor from './AdminResultEditor'
 import MatchRevealPanel from './MatchRevealPanel'
 
 function StatusChip({ status }: { status: Match['status'] }) {
@@ -104,24 +103,16 @@ interface FixtureCardProps {
 
 export default function FixtureCard({ match, index = 0, showBadge = true }: FixtureCardProps) {
   const { t } = useTranslation()
-  const { status: authStatus, user } = useAuth()
-  const isAdmin = user?.role === 'admin'
-
-  // Optimistic override after an admin sets the result, so the card reflects the
-  // new score (and finished status) immediately without waiting for a refetch.
-  const [override, setOverride] = useState<{
-    homeScore: number
-    awayScore: number
-    status: MatchStatus
-  } | null>(null)
+  const { status: authStatus } = useAuth()
 
   // Expandable "who predicted what" panel (reveal is kickoff-gated server-side).
   const [showReveal, setShowReveal] = useState(false)
 
+  // Results come exclusively from the FIFA sync — never set manually here.
   const { home, away, venue, placeholderHome, placeholderAway } = match
-  const homeScore = override ? override.homeScore : match.homeScore
-  const awayScore = override ? override.awayScore : match.awayScore
-  const status = override ? override.status : match.status
+  const homeScore = match.homeScore
+  const awayScore = match.awayScore
+  const status = match.status
 
   const live = status === 'live'
   const finished = status === 'finished'
@@ -189,18 +180,10 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
       </div>
 
       {/* Prediction entry / read-only pick — only for signed-in users with both
-          real teams known (no TBD placeholders to predict against). */}
+          real teams known (no TBD placeholders to predict against). Admins also
+          get an "as [player]" selector here to edit any player's prediction. */}
       {authStatus === 'authenticated' && home && away && (
         <PredictionEditor match={match} />
-      )}
-
-      {/* Admin-only: set/correct the real match result. Distinct gold panel,
-          works for any match (incl. finished). Regular players never see it. */}
-      {isAdmin && home && away && (
-        <AdminResultEditor
-          match={{ ...match, homeScore, awayScore, status }}
-          onSaved={(h, a) => setOverride({ homeScore: h, awayScore: a, status: 'finished' })}
-        />
       )}
 
       {/* Expand to see everyone's predictions (revealed after kickoff). */}

@@ -16,6 +16,7 @@ type Team struct {
 type Match struct {
 	ID              int64
 	FifaID          string
+	FifaStageID     string
 	Stage           string
 	GroupLabel      string
 	MatchNumber     *int
@@ -51,6 +52,7 @@ type UpsertTeam struct {
 // (pre-draw knockout slots).
 type UpsertMatch struct {
 	FifaID          string
+	FifaStageID     string
 	Stage           string
 	GroupLabel      string
 	MatchNumber     *int

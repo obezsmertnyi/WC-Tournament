@@ -47,6 +47,7 @@ type FixtureTeam struct {
 // ResultsProvider. Pointers are nil when the source omits the value.
 type Fixture struct {
 	FifaID          string // IdMatch
+	FifaStageID     string // IdStage (raw FIFA stage id, needed for the live endpoint)
 	Stage           Stage
 	GroupLabel      string // GroupName[en].Description
 	MatchNumber     *int
@@ -61,6 +62,85 @@ type Fixture struct {
 	VenueCountry    string
 	PlaceholderHome string // PlaceHolderA
 	PlaceholderAway string // PlaceHolderB
+}
+
+// --- Live match detail (statistics) ---
+
+// LivePlayer is a player in a starting lineup / bench.
+type LivePlayer struct {
+	FifaID      string
+	Name        string
+	ShirtNumber *int
+	Position    string
+	Captain     bool
+	PictureURL  string
+}
+
+// LiveLineup is a team's formation and players for the match.
+type LiveLineup struct {
+	TeamFifaID string
+	TeamName   string
+	Formation  string // Tactics, e.g. "4-1-2-3"
+	Players    []LivePlayer
+}
+
+// LiveGoal is a goal event normalized with resolved scorer/assist names.
+type LiveGoal struct {
+	TeamFifaID string
+	ScorerName string
+	AssistName string // "" when none
+	Minute     string
+	Type       *int // raw FIFA goal type (0 normal, etc.)
+}
+
+// LiveCard is a booking event normalized with the resolved player name.
+type LiveCard struct {
+	TeamFifaID string
+	PlayerName string
+	Minute     string
+	Card       *int // raw FIFA card type (1 yellow, etc.)
+}
+
+// LiveSubstitution is a substitution event.
+type LiveSubstitution struct {
+	TeamFifaID string
+	PlayerIn   string
+	PlayerOut  string
+	Minute     string
+}
+
+// LiveOfficial is a match official.
+type LiveOfficial struct {
+	Name string
+	Type *int // OfficialType: 1=Referee
+}
+
+// LivePossession is overall ball possession when reported.
+type LivePossession struct {
+	Home *float64
+	Away *float64
+}
+
+// LiveMatch is the normalized, source-agnostic live/finished match statistics
+// payload returned by a provider's LiveMatch method.
+type LiveMatch struct {
+	FifaStageID   string
+	MatchTime     string // e.g. "98'"
+	Attendance    string
+	WinnerTeamID  string // IdTeam of the winner, "" when none/draw
+	Possession    *LivePossession
+	HomeLineup    *LiveLineup
+	AwayLineup    *LiveLineup
+	Goals         []LiveGoal
+	Cards         []LiveCard
+	Substitutions []LiveSubstitution
+	Officials     []LiveOfficial
+	Stadium       string
+
+	HomePenaltyScore   *int
+	AwayPenaltyScore   *int
+	AggregateHomeScore *int
+	AggregateAwayScore *int
 }
 
 // ResultsProvider is the decoupled source of calendar + results data.

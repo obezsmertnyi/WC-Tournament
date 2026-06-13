@@ -67,21 +67,22 @@ func (s *Store) UpsertMatch(ctx context.Context, q pgx.Tx, m UpsertMatch) error 
 
 	const sql = `
 		INSERT INTO matches (
-			fifa_id, stage, group_label, match_number,
+			fifa_id, fifa_stage_id, stage, group_label, match_number,
 			home_team_id, away_team_id, kickoff_at, status,
 			home_score, away_score,
 			venue_stadium, venue_city, venue_country,
 			placeholder_home, placeholder_away,
 			result_source, updated_at
 		) VALUES (
-			$1, $2, $3, $4,
-			$5, $6, $7, $8,
-			$9, $10,
-			$11, $12, $13,
-			$14, $15,
+			$1, $2, $3, $4, $5,
+			$6, $7, $8, $9,
+			$10, $11,
+			$12, $13, $14,
+			$15, $16,
 			'fifa', now()
 		)
 		ON CONFLICT (fifa_id) DO UPDATE SET
+			fifa_stage_id    = EXCLUDED.fifa_stage_id,
 			stage            = EXCLUDED.stage,
 			group_label      = EXCLUDED.group_label,
 			match_number     = EXCLUDED.match_number,
@@ -100,7 +101,7 @@ func (s *Store) UpsertMatch(ctx context.Context, q pgx.Tx, m UpsertMatch) error 
 			updated_at       = now()
 		WHERE matches.result_source <> 'manual'`
 	_, err = q.Exec(ctx, sql,
-		m.FifaID, m.Stage, m.GroupLabel, m.MatchNumber,
+		m.FifaID, m.FifaStageID, m.Stage, m.GroupLabel, m.MatchNumber,
 		homePtr, awayPtr, m.KickoffAt, m.Status,
 		m.HomeScore, m.AwayScore,
 		m.VenueStadium, m.VenueCity, m.VenueCountry,
@@ -178,6 +179,25 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// GetMatchByID returns the identifying fields of a single match needed to
+// build the FIFA live URL. Returns ErrNotFound when no match with the id
+// exists. Only the columns the match-detail endpoint consumes are populated.
+func (s *Store) GetMatchByID(ctx context.Context, id int64) (Match, error) {
+	const sql = `
+		SELECT id, COALESCE(fifa_id, ''), COALESCE(fifa_stage_id, ''), stage, status
+		FROM matches
+		WHERE id = $1`
+	var m Match
+	err := s.pool.QueryRow(ctx, sql, id).Scan(&m.ID, &m.FifaID, &m.FifaStageID, &m.Stage, &m.Status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Match{}, ErrNotFound
+	}
+	if err != nil {
+		return Match{}, fmt.Errorf("get match %d: %w", id, err)
+	}
+	return m, nil
 }
 
 // SetMatchResult overrides a match result by id (admin manual entry). It sets

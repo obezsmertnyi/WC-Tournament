@@ -195,8 +195,9 @@ func run(logger *slog.Logger) error {
 		// Auth wall: ALL data reads require a logged-in user. Anonymous callers
 		// get 401 (the SPA shows the login screen). health + auth stay public.
 		authed := engine.Group("", auth.RequireUser())
-		api.RegisterReadRoutes(authed, store)      // /api/matches, /api/teams
-		api.RegisterStandingsRoutes(authed, store) // /api/standings
+		api.RegisterReadRoutes(authed, store)                                 // /api/matches, /api/teams
+		api.RegisterMatchDetailRoutes(authed, store, results.NewFIFAClient()) // /api/matches/:id/detail
+		api.RegisterStandingsRoutes(authed, store)                            // /api/standings
 		api.RegisterLeaderboardRoutes(authed, store)
 		api.RegisterAuditRoutes(authed, store)
 

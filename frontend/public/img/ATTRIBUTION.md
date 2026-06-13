@@ -24,12 +24,12 @@ License texts:
 CC BY / CC BY-SA require attribution (author + license, as listed above). The
 images are used unmodified except for resizing to a ~400–500px web thumbnail.
 
-## Trophy — `trophy.jpg`
+## Trophy — `trophy.png`
 
 | File | Description | Source (Wikimedia Commons) | Author | License |
 |------|-------------|----------------------------|--------|---------|
-| `trophy.jpg` | The FIFA World Cup Trophy on display, National Football Museum, Manchester | https://commons.wikimedia.org/wiki/File:FIFA_World_Cup_Trophy_at_National_Football_Museum,_Manchester_02.jpg | Ank Kumar (User:Ank gsx) | CC BY-SA 4.0 |
+| `trophy.png` | FIFA World Cup trophy illustration, transparent background | https://commons.wikimedia.org/wiki/File:FIFA_World_Cup.png | User:Pierdisilvestre7 | CC0 (public domain) |
 
-CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/ (attribution: author + license, as above; resized to a web thumbnail).
+CC0 — https://creativecommons.org/publicdomain/zero/1.0/ (no attribution required; listed for completeness). Transparent PNG so it sits cleanly on the dark theme. (`trophy.jpg` retained but unused.)
 
 **Trademark note:** the FIFA World Cup Trophy design is trademarked by FIFA. Use here is for a private, non-commercial PoC. **Legal review required** before any public/commercial release.

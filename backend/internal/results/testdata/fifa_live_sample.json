@@ -1,0 +1,100 @@
+{
+  "IdStage": "289273",
+  "MatchTime": "98'",
+  "Attendance": "104103",
+  "Winner": "43922",
+  "HomeTeamPenaltyScore": null,
+  "AwayTeamPenaltyScore": null,
+  "AggregateHomeTeamScore": 2,
+  "AggregateAwayTeamScore": 0,
+  "BallPossession": {
+    "OverallHome": 61.5,
+    "OverallAway": 38.5,
+    "Intervals": []
+  },
+  "Stadium": {
+    "Name": [
+      { "Locale": "en-GB", "Description": "Estadio Azteca" },
+      { "Locale": "es-ES", "Description": "Estadio Azteca" }
+    ],
+    "CityName": [
+      { "Locale": "en-GB", "Description": "Mexico City" }
+    ],
+    "IdCountry": "MEX"
+  },
+  "Officials": [
+    {
+      "OfficialType": 1,
+      "Name": [
+        { "Locale": "en-GB", "Description": "Cesar Ramos" }
+      ]
+    }
+  ],
+  "HomeTeam": {
+    "IdTeam": "43922",
+    "TeamName": [
+      { "Locale": "en-GB", "Description": "Mexico" }
+    ],
+    "Tactics": "4-1-2-3",
+    "Players": [
+      {
+        "IdPlayer": "P1",
+        "ShirtNumber": 9,
+        "Captain": true,
+        "Position": "Forward",
+        "PlayerPicture": "https://pic/p1.png",
+        "PlayerName": [ { "Locale": "en-GB", "Description": "Raul Jimenez" } ],
+        "ShortName": [ { "Locale": "en-GB", "Description": "R. Jimenez" } ]
+      },
+      {
+        "IdPlayer": "P2",
+        "ShirtNumber": 8,
+        "Captain": false,
+        "Position": "Midfield",
+        "PlayerPicture": "",
+        "PlayerName": [ { "Locale": "en-GB", "Description": "Hirving Lozano" } ],
+        "ShortName": [ { "Locale": "en-GB", "Description": "H. Lozano" } ]
+      }
+    ],
+    "Goals": [
+      {
+        "Type": 0,
+        "IdPlayer": "P1",
+        "IdAssistPlayer": "P2",
+        "Minute": "23'",
+        "IdTeam": "43922"
+      }
+    ],
+    "Bookings": [
+      {
+        "Card": 1,
+        "Minute": "67'",
+        "IdPlayer": "P2",
+        "IdTeam": "43922"
+      }
+    ],
+    "Substitutions": [
+      {
+        "Minute": "75'",
+        "IdTeam": "43922",
+        "PlayerOffName": [ { "Locale": "en-GB", "Description": "Raul Jimenez" } ],
+        "PlayerOnName": [ { "Locale": "en-GB", "Description": "Santiago Gimenez" } ]
+      }
+    ],
+    "Coaches": [
+      { "Role": "Coach", "Name": [ { "Locale": "en-GB", "Description": "Javier Aguirre" } ] }
+    ]
+  },
+  "AwayTeam": {
+    "IdTeam": "43948",
+    "TeamName": [
+      { "Locale": "en-GB", "Description": "South Africa" }
+    ],
+    "Tactics": "4-4-2",
+    "Players": [],
+    "Goals": [],
+    "Bookings": [],
+    "Substitutions": [],
+    "Coaches": []
+  }
+}

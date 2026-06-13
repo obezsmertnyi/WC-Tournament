@@ -117,6 +117,7 @@ func parseCalendar(resp fifaCalendarResponse, now time.Time) []Fixture {
 func mapMatch(m fifaMatch, now time.Time) Fixture {
 	f := Fixture{
 		FifaID:          m.IdMatch,
+		FifaStageID:     m.IdStage,
 		Stage:           mapStage(m.IdStage, m.StageName),
 		GroupLabel:      localized(m.GroupName),
 		MatchNumber:     m.MatchNumber,
