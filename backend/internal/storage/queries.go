@@ -303,6 +303,76 @@ func (s *Store) ListFinishedGroupMatches(ctx context.Context) ([]Match, error) {
 	return out, rows.Err()
 }
 
+// ListUnannouncedFinishedMatches returns finished matches with both teams and
+// both scores that have NOT yet been posted to Telegram (announced_at IS NULL),
+// with team data joined. Used by the result announcer. Oldest first so messages
+// arrive in chronological order.
+func (s *Store) ListUnannouncedFinishedMatches(ctx context.Context) ([]Match, error) {
+	const sql = `
+		SELECT
+			m.id, m.fifa_id, m.stage, COALESCE(m.group_label, ''), m.match_number,
+			m.kickoff_at, m.status, m.home_score, m.away_score,
+			COALESCE(m.venue_stadium, ''), COALESCE(m.venue_city, ''), COALESCE(m.venue_country, ''),
+			COALESCE(m.placeholder_home, ''), COALESCE(m.placeholder_away, ''),
+			m.result_source, m.updated_at,
+			ht.id, COALESCE(ht.name, ''), COALESCE(ht.code, ''), COALESCE(ht.flag_url, ''),
+			at.id, COALESCE(at.name, ''), COALESCE(at.code, ''), COALESCE(at.flag_url, '')
+		FROM matches m
+		LEFT JOIN teams ht ON ht.id = m.home_team_id
+		LEFT JOIN teams at ON at.id = m.away_team_id
+		WHERE m.status = 'finished'
+		  AND m.announced_at IS NULL
+		  AND m.home_team_id IS NOT NULL
+		  AND m.away_team_id IS NOT NULL
+		  AND m.home_score IS NOT NULL
+		  AND m.away_score IS NOT NULL
+		ORDER BY m.kickoff_at ASC NULLS LAST, m.match_number ASC NULLS LAST, m.id ASC`
+
+	rows, err := s.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("query unannounced matches: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Match
+	for rows.Next() {
+		var (
+			m                   Match
+			homeID, awayID      *int64
+			hName, hCode, hFlag string
+			aName, aCode, aFlag string
+		)
+		if err := rows.Scan(
+			&m.ID, &m.FifaID, &m.Stage, &m.GroupLabel, &m.MatchNumber,
+			&m.KickoffAt, &m.Status, &m.HomeScore, &m.AwayScore,
+			&m.VenueStadium, &m.VenueCity, &m.VenueCountry,
+			&m.PlaceholderHome, &m.PlaceholderAway,
+			&m.ResultSource, &m.UpdatedAt,
+			&homeID, &hName, &hCode, &hFlag,
+			&awayID, &aName, &aCode, &aFlag,
+		); err != nil {
+			return nil, fmt.Errorf("scan unannounced match: %w", err)
+		}
+		if homeID != nil {
+			m.Home = &Team{ID: *homeID, Name: hName, Code: hCode, FlagURL: hFlag, GroupLabel: m.GroupLabel}
+		}
+		if awayID != nil {
+			m.Away = &Team{ID: *awayID, Name: aName, Code: aCode, FlagURL: aFlag, GroupLabel: m.GroupLabel}
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// MarkMatchAnnounced stamps announced_at=now() so the result is not posted again.
+func (s *Store) MarkMatchAnnounced(ctx context.Context, id int64) error {
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE matches SET announced_at = now() WHERE id = $1`, id); err != nil {
+		return fmt.Errorf("mark match announced %d: %w", id, err)
+	}
+	return nil
+}
+
 // ListTeams returns all teams ordered by group then name.
 func (s *Store) ListTeams(ctx context.Context) ([]Team, error) {
 	const sql = `

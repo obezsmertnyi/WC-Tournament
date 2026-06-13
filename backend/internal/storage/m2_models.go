@@ -74,14 +74,18 @@ type AuditEntry struct {
 	ActorNickname string
 }
 
-// LeaderboardRow is one aggregated leaderboard entry.
+// LeaderboardRow is one aggregated leaderboard entry. Points is the grand total
+// (match points + bonus points); MatchPoints and BonusPoints break it down so
+// the UI can show a separate bonus column.
 type LeaderboardRow struct {
-	UserID     int64
-	Nickname   string
-	AvatarURL  *string
-	Points     int
-	ExactCount int
-	Played     int
+	UserID      int64
+	Nickname    string
+	AvatarURL   *string
+	Points      int
+	MatchPoints int
+	BonusPoints int
+	ExactCount  int
+	Played      int
 }
 
 // MatchPrediction is a revealed prediction for the per-match reveal endpoint.

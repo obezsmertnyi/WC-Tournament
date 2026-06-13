@@ -15,12 +15,14 @@ type LeaderboardStore interface {
 }
 
 type leaderboardRowDTO struct {
-	UserID     int64   `json:"userId"`
-	Nickname   string  `json:"nickname"`
-	AvatarURL  *string `json:"avatarUrl"`
-	Points     int     `json:"points"`
-	ExactCount int     `json:"exactCount"`
-	Played     int     `json:"played"`
+	UserID      int64   `json:"userId"`
+	Nickname    string  `json:"nickname"`
+	AvatarURL   *string `json:"avatarUrl"`
+	Points      int     `json:"points"`
+	MatchPoints int     `json:"matchPoints"`
+	BonusPoints int     `json:"bonusPoints"`
+	ExactCount  int     `json:"exactCount"`
+	Played      int     `json:"played"`
 }
 
 // RegisterLeaderboardRoutes wires GET /api/leaderboard (public).
@@ -38,12 +40,14 @@ func leaderboardHandler(store LeaderboardStore) gin.HandlerFunc {
 		dtos := make([]leaderboardRowDTO, 0, len(rows))
 		for _, r := range rows {
 			dtos = append(dtos, leaderboardRowDTO{
-				UserID:     r.UserID,
-				Nickname:   r.Nickname,
-				AvatarURL:  r.AvatarURL,
-				Points:     r.Points,
-				ExactCount: r.ExactCount,
-				Played:     r.Played,
+				UserID:      r.UserID,
+				Nickname:    r.Nickname,
+				AvatarURL:   r.AvatarURL,
+				Points:      r.Points,
+				MatchPoints: r.MatchPoints,
+				BonusPoints: r.BonusPoints,
+				ExactCount:  r.ExactCount,
+				Played:      r.Played,
 			})
 		}
 		c.JSON(http.StatusOK, dtos)

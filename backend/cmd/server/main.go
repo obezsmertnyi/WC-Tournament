@@ -5,6 +5,7 @@
 //	server               run the HTTP server (default)
 //	server healthcheck   probe /healthz and exit 0/1 (container HEALTHCHECK)
 //	server sync          run one FIFA calendar sync and exit
+//	server announce      post unannounced finished results to Telegram and exit
 package main
 
 import (
@@ -19,8 +20,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/announce"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/api"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/auth"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/notify"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
@@ -60,6 +63,15 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "recompute-scores" {
 		if err := runRecomputeScores(logger); err != nil {
 			logger.Error("recompute-scores failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
+	// `server announce` posts unannounced finished results to Telegram and exits.
+	if len(os.Args) > 1 && os.Args[1] == "announce" {
+		if err := runAnnounce(logger); err != nil {
+			logger.Error("announce failed", slog.Any("error", err))
 			os.Exit(1)
 		}
 		return
@@ -154,6 +166,35 @@ func runRecomputeScores(logger *slog.Logger) error {
 		return err
 	}
 	logger.Info("recompute-scores complete")
+	return nil
+}
+
+// runAnnounce posts any finished-but-unannounced results to Telegram and exits.
+func runAnnounce(logger *slog.Logger) error {
+	ctx, cancel := context.WithTimeout(context.Background(), syncCmdTimeout)
+	defer cancel()
+
+	store, err := openStore(ctx, logger)
+	if err != nil {
+		return err
+	}
+	if store == nil {
+		return errors.New("DATABASE_URL is required for announce")
+	}
+	defer store.Close()
+
+	tg, err := notify.TelegramFromEnv()
+	if err != nil {
+		return err
+	}
+	if !tg.Enabled() {
+		logger.Warn("announce: TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID not set — marking results announced without posting")
+	}
+	sent, err := announce.New(store, tg, logger).Run(ctx)
+	if err != nil {
+		return err
+	}
+	logger.Info("announce complete", slog.Int("posted", sent))
 	return nil
 }
 
@@ -267,6 +308,15 @@ func bootSync(ctx context.Context, store *storage.Store, logger *slog.Logger) {
 	// Best-effort re-score after the boot sync (idempotent).
 	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
 		logger.Warn("boot recompute failed (continuing)", slog.Any("error", err))
+	}
+	// Best-effort: post any freshly-finished results to Telegram (idempotent —
+	// each match is announced at most once).
+	if tg, err := notify.TelegramFromEnv(); err != nil {
+		logger.Warn("boot announce: telegram config error (continuing)", slog.Any("error", err))
+	} else if sent, err := announce.New(store, tg, logger).Run(syncCtx); err != nil {
+		logger.Warn("boot announce failed (continuing)", slog.Any("error", err))
+	} else if sent > 0 {
+		logger.Info("boot announce posted results", slog.Int("posted", sent))
 	}
 }
 

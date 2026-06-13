@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import AppBar, { BottomNav } from './AppBar'
 import Spotlight from './Spotlight'
+import Footer from './Footer'
 import LoginScreen from './LoginScreen'
 import { useAuth } from '../auth/AuthContext'
 
@@ -40,6 +41,8 @@ export default function Layout() {
         >
           <Outlet />
         </motion.div>
+
+        <Footer />
       </main>
 
       <BottomNav />

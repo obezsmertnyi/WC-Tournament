@@ -90,7 +90,8 @@
     "player": "Player",
     "points": "Pts",
     "exact": "Exact",
-    "legend": "Exact — number of exact-score guesses · Pts — total points",
+    "bonus": "Bonus",
+    "legend": "Exact — exact-score guesses · Bonus — champion/finalist/top-scorer points · Pts — grand total",
     "leaderboardEmpty": "No scores yet — predictions reveal as matches kick off.",
     "vs": "vs",
     "revealLocked": "Hidden until kickoff",
@@ -143,6 +144,9 @@
     "label": "Language",
     "uk": "UA",
     "en": "EN"
+  },
+  "footer": {
+    "tagline": "Predict. Cheer. Win."
   },
   "backend": {
     "checking": "Checking",

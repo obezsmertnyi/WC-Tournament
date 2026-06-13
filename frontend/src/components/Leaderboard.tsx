@@ -28,6 +28,9 @@ export default function Leaderboard({ entries }: LeaderboardProps) {
             <th className="px-1.5 py-2.5 text-center font-semibold tabular-nums sm:px-2">
               {t('competition.exact')}
             </th>
+            <th className="px-1.5 py-2.5 text-center font-semibold tabular-nums sm:px-2">
+              {t('competition.bonus')}
+            </th>
             <th className="px-2 py-2.5 pr-3 text-center font-semibold text-accent/80 sm:pr-4">
               {t('competition.points')}
             </th>
@@ -66,6 +69,13 @@ export default function Leaderboard({ entries }: LeaderboardProps) {
                 </td>
                 <td className="px-1.5 py-3 text-center tabular-nums text-muted sm:px-2">
                   {e.exactCount}
+                </td>
+                <td className="px-1.5 py-3 text-center tabular-nums sm:px-2">
+                  {e.bonusPoints > 0 ? (
+                    <span className="font-semibold text-accent/90">+{e.bonusPoints}</span>
+                  ) : (
+                    <span className="text-muted/50">—</span>
+                  )}
                 </td>
                 <td
                   className={`px-2 py-3 pr-3 text-center font-bold tabular-nums sm:pr-4 ${

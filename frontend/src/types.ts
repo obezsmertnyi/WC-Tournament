@@ -117,7 +117,12 @@ export interface LeaderboardEntry {
   userId: string
   nickname: string
   avatarUrl: string | null
+  /** Grand total = matchPoints + bonusPoints. */
   points: number
+  /** Points from match predictions only. */
+  matchPoints: number
+  /** Points from awarded tournament bonuses (champion/finalist/top scorer). */
+  bonusPoints: number
   exactCount: number
   played: number
 }

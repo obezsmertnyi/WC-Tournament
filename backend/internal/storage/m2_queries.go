@@ -492,7 +492,9 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 			u.id,
 			u.nickname,
 			u.avatar_url,
-			COALESCE(mp.match_points, 0) + COALESCE(tp.tier_points, 0) AS total_points,
+			COALESCE(mp.match_points, 0) AS match_points,
+			COALESCE(tp.bonus_points, 0) AS bonus_points,
+			COALESCE(mp.match_points, 0) + COALESCE(tp.bonus_points, 0) AS total_points,
 			COALESCE(mp.exact_count, 0) AS exact_count,
 			COALESCE(mp.played, 0)      AS played
 		FROM users u
@@ -505,9 +507,11 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 			GROUP BY user_id
 		) mp ON mp.user_id = u.id
 		LEFT JOIN (
-			SELECT user_id, sum(tier_points) AS tier_points
+			-- Bonus points count only once a pick is resolved correct (awarded=true);
+			-- a pending or wrong pick contributes 0. tier_points is the potential award.
+			SELECT user_id, sum(tier_points) AS bonus_points
 			FROM tournament_picks
-			WHERE tier_points IS NOT NULL
+			WHERE tier_points IS NOT NULL AND awarded IS TRUE
 			GROUP BY user_id
 		) tp ON tp.user_id = u.id
 		ORDER BY total_points DESC, exact_count DESC, u.nickname ASC`
@@ -519,7 +523,7 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 	var out []LeaderboardRow
 	for rows.Next() {
 		var r LeaderboardRow
-		if err := rows.Scan(&r.UserID, &r.Nickname, &r.AvatarURL, &r.Points, &r.ExactCount, &r.Played); err != nil {
+		if err := rows.Scan(&r.UserID, &r.Nickname, &r.AvatarURL, &r.MatchPoints, &r.BonusPoints, &r.Points, &r.ExactCount, &r.Played); err != nil {
 			return nil, fmt.Errorf("scan leaderboard: %w", err)
 		}
 		out = append(out, r)
