@@ -164,6 +164,43 @@ export function statusLabel(status: Match['status']): string {
   return i18n.t(`status.${status}`)
 }
 
+/**
+ * Whether a match has kicked off (predictions lock at this point). True for any
+ * non-`scheduled` status, and also once the kickoff timestamp is in the past —
+ * so the UI locks correctly even if a status hasn't flipped server-side yet.
+ */
+export function hasKickedOff(match: Pick<Match, 'status' | 'kickoffAt'>): boolean {
+  if (match.status !== 'scheduled') return true
+  if (!match.kickoffAt) return false
+  return new Date(match.kickoffAt).getTime() <= Date.now()
+}
+
+/**
+ * A compact, localized "relative time" string for the audit feed, e.g.
+ * "2m ago" / "2 хв тому". Uses Intl.RelativeTimeFormat so it localizes cleanly.
+ */
+export function formatRelativeTime(iso: string): string {
+  const rtf = new Intl.RelativeTimeFormat(intlLocale(), { numeric: 'auto', style: 'short' })
+  const diffSec = Math.round((new Date(iso).getTime() - Date.now()) / 1000)
+
+  // Ordered (seconds-per-unit, unit) — largest unit whose span fits wins.
+  const steps: [number, Intl.RelativeTimeFormatUnit][] = [
+    [31557600, 'year'],
+    [2629800, 'month'],
+    [604800, 'week'],
+    [86400, 'day'],
+    [3600, 'hour'],
+    [60, 'minute'],
+    [1, 'second'],
+  ]
+  for (const [secs, unit] of steps) {
+    if (Math.abs(diffSec) >= secs || unit === 'second') {
+      return rtf.format(Math.round(diffSec / secs), unit)
+    }
+  }
+  return rtf.format(0, 'second')
+}
+
 export interface GroupSection {
   key: string
   /** Group letter ("A"), or "—" when missing. The display title is derived in the UI. */

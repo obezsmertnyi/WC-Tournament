@@ -2,8 +2,77 @@
   "nav": {
     "calendar": "Calendar",
     "groups": "Groups",
-    "leaderboard": "Leaderboard",
-    "bracket": "Bracket"
+    "competition": "Competition",
+    "bracket": "Bracket",
+    "audit": "Audit"
+  },
+  "auth": {
+    "eyebrow": "Welcome",
+    "signIn": "Sign in",
+    "subtitle": "Sign in to make predictions and climb the leaderboard.",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Your nickname",
+    "devLogin": "Continue",
+    "signingIn": "Signing in…",
+    "google": "Continue with Google",
+    "or": "or",
+    "failed": "Couldn’t sign in. Try again.",
+    "profile": "Profile",
+    "logout": "Log out",
+    "close": "Close"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Your nickname and favourite team.",
+    "nickname": "Nickname",
+    "favoriteTeam": "Favourite team",
+    "roleUser": "Player",
+    "roleAdmin": "Admin",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Couldn’t save"
+  },
+  "predict": {
+    "yourPick": "Your prediction",
+    "advancer": "Who advances?",
+    "scoreFor": "Score for {{team}}",
+    "saving": "Saving",
+    "saved": "Saved",
+    "locked": "Locked",
+    "error": "Error",
+    "noPick": "No prediction made",
+    "pointsBadge": "{{points}} pts"
+  },
+  "competition": {
+    "title": "Competition",
+    "subtitle": "Live leaderboard and revealed predictions.",
+    "tab": {
+      "leaderboard": "Leaderboard",
+      "reveals": "Predictions"
+    },
+    "player": "Player",
+    "points": "Pts",
+    "exact": "Exact",
+    "leaderboardEmpty": "No scores yet — predictions reveal as matches kick off.",
+    "vs": "vs",
+    "revealLocked": "Hidden until kickoff",
+    "revealLockedBody": "Everyone’s predictions for this match unlock the moment it kicks off.",
+    "revealEmpty": "No predictions for this match.",
+    "revealError": "Couldn’t load predictions.",
+    "revealNoMatches": "No matches to reveal yet."
+  },
+  "audit": {
+    "title": "Audit",
+    "subtitle": "A public, read-only feed of activity.",
+    "empty": "No activity yet.",
+    "someone": "Someone",
+    "matchRef": "· match #{{id}}",
+    "predictionSubmitted": "{{actor}} submitted a prediction",
+    "predictionUpdated": "{{actor}} updated a prediction",
+    "resultUpdated": "{{actor}} updated a result",
+    "championPicked": "{{actor}} picked a champion",
+    "generic": "{{actor}} · {{action}}"
   },
   "language": {
     "label": "Language",

@@ -2,8 +2,77 @@
   "nav": {
     "calendar": "Календар",
     "groups": "Групи",
-    "leaderboard": "Лідери",
-    "bracket": "Сітка"
+    "competition": "Змагання",
+    "bracket": "Сітка",
+    "audit": "Аудит"
+  },
+  "auth": {
+    "eyebrow": "Вітаємо",
+    "signIn": "Увійти",
+    "subtitle": "Увійдіть, щоб робити прогнози та підніматися в рейтингу.",
+    "nickname": "Нікнейм",
+    "nicknamePlaceholder": "Ваш нікнейм",
+    "devLogin": "Продовжити",
+    "signingIn": "Вхід…",
+    "google": "Увійти через Google",
+    "or": "або",
+    "failed": "Не вдалося увійти. Спробуйте ще раз.",
+    "profile": "Профіль",
+    "logout": "Вийти",
+    "close": "Закрити"
+  },
+  "profile": {
+    "title": "Профіль",
+    "subtitle": "Ваш нікнейм та улюблена команда.",
+    "nickname": "Нікнейм",
+    "favoriteTeam": "Улюблена команда",
+    "roleUser": "Гравець",
+    "roleAdmin": "Адмін",
+    "save": "Зберегти",
+    "saving": "Збереження…",
+    "saved": "Збережено",
+    "error": "Не вдалося зберегти"
+  },
+  "predict": {
+    "yourPick": "Ваш прогноз",
+    "advancer": "Хто проходить далі?",
+    "scoreFor": "Рахунок для {{team}}",
+    "saving": "Збереження",
+    "saved": "Збережено",
+    "locked": "Заблоковано",
+    "error": "Помилка",
+    "noPick": "Прогноз не зроблено",
+    "pointsBadge": "{{points}} б"
+  },
+  "competition": {
+    "title": "Змагання",
+    "subtitle": "Живий рейтинг та відкриті прогнози.",
+    "tab": {
+      "leaderboard": "Рейтинг",
+      "reveals": "Прогнози"
+    },
+    "player": "Гравець",
+    "points": "Б",
+    "exact": "Точні",
+    "leaderboardEmpty": "Поки немає балів — прогнози відкриються після старту матчів.",
+    "vs": "проти",
+    "revealLocked": "Приховано до початку",
+    "revealLockedBody": "Прогнози всіх на цей матч відкриються, щойно він розпочнеться.",
+    "revealEmpty": "Немає прогнозів на цей матч.",
+    "revealError": "Не вдалося завантажити прогнози.",
+    "revealNoMatches": "Поки немає матчів для перегляду."
+  },
+  "audit": {
+    "title": "Аудит",
+    "subtitle": "Публічна стрічка активності лише для читання.",
+    "empty": "Поки немає активності.",
+    "someone": "Хтось",
+    "matchRef": "· матч №{{id}}",
+    "predictionSubmitted": "{{actor}} надіслав(-ла) прогноз",
+    "predictionUpdated": "{{actor}} оновив(-ла) прогноз",
+    "resultUpdated": "{{actor}} оновив(-ла) результат",
+    "championPicked": "{{actor}} обрав(-ла) чемпіона",
+    "generic": "{{actor}} · {{action}}"
   },
   "language": {
     "label": "Мова",

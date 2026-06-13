@@ -3,13 +3,15 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import BackendBadge from './BackendBadge'
 import LanguageSwitcher from './LanguageSwitcher'
+import AuthControl from './AuthControl'
 import Trophy from './Trophy'
 
 const TABS = [
   { to: '/', labelKey: 'nav.calendar', end: true },
   { to: '/groups', labelKey: 'nav.groups', end: false },
-  { to: '/leaderboard', labelKey: 'nav.leaderboard', end: false },
+  { to: '/competition', labelKey: 'nav.competition', end: false },
   { to: '/bracket', labelKey: 'nav.bracket', end: false },
+  { to: '/audit', labelKey: 'nav.audit', end: false },
 ] as const
 
 function Wordmark() {
@@ -65,7 +67,7 @@ export default function AppBar() {
         <Wordmark />
 
         {/* Desktop / tablet tabs */}
-        <nav className="hidden items-center gap-6 sm:flex">
+        <nav className="hidden items-center gap-5 lg:flex">
           {TABS.map((tab) => (
             <Tab key={tab.to} to={tab.to} end={tab.end} label={t(tab.labelKey)} />
           ))}
@@ -74,26 +76,28 @@ export default function AppBar() {
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher />
           <BackendBadge />
+          <AuthControl />
         </div>
       </div>
     </header>
   )
 }
 
-/** Bottom navigation shown only on mobile (< sm). */
+/** Bottom navigation shown on mobile + tablet (< lg). Five compact items fit
+ *  within 375px because each cell is flex-1 with tight padding/type. */
 export function BottomNav() {
   const { t } = useTranslation()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-bg/80 backdrop-blur-xl sm:hidden">
-      <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-bg/80 backdrop-blur-xl lg:hidden">
+      <div className="mx-auto flex max-w-5xl items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             end={tab.end}
             className={({ isActive }) =>
-              `relative flex flex-1 flex-col items-center gap-1 py-3 text-[0.7rem] font-medium transition-colors ${
+              `relative flex flex-1 flex-col items-center gap-1 px-0.5 py-3 text-center text-[0.62rem] font-medium leading-tight transition-colors ${
                 isActive ? 'text-accent' : 'text-muted'
               }`
             }
@@ -107,7 +111,7 @@ export function BottomNav() {
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
-                {t(tab.labelKey)}
+                <span className="truncate">{t(tab.labelKey)}</span>
               </>
             )}
           </NavLink>

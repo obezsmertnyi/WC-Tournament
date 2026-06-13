@@ -4,7 +4,9 @@ import type { Match, Team } from '../types'
 import { formatKyivTime, statusLabel, stageLabel, venueCaption } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
+import { useAuth } from '../auth/AuthContext'
 import Flag from './Flag'
+import PredictionEditor from './PredictionEditor'
 
 function StatusChip({ status }: { status: Match['status'] }) {
   // Subscribe to language changes so labels re-localize.
@@ -99,6 +101,7 @@ interface FixtureCardProps {
 
 export default function FixtureCard({ match, index = 0, showBadge = true }: FixtureCardProps) {
   const { t } = useTranslation()
+  const { status: authStatus } = useAuth()
   const { home, away, homeScore, awayScore, status, venue, placeholderHome, placeholderAway } =
     match
 
@@ -166,6 +169,12 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
           winner={awayWins}
         />
       </div>
+
+      {/* Prediction entry / read-only pick — only for signed-in users with both
+          real teams known (no TBD placeholders to predict against). */}
+      {authStatus === 'authenticated' && home && away && (
+        <PredictionEditor match={match} />
+      )}
 
       {/* Venue — host-country flag + caption */}
       <footer className="mt-3.5 flex items-center gap-1.5 border-t border-hairline pt-2.5">
