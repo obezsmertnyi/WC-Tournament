@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext'
 import Flag from './Flag'
 import PredictionEditor from './PredictionEditor'
 import AdminResultEditor from './AdminResultEditor'
+import MatchRevealPanel from './MatchRevealPanel'
 
 function StatusChip({ status }: { status: Match['status'] }) {
   // Subscribe to language changes so labels re-localize.
@@ -114,6 +115,9 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
     status: MatchStatus
   } | null>(null)
 
+  // Expandable "who predicted what" panel (reveal is kickoff-gated server-side).
+  const [showReveal, setShowReveal] = useState(false)
+
   const { home, away, venue, placeholderHome, placeholderAway } = match
   const homeScore = override ? override.homeScore : match.homeScore
   const awayScore = override ? override.awayScore : match.awayScore
@@ -197,6 +201,26 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
           match={{ ...match, homeScore, awayScore, status }}
           onSaved={(h, a) => setOverride({ homeScore: h, awayScore: a, status: 'finished' })}
         />
+      )}
+
+      {/* Expand to see everyone's predictions (revealed after kickoff). */}
+      {authStatus === 'authenticated' && home && away && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowReveal((v) => !v)}
+            aria-expanded={showReveal}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-hairline bg-white/[0.02] py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted/80 transition-colors hover:border-white/15 hover:text-text"
+          >
+            {t('fixture.whoPredicted')}
+            <span className={`transition-transform ${showReveal ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          {showReveal && (
+            <div className="mt-2">
+              <MatchRevealPanel match={{ ...match, homeScore, awayScore, status }} />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Venue — host-country flag + caption */}

@@ -210,7 +210,8 @@
     "finished": "FT"
   },
   "fixture": {
-    "tbd": "TBD"
+    "tbd": "TBD",
+    "whoPredicted": "Хто що поставив"
   },
   "states": {
     "empty": {

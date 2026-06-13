@@ -208,7 +208,8 @@
     "finished": "FT"
   },
   "fixture": {
-    "tbd": "TBD"
+    "tbd": "TBD",
+    "whoPredicted": "Who predicted what"
   },
   "states": {
     "empty": {
