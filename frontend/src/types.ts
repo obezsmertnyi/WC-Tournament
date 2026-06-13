@@ -47,6 +47,22 @@ export interface GroupStanding {
   rows: StandingRow[]
 }
 
+/**
+ * One team in the cross-group "best third-placed teams" ranking. Carries the
+ * usual standings stats plus the source group letter and whether the team
+ * currently sits in a Round-of-32 qualifying slot (top 8).
+ */
+export interface ThirdPlaceRow extends StandingRow {
+  group: string
+  qualified: boolean
+}
+
+/** Full standings payload: per-group tables + the third-placed ranking. */
+export interface Standings {
+  groups: GroupStanding[]
+  thirdPlace: ThirdPlaceRow[]
+}
+
 // ── M2: users, predictions, competition, audit ──────────────────────────────
 
 export type Role = 'user' | 'admin'

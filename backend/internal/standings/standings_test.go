@@ -140,3 +140,46 @@ func TestBareGroup(t *testing.T) {
 		}
 	}
 }
+
+func TestThirdPlaceRanking(t *testing.T) {
+	// Two groups of 3 so each resolves a clear 3rd place; group A's third has
+	// more points than group B's third, so A's third must rank first.
+	teams := []Team{
+		{ID: 1, Name: "A1", GroupLabel: "Group A"},
+		{ID: 2, Name: "A2", GroupLabel: "Group A"},
+		{ID: 3, Name: "A3", GroupLabel: "Group A"},
+		{ID: 4, Name: "B1", GroupLabel: "Group B"},
+		{ID: 5, Name: "B2", GroupLabel: "Group B"},
+		{ID: 6, Name: "B3", GroupLabel: "Group B"},
+	}
+	finished := []Match{
+		// Group A: A1 beats A3, A2 beats A3, A1 draws A2 -> A3 is 3rd with 0 pts
+		// but scores a goal so has GF=1 (loses 1-2 twice).
+		{HomeTeamID: i64(1), AwayTeamID: i64(3), HomeScore: ip(2), AwayScore: ip(1)},
+		{HomeTeamID: i64(2), AwayTeamID: i64(3), HomeScore: ip(2), AwayScore: ip(1)},
+		{HomeTeamID: i64(1), AwayTeamID: i64(2), HomeScore: ip(0), AwayScore: ip(0)},
+		// Group B: B3 also loses both but by larger margins (worse GD/GF).
+		{HomeTeamID: i64(4), AwayTeamID: i64(6), HomeScore: ip(3), AwayScore: ip(0)},
+		{HomeTeamID: i64(5), AwayTeamID: i64(6), HomeScore: ip(3), AwayScore: ip(0)},
+		{HomeTeamID: i64(4), AwayTeamID: i64(5), HomeScore: ip(0), AwayScore: ip(0)},
+	}
+	groups := ComputeStandings(teams, finished)
+	thirds := ThirdPlaceRanking(groups)
+
+	if len(thirds) != 2 {
+		t.Fatalf("expected 2 third-placed teams, got %d", len(thirds))
+	}
+	if thirds[0].TeamID != 3 {
+		t.Errorf("expected A3 (id 3) ranked first by GD/GF, got id %d", thirds[0].TeamID)
+	}
+	if thirds[0].Rank != 1 || thirds[1].Rank != 2 {
+		t.Errorf("ranks not assigned 1..n: %d, %d", thirds[0].Rank, thirds[1].Rank)
+	}
+	// With only 2 third-placed teams (< 8 slots) both qualify.
+	if !thirds[0].Qualified || !thirds[1].Qualified {
+		t.Errorf("expected both within %d slots to qualify", ThirdPlaceQualifiers)
+	}
+	if thirds[0].Group != "A" {
+		t.Errorf("expected group A, got %q", thirds[0].Group)
+	}
+}

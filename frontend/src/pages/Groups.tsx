@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GroupStanding } from '../types'
+import type { Standings } from '../types'
 import { fetchStandings } from '../lib/api'
 import GroupCard from '../components/GroupCard'
+import ThirdPlaceTable from '../components/ThirdPlaceTable'
 import StarHero from '../components/StarHero'
 import { ErrorState } from '../components/states'
 
 type LoadState =
   | { phase: 'loading' }
   | { phase: 'error' }
-  | { phase: 'ready'; groups: GroupStanding[] }
+  | { phase: 'ready'; standings: Standings }
 
 /** Skeleton grid mirroring the 12 group cards. */
 function GroupsSkeleton() {
@@ -42,7 +43,7 @@ export default function Groups() {
   const load = useCallback((signal?: AbortSignal) => {
     setState({ phase: 'loading' })
     fetchStandings(signal)
-      .then((groups) => setState({ phase: 'ready', groups }))
+      .then((standings) => setState({ phase: 'ready', standings }))
       .catch((err) => {
         if (signal?.aborted) return
         if (err instanceof DOMException && err.name === 'AbortError') return
@@ -71,13 +72,16 @@ export default function Groups() {
       {state.phase === 'loading' && <GroupsSkeleton />}
       {state.phase === 'error' && <ErrorState onRetry={() => load()} />}
       {state.phase === 'ready' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[...state.groups]
-            .sort((a, b) => a.group.localeCompare(b.group))
-            .map((g, i) => (
-              <GroupCard key={g.group} standing={g} index={i} />
-            ))}
-        </div>
+        <>
+          <ThirdPlaceTable rows={state.standings.thirdPlace} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...state.standings.groups]
+              .sort((a, b) => a.group.localeCompare(b.group))
+              .map((g, i) => (
+                <GroupCard key={g.group} standing={g} index={i} />
+              ))}
+          </div>
+        </>
       )}
     </div>
   )

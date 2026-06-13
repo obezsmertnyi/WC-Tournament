@@ -158,6 +158,60 @@ func ComputeStandings(teams []Team, finished []Match) []GroupStanding {
 	return out
 }
 
+// ThirdPlaceQualifiers is how many of the third-placed teams advance to the
+// Round of 32 under the 48-team (12-group) WC2026 format.
+const ThirdPlaceQualifiers = 8
+
+// ThirdPlaceRow is one third-placed team's line in the cross-group ranking.
+// It embeds the team's full group Row and adds the group letter plus whether
+// the team currently sits in a qualifying position.
+type ThirdPlaceRow struct {
+	Row
+	Group     string `json:"group"`
+	Qualified bool   `json:"qualified"`
+}
+
+// ThirdPlaceRanking takes the per-group standings and ranks the third-placed
+// team of each group against the others, per the WC2026 criteria (points desc,
+// goal difference desc, goals-for desc; conduct / FIFA ranking are not modelled
+// so a stable name tie-break stands in last). The top ThirdPlaceQualifiers rows
+// are flagged Qualified. Groups without a resolved third place (fewer than three
+// teams) are skipped. The returned Rank is the 1..n cross-group position.
+//
+// This is DISPLAY-ONLY: it mirrors the official "ranking of third-placed teams"
+// table and does not itself seed the knockout bracket (see ADR-0007).
+func ThirdPlaceRanking(groups []GroupStanding) []ThirdPlaceRow {
+	thirds := make([]ThirdPlaceRow, 0, len(groups))
+	for _, g := range groups {
+		for _, r := range g.Rows {
+			if r.Rank == 3 {
+				thirds = append(thirds, ThirdPlaceRow{Row: r, Group: g.Group})
+				break
+			}
+		}
+	}
+
+	sort.SliceStable(thirds, func(i, j int) bool {
+		a, b := thirds[i], thirds[j]
+		if a.Points != b.Points {
+			return a.Points > b.Points
+		}
+		if a.GD != b.GD {
+			return a.GD > b.GD
+		}
+		if a.GF != b.GF {
+			return a.GF > b.GF
+		}
+		return a.Name < b.Name
+	})
+
+	for i := range thirds {
+		thirds[i].Rank = i + 1
+		thirds[i].Qualified = i < ThirdPlaceQualifiers
+	}
+	return thirds
+}
+
 // sortRows orders a group's rows by the display tie-break chain:
 // points desc, goal difference desc, goals-for desc, then name asc.
 func sortRows(rows []Row) {

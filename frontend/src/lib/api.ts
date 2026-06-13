@@ -3,6 +3,8 @@ import type {
   MatchStatus,
   MatchDetail,
   GroupStanding,
+  Standings,
+  ThirdPlaceRow,
   User,
   AdminPlayer,
   MyPrediction,
@@ -64,18 +66,22 @@ export async function fetchMatches(signal?: AbortSignal): Promise<Match[]> {
 }
 
 /**
- * Fetch computed group-stage standings.
- * The backend returns `{ "groups": [{ group, rows: [...] }] }`.
+ * Fetch computed group-stage standings plus the cross-group ranking of the
+ * third-placed teams. The backend returns
+ * `{ "groups": [{ group, rows: [...] }], "thirdPlace": [...] }`.
  */
-export async function fetchStandings(signal?: AbortSignal): Promise<GroupStanding[]> {
+export async function fetchStandings(signal?: AbortSignal): Promise<Standings> {
   return withRetry(async () => {
     const res = await fetch('/api/standings', { ...withCreds, signal })
     if (!res.ok) throw new ApiError(res.status)
-    const data = (await res.json()) as { groups?: unknown }
+    const data = (await res.json()) as { groups?: unknown; thirdPlace?: unknown }
     if (!data || !Array.isArray(data.groups)) {
       throw new Error('Unexpected response shape: expected { groups: [...] }')
     }
-    return data.groups as GroupStanding[]
+    return {
+      groups: data.groups as GroupStanding[],
+      thirdPlace: Array.isArray(data.thirdPlace) ? (data.thirdPlace as ThirdPlaceRow[]) : [],
+    }
   }, signal)
 }
 

@@ -40,6 +40,15 @@ type standingsGroupDTO struct {
 	Rows  []standingsRowDTO `json:"rows"`
 }
 
+// thirdPlaceRowDTO is one line in the cross-group "best third-placed teams"
+// ranking. It carries the standard stats plus the source group and whether the
+// team currently sits in a Round-of-32 qualifying slot.
+type thirdPlaceRowDTO struct {
+	standingsRowDTO
+	Group     string `json:"group"`
+	Qualified bool   `json:"qualified"`
+}
+
 // RegisterStandingsRoutes wires the standings endpoint onto the router.
 func RegisterStandingsRoutes(r gin.IRouter, reader StandingsReader) {
 	r.GET("/api/standings", standingsHandler(reader))
@@ -113,6 +122,32 @@ func standingsHandler(reader StandingsReader) gin.HandlerFunc {
 			groups = append(groups, standingsGroupDTO{Group: g.Group, Rows: rows})
 		}
 
-		c.JSON(http.StatusOK, gin.H{"groups": groups})
+		// Cross-group ranking of the third-placed teams — the 8 best advance to
+		// the Round of 32 under the 48-team format.
+		thirds := standings.ThirdPlaceRanking(computed)
+		thirdPlace := make([]thirdPlaceRowDTO, 0, len(thirds))
+		for _, r := range thirds {
+			thirdPlace = append(thirdPlace, thirdPlaceRowDTO{
+				standingsRowDTO: standingsRowDTO{
+					TeamID:  r.TeamID,
+					Name:    r.Name,
+					Code:    r.Code,
+					FlagURL: r.FlagURL,
+					Played:  r.Played,
+					Win:     r.Win,
+					Draw:    r.Draw,
+					Loss:    r.Loss,
+					GF:      r.GF,
+					GA:      r.GA,
+					GD:      r.GD,
+					Points:  r.Points,
+					Rank:    r.Rank,
+				},
+				Group:     r.Group,
+				Qualified: r.Qualified,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"groups": groups, "thirdPlace": thirdPlace})
 	}
 }

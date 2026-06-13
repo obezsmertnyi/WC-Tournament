@@ -39,7 +39,7 @@ export default function GroupDetail() {
       setState({ phase: 'loading' })
       Promise.all([fetchStandings(signal), fetchMatches(signal)])
         .then(([standings, matches]) => {
-          const standing = standings.find((g) => g.group.toUpperCase() === group)
+          const standing = standings.groups.find((g) => g.group.toUpperCase() === group)
           const groupMatches = matches
             .filter((m) => m.stage === 'group' && (m.group ?? '').toUpperCase() === group)
             .sort(byKickoff)
