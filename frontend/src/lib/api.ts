@@ -351,11 +351,47 @@ export async function saveChampionBonus(
   teamId: number,
   signal?: AbortSignal,
 ): Promise<BonusPick> {
-  const res = await fetch('/api/bonus/champion', {
+  return saveTeamBonus('champion', teamId, signal)
+}
+
+/** Upsert the losing-finalist pick (`PUT /api/bonus/finalist {teamId}`). */
+export async function saveFinalistBonus(
+  teamId: number,
+  signal?: AbortSignal,
+): Promise<BonusPick> {
+  return saveTeamBonus('finalist', teamId, signal)
+}
+
+/** Shared helper for team-referenced bonus picks (champion / finalist). */
+async function saveTeamBonus(
+  kind: 'champion' | 'finalist',
+  teamId: number,
+  signal?: AbortSignal,
+): Promise<BonusPick> {
+  const res = await fetch(`/api/bonus/${kind}`, {
     ...withCreds,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ teamId }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as BonusPick
+}
+
+/**
+ * Upsert the top-scorer pick (`PUT /api/bonus/top-scorer {player}`). Free-text
+ * player name. Throws ApiError(409) once the Round of 16 starts (hard lock).
+ */
+export async function saveTopScorerBonus(
+  player: string,
+  signal?: AbortSignal,
+): Promise<BonusPick> {
+  const res = await fetch('/api/bonus/top-scorer', {
+    ...withCreds,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ player }),
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)

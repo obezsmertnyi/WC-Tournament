@@ -14,7 +14,7 @@ import {
 import { teamName } from '../lib/teamNames'
 import Leaderboard from '../components/Leaderboard'
 import MatchRevealPanel from '../components/MatchRevealPanel'
-import BonusChampion from '../components/BonusChampion'
+import BonusPanel from '../components/BonusPanel'
 import ScoringRules from '../components/ScoringRules'
 import DateStrip from '../components/DateStrip'
 import Flag from '../components/Flag'
@@ -72,7 +72,7 @@ export default function Competition() {
       {sub === 'bonus' && (
         <>
           <ScoringRules />
-          <BonusChampion />
+          <BonusPanel />
         </>
       )}
     </div>

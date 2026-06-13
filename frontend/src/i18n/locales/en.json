@@ -103,6 +103,13 @@
   "bonus": {
     "title": "Bonus picks",
     "champion": "Champion",
+    "finalist": "Finalist",
+    "topScorer": "Top scorer",
+    "pick": "Pick",
+    "change": "Change",
+    "close": "Close",
+    "save": "Save",
+    "scorerPlaceholder": "Player name (e.g. Mbappé)",
     "pickChampion": "Pick your champion",
     "tierHint": "Pick during the group stage to lock in the most points — a pick made after the group stage is worth fewer. The pick stays open until the knockout rounds begin, but changing it re-stamps the time, so a late switch can drop your tier.",
     "tierGroup": "Group stage",

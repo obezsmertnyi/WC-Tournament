@@ -245,13 +245,28 @@ func (s *Store) GroupStageLastKickoff(ctx context.Context) (*time.Time, error) {
 }
 
 // FirstKnockoutKickoff returns the earliest kickoff among knockout matches
-// (R32), the champion-pick hard lock. Returns (nil,nil) when none.
+// (R32 / "round of 32"), used as the bonus tier boundary: a pick made before it
+// (group stage still running) earns the higher tier, after it the lower tier.
+// Returns (nil,nil) when none.
 func (s *Store) FirstKnockoutKickoff(ctx context.Context) (*time.Time, error) {
 	var t *time.Time
 	err := s.pool.QueryRow(ctx,
 		`SELECT min(kickoff_at) FROM matches WHERE stage <> 'group'`).Scan(&t)
 	if err != nil {
 		return nil, fmt.Errorf("first knockout kickoff: %w", err)
+	}
+	return t, nil
+}
+
+// FirstRoundOf16Kickoff returns the earliest Round-of-16 ("1/8") kickoff — the
+// HARD lock for all tournament bonus picks (champion/finalist/top scorer): once
+// the R16 starts no pick may be set or changed. Returns (nil,nil) when none.
+func (s *Store) FirstRoundOf16Kickoff(ctx context.Context) (*time.Time, error) {
+	var t *time.Time
+	err := s.pool.QueryRow(ctx,
+		`SELECT min(kickoff_at) FROM matches WHERE stage = 'r16'`).Scan(&t)
+	if err != nil {
+		return nil, fmt.Errorf("first round-of-16 kickoff: %w", err)
 	}
 	return t, nil
 }
