@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"net/http"
@@ -21,6 +22,7 @@ type UserStore interface {
 	GetUserByGoogleSub(ctx context.Context, sub string) (storage.User, error)
 	CreateUser(ctx context.Context, u storage.User) (storage.User, error)
 	GetUserByID(ctx context.Context, id int64) (storage.User, error)
+	AppendAudit(ctx context.Context, e storage.AuditEntry) error
 }
 
 // userDTO is the public user shape returned by auth + profile endpoints.
@@ -47,6 +49,7 @@ func ToUserDTO(u storage.User) userDTO {
 // when GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET are set.
 func RegisterRoutes(r gin.IRouter, store UserStore) {
 	r.POST("/api/auth/dev-login", devLoginHandler(store))
+	r.POST("/api/auth/admin-login", adminLoginHandler(store))
 	r.POST("/api/auth/logout", logoutHandler())
 
 	if oauthEnabled() {
@@ -55,20 +58,18 @@ func RegisterRoutes(r gin.IRouter, store UserStore) {
 	}
 }
 
-// roleForNewUser assigns 'admin' to the very first user, 'player' otherwise.
-func roleForNewUser(ctx context.Context, store UserStore) (string, error) {
-	n, err := store.CountUsers(ctx)
-	if err != nil {
-		return "", err
-	}
-	if n == 0 {
-		return "admin", nil
-	}
+// roleForNewUser always returns 'player'. Admin accounts are never provisioned
+// implicitly (no admin-by-count); they exist only via the password-gated
+// admin-login path.
+func roleForNewUser(_ context.Context, _ UserStore) (string, error) {
 	return "player", nil
 }
 
-// devLoginHandler finds or creates a user by nickname, sets the session cookie
-// and returns the user. Works without Google credentials (PoC).
+// devLoginHandler self-identifies a PLAYER by nickname (Friends-PoC trust
+// model). It finds or creates a fresh player account and sets the session
+// cookie. It REFUSES (403) to log in as any account that is an admin or is
+// linked to Google, so this path can never impersonate a privileged or
+// federated identity and never issues an admin token.
 func devLoginHandler(store UserStore) gin.HandlerFunc {
 	type req struct {
 		Nickname string `json:"nickname"`
@@ -87,16 +88,83 @@ func devLoginHandler(store UserStore) gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 		user, err := store.GetUserByNickname(ctx, nickname)
-		if errors.Is(err, storage.ErrNotFound) {
+		switch {
+		case errors.Is(err, storage.ErrNotFound):
+			// Fresh sign-up: always a player.
 			role, rerr := roleForNewUser(ctx, store)
 			if rerr != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
 				return
 			}
 			user, err = store.CreateUser(ctx, storage.User{Nickname: nickname, Role: role})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
+				return
+			}
+		case err != nil:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
+			return
+		default:
+			// Existing account: only plain player accounts may use dev-login.
+			// Admin or Google-linked accounts are protected from impersonation.
+			if user.Role != "player" || user.GoogleSub != nil {
+				c.JSON(http.StatusForbidden, gin.H{"error": "this account cannot use nickname login"})
+				return
+			}
+		}
+
+		if err := issueAndSet(c, user); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
+			return
+		}
+		c.JSON(http.StatusOK, ToUserDTO(user))
+	}
+}
+
+// adminLoginHandler authenticates the single admin account with a password
+// compared in constant time against ADMIN_PASSWORD. When ADMIN_PASSWORD is
+// unset the endpoint is disabled (503). On success it finds-or-creates the
+// admin user (nickname from ADMIN_NICKNAME, default "Admin"), issues its
+// session cookie and writes an admin_login audit row. On mismatch it returns
+// 401 with no user enumeration.
+func adminLoginHandler(store UserStore) gin.HandlerFunc {
+	type req struct {
+		Password string `json:"password"`
+	}
+	return func(c *gin.Context) {
+		want := os.Getenv("ADMIN_PASSWORD")
+		if want == "" {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "admin login disabled"})
+			return
+		}
+
+		var body req
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+			return
+		}
+
+		// Constant-time compare to avoid leaking the password via timing.
+		if subtle.ConstantTimeCompare([]byte(body.Password), []byte(want)) != 1 {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			return
+		}
+
+		ctx := c.Request.Context()
+		nickname := envDefault("ADMIN_NICKNAME", "Admin")
+
+		user, err := store.GetUserByNickname(ctx, nickname)
+		if errors.Is(err, storage.ErrNotFound) {
+			user, err = store.CreateUser(ctx, storage.User{Nickname: nickname, Role: "admin"})
 		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
+			return
+		}
+		// Defensive: if an account already exists under the admin nickname but
+		// is not actually an admin, do not silently elevate it.
+		if user.Role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin account misconfigured"})
 			return
 		}
 
@@ -104,6 +172,14 @@ func devLoginHandler(store UserStore) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "login failed"})
 			return
 		}
+
+		actor := user.ID
+		_ = store.AppendAudit(ctx, storage.AuditEntry{
+			ActorUserID: &actor,
+			ActorRole:   "admin",
+			Action:      "admin_login",
+		})
+
 		c.JSON(http.StatusOK, ToUserDTO(user))
 	}
 }

@@ -24,8 +24,8 @@ const CookieName = "wc_session"
 // sessionTTL is how long an issued session is valid.
 const sessionTTL = 30 * 24 * time.Hour
 
-// devSecret is used when JWT_SECRET is unset (PoC / local dev only).
-const devSecret = "dev-insecure-jwt-secret-change-me"
+// minSecretLen is the minimum acceptable JWT_SECRET length in bytes.
+const minSecretLen = 32
 
 // Claims is the JWT payload we issue.
 type Claims struct {
@@ -36,12 +36,21 @@ type Claims struct {
 	Iat      int64  `json:"iat"`
 }
 
-// secret returns the signing secret from JWT_SECRET or a dev default.
+// secret returns the signing secret from JWT_SECRET. It never falls back to a
+// default: callers must have validated the secret at boot via ValidateSecret.
 func secret() []byte {
-	if s := os.Getenv("JWT_SECRET"); s != "" {
-		return []byte(s)
+	return []byte(os.Getenv("JWT_SECRET"))
+}
+
+// ValidateSecret reports whether JWT_SECRET is set and long enough to be safe.
+// It must be called at boot (main.go) and the process must refuse to start when
+// it returns an error — there is no insecure default.
+func ValidateSecret() error {
+	s := os.Getenv("JWT_SECRET")
+	if len(s) < minSecretLen {
+		return fmt.Errorf("JWT_SECRET must be set and at least %d bytes (got %d)", minSecretLen, len(s))
 	}
-	return []byte(devSecret)
+	return nil
 }
 
 var b64 = base64.RawURLEncoding

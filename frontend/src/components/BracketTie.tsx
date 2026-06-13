@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { Match, Team } from '../types'
-import { formatKyivTime, statusLabel } from '../lib/fixtures'
+import { formatKyivTime, formatKyivDayMonth, statusLabel } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
 import Flag from './Flag'
@@ -122,7 +122,7 @@ export default function BracketTie({ match, index = 0, emphasis = false }: Brack
     >
       <header className="mb-1.5 flex items-center justify-between gap-2">
         <time className="text-[0.6rem] font-semibold tabular-nums tracking-wide text-text/70">
-          {match.kickoffAt ? formatKyivTime(match.kickoffAt) : ''}
+          {match.kickoffAt ? `${formatKyivDayMonth(match.kickoffAt)} · ${formatKyivTime(match.kickoffAt)}` : ''}
         </time>
         <TieStatus status={status} />
       </header>

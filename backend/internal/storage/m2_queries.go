@@ -114,6 +114,18 @@ func (s *Store) UpdateUserProfile(ctx context.Context, id int64, nickname, favor
 	return out, nil
 }
 
+// TeamCodeExists reports whether a team with the given code exists. Used to
+// validate the profile favorite-team allowlist.
+func (s *Store) TeamCodeExists(ctx context.Context, code string) (bool, error) {
+	var exists bool
+	err := s.pool.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM teams WHERE code = $1)`, code).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("team code exists: %w", err)
+	}
+	return exists, nil
+}
+
 // ---------------------------------------------------------------------------
 // Matches (M2 helpers)
 // ---------------------------------------------------------------------------

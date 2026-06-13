@@ -17,10 +17,14 @@ interface LoginModalProps {
  */
 export default function LoginModal({ open, onClose }: LoginModalProps) {
   const { t } = useTranslation()
-  const { loginDev } = useAuth()
+  const { loginDev, loginAdmin } = useAuth()
   const [nickname, setNickname] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
+  const [adminMode, setAdminMode] = useState(false)
+  const [password, setPassword] = useState('')
+  const [adminBusy, setAdminBusy] = useState(false)
+  const [adminError, setAdminError] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -36,6 +40,22 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       clearTimeout(id)
     }
   }, [open, onClose])
+
+  async function submitAdmin(e: React.FormEvent) {
+    e.preventDefault()
+    if (!password || adminBusy) return
+    setAdminBusy(true)
+    setAdminError(false)
+    try {
+      await loginAdmin(password)
+      setPassword('')
+      onClose()
+    } catch {
+      setAdminError(true)
+    } finally {
+      setAdminBusy(false)
+    }
+  }
 
   async function submitDev(e: React.FormEvent) {
     e.preventDefault()
@@ -128,6 +148,38 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
               <GoogleGlyph />
               {t('auth.google')}
             </a>
+
+            {!adminMode ? (
+              <button
+                type="button"
+                onClick={() => setAdminMode(true)}
+                className="mt-4 block w-full text-center text-[0.7rem] uppercase tracking-[0.16em] text-muted/60 transition-colors hover:text-accent"
+              >
+                {t('auth.adminEntry')}
+              </button>
+            ) : (
+              <form onSubmit={submitAdmin} className="mt-4 space-y-2 border-t border-hairline pt-4">
+                <span className="block text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted/80">
+                  {t('auth.adminPassword')}
+                </span>
+                <input
+                  type="password"
+                  value={password}
+                  autoComplete="current-password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-11 w-full rounded-xl border border-hairline bg-white/[0.04] px-3.5 text-sm text-text outline-none transition-colors placeholder:text-muted/40 focus:border-accent focus:shadow-[0_0_0_3px_rgba(201,162,75,0.18)]"
+                />
+                {adminError && <p className="text-xs text-red-400/90">{t('auth.adminFailed')}</p>}
+                <button
+                  type="submit"
+                  disabled={adminBusy || password === ''}
+                  className="h-11 w-full rounded-xl border border-accent/50 bg-accent/10 text-sm font-semibold uppercase tracking-[0.14em] text-accent transition-opacity hover:bg-accent/20 disabled:opacity-40"
+                >
+                  {adminBusy ? t('auth.signingIn') : t('auth.adminLogin')}
+                </button>
+              </form>
+            )}
           </motion.div>
         </motion.div>
       )}

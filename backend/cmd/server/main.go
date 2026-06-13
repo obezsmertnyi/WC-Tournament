@@ -158,6 +158,12 @@ func runRecomputeScores(logger *slog.Logger) error {
 }
 
 func run(logger *slog.Logger) error {
+	// Fail closed: the server must never start with a missing/weak signing key.
+	if err := auth.ValidateSecret(); err != nil {
+		logger.Error("refusing to start: invalid JWT_SECRET", slog.Any("error", err))
+		return err
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort

@@ -8,7 +8,14 @@ import {
   type ReactNode,
 } from 'react'
 import type { User } from '../types'
-import { devLogin, fetchMe, logout as apiLogout, updateMe, type ProfilePatch } from '../lib/api'
+import {
+  devLogin,
+  adminLogin,
+  fetchMe,
+  logout as apiLogout,
+  updateMe,
+  type ProfilePatch,
+} from '../lib/api'
 
 type Status = 'loading' | 'authenticated' | 'anonymous'
 
@@ -17,6 +24,8 @@ interface AuthValue {
   status: Status
   /** Dev login by nickname; resolves the session and stores the user. */
   loginDev: (nickname: string) => Promise<void>
+  /** Admin login with the shared password. */
+  loginAdmin: (password: string) => Promise<void>
   logout: () => Promise<void>
   /** Patch the current user's profile and update local state. */
   updateProfile: (patch: ProfilePatch) => Promise<User>
@@ -68,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
+  const loginAdmin = useCallback(async (password: string) => {
+    const me = await adminLogin(password)
+    setUser(me)
+    setStatus('authenticated')
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await apiLogout()
@@ -85,8 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AuthValue>(
-    () => ({ user, status, loginDev, logout, updateProfile, refresh }),
-    [user, status, loginDev, logout, updateProfile, refresh],
+    () => ({ user, status, loginDev, loginAdmin, logout, updateProfile, refresh }),
+    [user, status, loginDev, loginAdmin, logout, updateProfile, refresh],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

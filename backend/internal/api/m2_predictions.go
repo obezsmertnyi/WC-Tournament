@@ -41,8 +41,8 @@ type predictionDTO struct {
 func RegisterPredictionRoutes(r gin.IRouter, store PredictionStore, rc Recomputer) {
 	r.GET("/api/predictions/me", auth.RequireUser(), myPredictionsHandler(store))
 	r.PUT("/api/predictions/:matchId", auth.RequireUser(), upsertPredictionHandler(store, rc))
-	// Reveal endpoint: visible to authenticated users; admins included.
-	r.GET("/api/matches/:id/predictions", auth.Optional(), matchPredictionsHandler(store))
+	// Reveal endpoint: only logged-in users may see revealed predictions.
+	r.GET("/api/matches/:id/predictions", auth.RequireUser(), matchPredictionsHandler(store))
 }
 
 func myPredictionsHandler(store PredictionStore) gin.HandlerFunc {

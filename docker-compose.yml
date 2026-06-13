@@ -34,6 +34,8 @@ services:
     build: ./backend
     image: wc2026-backend:latest
     container_name: wc2026-backend
+    env_file:
+      - .env          # JWT_SECRET, ADMIN_PASSWORD, GOOGLE_OAUTH_*, TELEGRAM_* (gitignored)
     environment:
       PORT: "8080"
       DATABASE_URL: ${DATABASE_URL:-postgres://wc:wc@db:5432/wc2026?sslmode=disable}

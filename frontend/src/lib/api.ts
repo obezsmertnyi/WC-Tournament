@@ -90,6 +90,19 @@ export async function devLogin(nickname: string, signal?: AbortSignal): Promise<
   return (await res.json()) as User
 }
 
+/** Admin login with the shared password (from .env on the server). */
+export async function adminLogin(password: string, signal?: AbortSignal): Promise<User> {
+  const res = await fetch('/api/auth/admin-login', {
+    ...withCreds,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as User
+}
+
 /** URL the "Continue with Google" affordance navigates to. */
 export const GOOGLE_LOGIN_URL = '/api/auth/google/login'
 

@@ -17,6 +17,10 @@
     "google": "Continue with Google",
     "or": "or",
     "failed": "Couldn’t sign in. Try again.",
+    "adminEntry": "Admin sign-in",
+    "adminPassword": "Admin password",
+    "adminLogin": "Sign in as admin",
+    "adminFailed": "Wrong password.",
     "profile": "Profile",
     "logout": "Log out",
     "close": "Close"

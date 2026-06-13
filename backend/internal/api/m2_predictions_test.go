@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -44,9 +46,21 @@ func (f *fakePredStore) AppendAudit(_ context.Context, e storage.AuditEntry) err
 	return nil
 }
 
-// sessionCookie builds a valid wc_session cookie header value for a user.
+// setTestSecret installs an ephemeral random 32+ byte JWT_SECRET for the test.
+func setTestSecret(t *testing.T) {
+	t.Helper()
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		t.Fatalf("rand: %v", err)
+	}
+	t.Setenv("JWT_SECRET", hex.EncodeToString(b))
+}
+
+// sessionCookie builds a valid wc_session cookie header value for a user. It
+// also installs an ephemeral JWT_SECRET so issued tokens verify in-process.
 func sessionCookie(t *testing.T, id int64, role string) string {
 	t.Helper()
+	setTestSecret(t)
 	tok, err := auth.IssueToken(id, role, "tester")
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
@@ -200,7 +214,10 @@ func TestMatchPredictions_RevealGating(t *testing.T) {
 	r := gin.New()
 	RegisterPredictionRoutes(r, store, nil)
 
+	cookie := sessionCookie(t, 1, "player")
+
 	req := httptest.NewRequest(http.MethodGet, "/api/matches/3/predictions", nil)
+	req.Header.Set("Cookie", cookie)
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -224,6 +241,7 @@ func TestMatchPredictions_RevealGating(t *testing.T) {
 	past := time.Now().UTC().Add(-time.Hour)
 	store.match = storage.MatchScoringRow{ID: 3, Stage: "group", KickoffAt: tp(past)}
 	req2 := httptest.NewRequest(http.MethodGet, "/api/matches/3/predictions", nil)
+	req2.Header.Set("Cookie", cookie)
 	rec2 := httptest.NewRecorder()
 	r.ServeHTTP(rec2, req2)
 	var revealed []map[string]any
@@ -232,5 +250,20 @@ func TestMatchPredictions_RevealGating(t *testing.T) {
 	}
 	if len(revealed) != 1 || revealed[0]["home"] != float64(2) || revealed[0]["points"] != float64(3) {
 		t.Fatalf("post-kickoff reveal mismatch: %s", rec2.Body.String())
+	}
+}
+
+func TestMatchPredictions_RequiresAuth(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	past := time.Now().UTC().Add(-time.Hour)
+	store := &fakePredStore{match: storage.MatchScoringRow{ID: 3, Stage: "group", KickoffAt: tp(past)}}
+	r := gin.New()
+	RegisterPredictionRoutes(r, store, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/matches/3/predictions", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("reveal must require auth (401), got %d (%s)", rec.Code, rec.Body.String())
 	}
 }

@@ -111,7 +111,8 @@ func fetchGoogleUserinfo(ctx context.Context, cfg *oauth2.Config, tok *oauth2.To
 }
 
 // upsertGoogleUser finds the user by google_sub, creating one on first login.
-// The first-ever user becomes admin.
+// New Google users are always players; admin is provisioned only via the
+// password-gated admin-login path.
 func upsertGoogleUser(ctx context.Context, store UserStore, info googleUserinfo) (storage.User, error) {
 	user, err := store.GetUserByGoogleSub(ctx, info.Sub)
 	if err == nil {
