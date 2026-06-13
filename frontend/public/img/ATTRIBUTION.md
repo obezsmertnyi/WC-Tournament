@@ -26,9 +26,10 @@ images are used unmodified except for resizing to a ~400–500px web thumbnail.
 
 ## Trophy — `trophy.jpg`
 
-| File | Description | Source (Pexels) | Author | License |
-|------|-------------|-----------------|--------|---------|
-| `trophy.jpg` | Generic gold football-style trophy cup (studio shot, neutral background) | https://www.pexels.com/photo/gold-trophy-in-close-up-photography-6532362/ | Nataliya Vaitkevich | Pexels License (free to use, no attribution required) |
+| File | Description | Source (Wikimedia Commons) | Author | License |
+|------|-------------|----------------------------|--------|---------|
+| `trophy.jpg` | The FIFA World Cup Trophy on display, National Football Museum, Manchester | https://commons.wikimedia.org/wiki/File:FIFA_World_Cup_Trophy_at_National_Football_Museum,_Manchester_02.jpg | Ank Kumar (User:Ank gsx) | CC BY-SA 4.0 |
 
-Pexels License — https://www.pexels.com/license/. This is a generic gold cup and
-is **not** the official FIFA World Cup Trophy.
+CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/ (attribution: author + license, as above; resized to a web thumbnail).
+
+**Trademark note:** the FIFA World Cup Trophy design is trademarked by FIFA. Use here is for a private, non-commercial PoC. **Legal review required** before any public/commercial release.

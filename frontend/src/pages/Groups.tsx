@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { GroupStanding } from '../types'
 import { fetchStandings } from '../lib/api'
 import GroupCard from '../components/GroupCard'
+import StarHero from '../components/StarHero'
 import { ErrorState } from '../components/states'
 
 type LoadState =
@@ -57,11 +58,14 @@ export default function Groups() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          {t('groups.title')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{t('groups.subtitle')}</p>
+      <header className="relative mb-6 -mx-4 overflow-hidden rounded-b-3xl px-4 pb-6 pt-4 sm:-mx-6 sm:px-6">
+        <StarHero variant="band" />
+        <div className="relative">
+          <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+            {t('groups.title')}
+          </h1>
+          <p className="mt-1 text-sm text-muted">{t('groups.subtitle')}</p>
+        </div>
       </header>
 
       {state.phase === 'loading' && <GroupsSkeleton />}

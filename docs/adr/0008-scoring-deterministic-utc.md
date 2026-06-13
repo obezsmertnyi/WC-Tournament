@@ -20,7 +20,12 @@ A prediction is a **regular-time score** (`home_pred : away_pred`, i.e. "осн�
 
 **Optional tournament bonus picks.** Each is independently toggleable in `bonus_rules` (all default off, integer points): **champion** (default 5), **finalist** (reaches the final), **top scorer**. Each enabled kind lets a player make one pick (`tournament_picks`), locked at an admin-set deadline. Champion/finalist picks are team IDs; the top-scorer pick is a player reference, admin-confirmed at tournament end (from the FIFA top-scorer list). Correct pick → fixed integer bonus added to the total. None of this touches per-match math — all integers, no fractions.
 
-Values live in `scoring_rules` (defaults exact=3, outcome=1, knockout_winner=1, champion_bonus off/5) and are versioned. **Rules are frozen and confirmed by all players before scoring starts.** Re-scoring is **idempotent** (`recompute-scores` CLI) and re-runs on any result change.
+**Time-tiered champion bonus.** Picking the champion earlier is riskier (more teams alive) and so is worth more. The champion pick is changeable until knockout starts (R32 kickoff = hard lock); the awarded bonus is the tier of the window in which the pick was **last set**:
+- set **during the group stage** (early/risky) → higher bonus (default **+8**)
+- set **after the group stage, before R32** (32 teams left, safer) → lower bonus (default **+4**)
+Tiers live in `bonus_rules` as `champion_tiers[]{window_end, points}` (admin-editable, integer points only). The window boundary is the group stage's last kickoff. Changing the pick re-stamps its window (and thus its tier), so a late edit drops you to the lower tier — there's no way to "lock early, switch late for full points". Stored on `tournament_picks` as `locked_at` + resolved `tier_points`.
+
+Values live in `scoring_rules` (defaults exact=3, outcome=1, knockout_winner=1) and `bonus_rules` (champion tiers off by default), versioned. **Rules are frozen and confirmed by all players before scoring starts.** Re-scoring is **idempotent** (`recompute-scores` CLI) and re-runs on any result change.
 
 ### Time policy
 - **All timestamps stored and compared in UTC.** The prediction lock is enforced **server-side** against `kickoff_at` (UTC); the client clock is never trusted.

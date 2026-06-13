@@ -24,13 +24,25 @@ Legend: ✅ done & deployed · 🟡 coded, pending deploy/verify · ⬜ planned
 - ✅ Host-country flag (🇺🇸/🇨🇦/🇲🇽) next to venue/stadium
 - ✅ Ukrainian country/team names (Мексика, Південна Корея…) — switch with language
 - ✅ Reduced-motion robustness (fixture cards render reliably; fixed blank lists)
-- ✅ "Stars to watch" band on Calendar (Messi/Ronaldo/Mbappé/Vinícius/Bellingham — placeholder portraits + flag)
-- ⬜ **Star photos on group pages** — each notable team's star (Argentina→Messi, Norway→Haaland), styled differently than the calendar band. Needs licensed image URLs (owner to provide; copyright — not scraping).
-- ⬜ Stars in calendar AND groups, presented differently per context *(requested)*
+- ✅ Real CC-licensed player photos (Messi/Ronaldo/Mbappé/Vinícius/Kane/Haaland) — replaced drawn monograms
+- 🟡 Remove "Stars to watch" widget; use player photos LARGE as page artwork (calendar hero + groups + group-detail star), blended/editorial — *agent in progress*
+- 🟡 Real **FIFA World Cup trophy** image (replace generic cup) — *agent in progress*
 - ✅ Public access via Cloudflare quick tunnel (temporary URL)
 
+## Live data (gap found)
+- ⬜ **Periodic sync + auto-refresh** — scores only update on backend restart now (boot-sync once, no cron, no FE polling). Cadence: **schedule sync every 1h**; **per-match live sync every 1 min but ONLY while a match is in its live window** (kickoff ≤ now ≤ kickoff+~2.5h, not finished) — never poll a match outside its window (avoid Akamai block). Frontend polls /api/matches & /api/standings (faster when a match is live). *(reported: USA 3rd goal didn't appear)*
+
+## Knockout
+- ⬜ **Bracket view** (tab is a placeholder): knockout tree R32→Final from FIFA stages + pre-draw placeholders
+
+## Current priority order (owner)
+1. **#6 user cabinet + predictions** — the core game, INCLUDING the bonus picks (champion/finalist/top-scorer + time-tiered champion bonus, ADR-0008)
+2. **Groups** — finish polish (player-photo art done; minor)
+3. **Statistics** — live auto-update (#4) + detailed match-detail page on tapping a fixture (#9)
+Parallelize across non-overlapping areas (backend vs frontend; worktrees if same files).
+
 ## Match detail (researched)
-- ⬜ Match-detail page with FIFA stats. Calendar endpoint already gives officials/attendance/stadium/formations/penalties/weather; deep stats (possession/shots/cards/lineups/events) live in the FIFA `live/...` endpoint — one URL was sandbox-blocked, **verify its fields against a real match before coding structs**.
+- ⬜ Match-detail page with FIFA stats (priority 3). Auto-updating live + detailed post-match. Calendar endpoint already gives officials/attendance/stadium/formations/penalties/weather; deep stats (possession/shots/cards/lineups/events) live in the FIFA `live/...` endpoint — one URL was sandbox-blocked, **verify its fields against a real match before coding structs**.
 
 ## Game mechanics (M2+, not started)
 - ⬜ Google OAuth + profile (nickname, photo, favorite-team flag, Telegram link)

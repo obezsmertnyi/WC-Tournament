@@ -6,8 +6,10 @@ import type { GroupStanding, Match } from '../types'
 import { fetchMatches, fetchStandings } from '../lib/api'
 import StandingsTable from '../components/StandingsTable'
 import FixtureCard from '../components/FixtureCard'
+import StarHero from '../components/StarHero'
 import { ErrorState } from '../components/states'
 import { useMountAnimation } from '../lib/motion'
+import { starForTeams } from '../lib/stars'
 
 interface Data {
   standing: GroupStanding | undefined
@@ -61,6 +63,20 @@ export default function GroupDetail() {
   const title = useMemo(() => t('calendar.groupNamed', { letter: group }), [t, group])
   const mount = useMountAnimation(10)
 
+  // The featured star (if any) whose national team plays in this group. Codes are
+  // collected from standings rows and, as a fallback, from the group's fixtures —
+  // so the portrait shows even before standings populate.
+  const groupStar = useMemo(() => {
+    if (state.phase !== 'ready') return undefined
+    const codes = new Set<string>()
+    state.data.standing?.rows.forEach((r) => r.code && codes.add(r.code))
+    state.data.matches.forEach((m) => {
+      if (m.home?.code) codes.add(m.home.code)
+      if (m.away?.code) codes.add(m.away.code)
+    })
+    return starForTeams(codes)
+  }, [state])
+
   return (
     <div className="mx-auto w-full max-w-5xl">
       <Link
@@ -73,9 +89,12 @@ export default function GroupDetail() {
         {t('groups.back')}
       </Link>
 
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{t('groups.detailSubtitle')}</p>
+      <header className="relative mb-6 -mx-4 overflow-hidden rounded-b-3xl px-4 pb-6 pt-2 sm:-mx-6 sm:px-6">
+        {groupStar && <StarHero variant="portrait" stars={[groupStar]} />}
+        <div className="relative">
+          <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{title}</h1>
+          <p className="mt-1 text-sm text-muted">{t('groups.detailSubtitle')}</p>
+        </div>
       </header>
 
       {state.phase === 'loading' && (

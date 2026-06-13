@@ -6,7 +6,7 @@ import { fetchMatches } from '../lib/api'
 import { buildMatchDays, defaultMatchDayKey, formatKyivFullDate } from '../lib/fixtures'
 import FixtureCard from '../components/FixtureCard'
 import DateStrip from '../components/DateStrip'
-import StarsBand from '../components/StarsBand'
+import StarHero from '../components/StarHero'
 import Trophy from '../components/Trophy'
 import { EmptyState, ErrorState, FixturesSkeleton } from '../components/states'
 import { useMountAnimation } from '../lib/motion'
@@ -39,18 +39,19 @@ export default function Calendar() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      {/* Hero: trophy mark paired with the title. */}
-      <header className="mb-6 flex items-center gap-3 sm:gap-4">
-        <Trophy className="h-12 w-12 rounded-xl sm:h-16 sm:w-16" />
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-            {t('calendar.title')}
-          </h1>
-          <p className="mt-1 text-sm text-muted">{t('calendar.subtitle')}</p>
+      {/* Hero: large blended player artwork behind the trophy mark + title. */}
+      <header className="relative mb-6 -mx-4 overflow-hidden rounded-b-3xl px-4 pb-6 pt-4 sm:-mx-6 sm:px-6">
+        <StarHero variant="band" />
+        <div className="relative flex items-center gap-3 sm:gap-4">
+          <Trophy className="h-12 w-12 rounded-xl sm:h-16 sm:w-16" />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+              {t('calendar.title')}
+            </h1>
+            <p className="mt-1 text-sm text-muted">{t('calendar.subtitle')}</p>
+          </div>
         </div>
       </header>
-
-      <StarsBand />
 
       {state.phase === 'loading' && <FixturesSkeleton />}
       {state.phase === 'error' && <ErrorState onRetry={() => load()} />}

@@ -71,9 +71,6 @@
   "fixture": {
     "tbd": "TBD"
   },
-  "stars": {
-    "heading": "Зірки турніру"
-  },
   "states": {
     "empty": {
       "title": "Календар синхронізується…",
