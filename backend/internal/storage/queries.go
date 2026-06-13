@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -177,6 +178,69 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// SetMatchResult overrides a match result by id (admin manual entry). It sets
+// home_score/away_score/status, marks result_source='manual' so a later FIFA
+// sync will not silently overwrite it (ADR-0006), and bumps updated_at. The
+// updated row is returned with home/away team data joined when assigned.
+// Returns ErrNotFound when no match with the id exists.
+func (s *Store) SetMatchResult(ctx context.Context, id int64, home, away int, status string) (Match, error) {
+	const sql = `
+		WITH upd AS (
+			UPDATE matches SET
+				home_score    = $2,
+				away_score    = $3,
+				status        = $4,
+				result_source = 'manual',
+				updated_at    = now()
+			WHERE id = $1
+			RETURNING id, fifa_id, stage, group_label, match_number,
+			          kickoff_at, status, home_score, away_score,
+			          venue_stadium, venue_city, venue_country,
+			          placeholder_home, placeholder_away,
+			          result_source, updated_at, home_team_id, away_team_id
+		)
+		SELECT
+			upd.id, upd.fifa_id, upd.stage, COALESCE(upd.group_label, ''), upd.match_number,
+			upd.kickoff_at, upd.status, upd.home_score, upd.away_score,
+			COALESCE(upd.venue_stadium, ''), COALESCE(upd.venue_city, ''), COALESCE(upd.venue_country, ''),
+			COALESCE(upd.placeholder_home, ''), COALESCE(upd.placeholder_away, ''),
+			upd.result_source, upd.updated_at,
+			ht.id, COALESCE(ht.name, ''), COALESCE(ht.code, ''), COALESCE(ht.flag_url, ''),
+			at.id, COALESCE(at.name, ''), COALESCE(at.code, ''), COALESCE(at.flag_url, '')
+		FROM upd
+		LEFT JOIN teams ht ON ht.id = upd.home_team_id
+		LEFT JOIN teams at ON at.id = upd.away_team_id`
+
+	var (
+		m                   Match
+		homeID, awayID      *int64
+		hName, hCode, hFlag string
+		aName, aCode, aFlag string
+	)
+	err := s.pool.QueryRow(ctx, sql, id, home, away, status).Scan(
+		&m.ID, &m.FifaID, &m.Stage, &m.GroupLabel, &m.MatchNumber,
+		&m.KickoffAt, &m.Status, &m.HomeScore, &m.AwayScore,
+		&m.VenueStadium, &m.VenueCity, &m.VenueCountry,
+		&m.PlaceholderHome, &m.PlaceholderAway,
+		&m.ResultSource, &m.UpdatedAt,
+		&homeID, &hName, &hCode, &hFlag,
+		&awayID, &aName, &aCode, &aFlag,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Match{}, ErrNotFound
+	}
+	if err != nil {
+		return Match{}, fmt.Errorf("set match result: %w", err)
+	}
+	if homeID != nil {
+		m.Home = &Team{ID: *homeID, Name: hName, Code: hCode, FlagURL: hFlag, GroupLabel: m.GroupLabel}
+	}
+	if awayID != nil {
+		m.Away = &Team{ID: *awayID, Name: aName, Code: aCode, FlagURL: aFlag, GroupLabel: m.GroupLabel}
+	}
+	return m, nil
 }
 
 // ListFinishedGroupMatches returns finished group-stage matches that have both

@@ -53,6 +53,15 @@
     "selectPlayer": "Predict on behalf of a player",
     "editingFor": "Editing for {{player}}"
   },
+  "adminResult": {
+    "eyebrow": "Admin",
+    "title": "Set result",
+    "scoreFor": "Result score for {{team}}",
+    "save": "Save result",
+    "saving": "Saving…",
+    "saved": "Result saved",
+    "error": "Couldn’t save result"
+  },
   "admin": {
     "eyebrow": "Admin",
     "players": "Players",

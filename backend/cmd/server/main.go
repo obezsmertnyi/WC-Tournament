@@ -204,7 +204,7 @@ func run(logger *slog.Logger) error {
 		api.RegisterProfileRoutes(engine, store)
 		api.RegisterPredictionRoutes(engine, store, recomputer)
 		api.RegisterBonusRoutes(engine, store)
-		api.RegisterAdminRoutes(engine, store)
+		api.RegisterAdminRoutes(engine, store, recomputer)
 	}
 
 	srv := &http.Server{

@@ -19,6 +19,7 @@ type AdminStore interface {
 	CreatePlayer(ctx context.Context, nickname string) (storage.User, error)
 	GetUserByID(ctx context.Context, id int64) (storage.User, error)
 	DeleteUserCascade(ctx context.Context, id int64) error
+	SetMatchResult(ctx context.Context, id int64, home, away int, status string) (storage.Match, error)
 	AppendAudit(ctx context.Context, e storage.AuditEntry) error
 }
 
@@ -31,16 +32,94 @@ type adminUserDTO struct {
 	Role             string  `json:"role"`
 }
 
-// RegisterAdminRoutes wires the admin user-roster endpoints (all RequireAdmin):
+// RegisterAdminRoutes wires the admin endpoints (all RequireAdmin):
 //
-//	GET    /api/admin/users        list users
-//	POST   /api/admin/users        provision a player by nickname
-//	DELETE /api/admin/users/:id    delete a player and their derived rows
-func RegisterAdminRoutes(r gin.IRouter, store AdminStore) {
+//	GET    /api/admin/users               list users
+//	POST   /api/admin/users               provision a player by nickname
+//	DELETE /api/admin/users/:id           delete a player and their derived rows
+//	PUT    /api/admin/matches/:id/result  set/override a match result (manual)
+//
+// rc may be nil to disable the re-scoring hook (e.g. in tests that don't assert
+// on recompute), though production always passes a live recomputer.
+func RegisterAdminRoutes(r gin.IRouter, store AdminStore, rc Recomputer) {
 	grp := r.Group("/api/admin/users", auth.RequireAdmin())
 	grp.GET("", adminListUsersHandler(store))
 	grp.POST("", adminCreateUserHandler(store))
 	grp.DELETE("/:id", adminDeleteUserHandler(store))
+
+	matches := r.Group("/api/admin/matches", auth.RequireAdmin())
+	matches.PUT("/:id/result", adminSetMatchResultHandler(store, rc))
+}
+
+// adminSetMatchResultHandler sets or overrides a match result by id. Per
+// ADR-0006 a manual admin entry must win over a later FIFA sync, so the storage
+// write marks result_source='manual'. After persisting, it recomputes points
+// for the affected match so the leaderboard updates immediately, and writes a
+// result_override audit row (match id only — never the score values, per policy).
+func adminSetMatchResultHandler(store AdminStore, rc Recomputer) gin.HandlerFunc {
+	type req struct {
+		HomeScore int    `json:"homeScore"`
+		AwayScore int    `json:"awayScore"`
+		Status    string `json:"status"`
+	}
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil || id <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match id"})
+			return
+		}
+
+		var body req
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+			return
+		}
+		if body.HomeScore < 0 || body.HomeScore > maxScore || body.AwayScore < 0 || body.AwayScore > maxScore {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "scores must be between 0 and 30"})
+			return
+		}
+
+		status := strings.TrimSpace(body.Status)
+		if status == "" {
+			status = "finished"
+		}
+		switch status {
+		case "finished", "live", "scheduled":
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be finished, live or scheduled"})
+			return
+		}
+
+		ctx := c.Request.Context()
+		m, err := store.SetMatchResult(ctx, id, body.HomeScore, body.AwayScore, status)
+		if err != nil {
+			if errors.Is(err, storage.ErrNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "match not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set match result"})
+			return
+		}
+
+		// Re-materialize points for this match so the leaderboard reflects the
+		// override immediately.
+		if rc != nil {
+			_ = rc.RecomputeMatch(ctx, id)
+		}
+
+		// Audit (actions only — never the score values, per policy).
+		claims, _ := auth.Current(c)
+		actor := claims.Sub
+		matchID := id
+		_ = store.AppendAudit(ctx, storage.AuditEntry{
+			ActorUserID: &actor,
+			ActorRole:   claims.Role,
+			Action:      "result_override",
+			MatchID:     &matchID,
+		})
+
+		c.JSON(http.StatusOK, toMatchDTO(m))
+	}
 }
 
 func adminListUsersHandler(store AdminStore) gin.HandlerFunc {

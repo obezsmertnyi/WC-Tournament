@@ -1,5 +1,6 @@
 import type {
   Match,
+  MatchStatus,
   GroupStanding,
   User,
   AdminPlayer,
@@ -203,6 +204,34 @@ export async function deletePlayer(id: string, signal?: AbortSignal): Promise<vo
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)
+}
+
+/**
+ * Set (or correct) the actual result of a match (admin only). The backend
+ * recomputes scores for everyone's predictions. Works for any match, including
+ * already-finished ones. Returns the updated match when the backend provides
+ * it, or `null` when it answers with a bare `{ ok: true }`.
+ *
+ * `PUT /api/admin/matches/{id}/result` body `{ homeScore, awayScore, status? }`.
+ */
+export async function setMatchResult(
+  matchId: number,
+  homeScore: number,
+  awayScore: number,
+  status?: MatchStatus,
+  signal?: AbortSignal,
+): Promise<Match | null> {
+  const res = await fetch(`/api/admin/matches/${matchId}/result`, {
+    ...withCreds,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ homeScore, awayScore, ...(status ? { status } : {}) }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  const data = (await res.json().catch(() => null)) as unknown
+  if (data && typeof data === 'object' && 'id' in data) return data as Match
+  return null
 }
 
 /** Reveal everyone's predictions for a match (locked until kickoff). */
