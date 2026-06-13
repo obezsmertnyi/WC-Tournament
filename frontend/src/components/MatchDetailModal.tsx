@@ -184,8 +184,18 @@ interface DetailBodyProps {
   awayName: string
 }
 
+/** Flag identity for each side, passed to event rows so it's clear whose event it is. */
+export interface SideFlags {
+  home: { code?: string; flagUrl?: string; name: string }
+  away: { code?: string; flagUrl?: string; name: string }
+}
+
 function DetailBody({ match, detail, homeName, awayName }: DetailBodyProps) {
   const { t } = useTranslation()
+  const sides: SideFlags = {
+    home: { code: match.home?.code, flagUrl: match.home?.flagUrl, name: homeName },
+    away: { code: match.away?.code, flagUrl: match.away?.flagUrl, name: awayName },
+  }
 
   if (!detail.available) {
     return (
@@ -224,7 +234,7 @@ function DetailBody({ match, detail, homeName, awayName }: DetailBodyProps) {
         <Section title={t('matchDetail.goals')}>
           <ul className="space-y-1.5">
             {detail.goals.map((g, i) => (
-              <GoalRow key={i} goal={g} homeName={homeName} awayName={awayName} />
+              <GoalRow key={i} goal={g} sides={sides} homeName={homeName} awayName={awayName} />
             ))}
           </ul>
         </Section>
@@ -234,7 +244,7 @@ function DetailBody({ match, detail, homeName, awayName }: DetailBodyProps) {
         <Section title={t('matchDetail.cards')}>
           <ul className="space-y-1.5">
             {detail.cards.map((c, i) => (
-              <CardRow key={i} card={c} homeName={homeName} awayName={awayName} />
+              <CardRow key={i} card={c} sides={sides} homeName={homeName} awayName={awayName} />
             ))}
           </ul>
         </Section>
@@ -244,7 +254,7 @@ function DetailBody({ match, detail, homeName, awayName }: DetailBodyProps) {
         <Section title={t('matchDetail.subs')}>
           <ul className="space-y-1.5">
             {detail.substitutions.map((s, i) => (
-              <SubRow key={i} sub={s} homeName={homeName} awayName={awayName} />
+              <SubRow key={i} sub={s} sides={sides} homeName={homeName} awayName={awayName} />
             ))}
           </ul>
         </Section>
@@ -450,21 +460,22 @@ function Minute({ value }: { value: string }) {
 function EventRow({
   children,
   team,
+  sides,
 }: {
   children: React.ReactNode
   team: DetailSide
+  sides: SideFlags
 }) {
+  const s = team === 'home' ? sides.home : sides.away
   return (
     <li className="flex items-center gap-3 rounded-xl border border-hairline bg-white/[0.025] px-3 py-2">
       {children}
-      <span
-        className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.1em] ${
-          team === 'home'
-            ? 'bg-white/[0.05] text-muted/80'
-            : 'border border-hairline text-muted/70'
-        }`}
-      >
-        {team === 'home' ? 'H' : 'A'}
+      {/* Whose event it is — the team's flag + code (clear at a glance) */}
+      <span className="ml-auto flex shrink-0 items-center gap-1.5" title={s.name}>
+        <Flag code={s.code} flagUrl={s.flagUrl} label={s.name} className="h-[0.85rem] w-[1.25rem]" />
+        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted/75">
+          {s.code ?? (team === 'home' ? 'H' : 'A')}
+        </span>
       </span>
     </li>
   )
@@ -472,15 +483,17 @@ function EventRow({
 
 function GoalRow({
   goal,
+  sides,
   homeName,
   awayName,
 }: {
   goal: DetailGoal
+  sides: SideFlags
   homeName: string
   awayName: string
 }) {
   return (
-    <EventRow team={goal.team}>
+    <EventRow team={goal.team} sides={sides}>
       <Minute value={goal.minute} />
       <BallGlyph />
       <span className="min-w-0 flex-1 truncate text-sm text-text">
@@ -497,10 +510,12 @@ function GoalRow({
 
 function CardRow({
   card,
+  sides,
   homeName,
   awayName,
 }: {
   card: DetailCard
+  sides: SideFlags
   homeName: string
   awayName: string
 }) {
@@ -510,7 +525,7 @@ function CardRow({
       ? card.card.toLowerCase().includes('red')
       : Number(card.card) >= 2
   return (
-    <EventRow team={card.team}>
+    <EventRow team={card.team} sides={sides}>
       <Minute value={card.minute} />
       <span
         className={`h-3.5 w-2.5 shrink-0 rounded-[2px] shadow-sm ${red ? 'bg-red-500' : 'bg-yellow-400'}`}
@@ -526,15 +541,17 @@ function CardRow({
 
 function SubRow({
   sub,
+  sides,
   homeName,
   awayName,
 }: {
   sub: DetailSubstitution
+  sides: SideFlags
   homeName: string
   awayName: string
 }) {
   return (
-    <EventRow team={sub.team}>
+    <EventRow team={sub.team} sides={sides}>
       <Minute value={sub.minute} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
         <span className="flex items-center gap-1.5 truncate text-emerald-400/90">

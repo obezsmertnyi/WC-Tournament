@@ -87,6 +87,7 @@ type LiveLineup struct {
 // LiveGoal is a goal event normalized with resolved scorer/assist names.
 type LiveGoal struct {
 	TeamFifaID string
+	Side       string // "home" or "away" — which team scored
 	ScorerName string
 	AssistName string // "" when none
 	Minute     string
@@ -96,6 +97,7 @@ type LiveGoal struct {
 // LiveCard is a booking event normalized with the resolved player name.
 type LiveCard struct {
 	TeamFifaID string
+	Side       string // "home" or "away"
 	PlayerName string
 	Minute     string
 	Card       *int // raw FIFA card type (1 yellow, etc.)
@@ -104,6 +106,7 @@ type LiveCard struct {
 // LiveSubstitution is a substitution event.
 type LiveSubstitution struct {
 	TeamFifaID string
+	Side       string // "home" or "away"
 	PlayerIn   string
 	PlayerOut  string
 	Minute     string

@@ -210,7 +210,7 @@ func toMatchDetailDTO(l *results.LiveMatch) matchDetailDTO {
 
 	for _, g := range l.Goals {
 		dto.Goals = append(dto.Goals, detailGoalDTO{
-			Team:   g.TeamFifaID,
+			Team:   g.Side,
 			Scorer: g.ScorerName,
 			Assist: emptyToNil(g.AssistName),
 			Minute: g.Minute,
@@ -219,7 +219,7 @@ func toMatchDetailDTO(l *results.LiveMatch) matchDetailDTO {
 	}
 	for _, card := range l.Cards {
 		dto.Cards = append(dto.Cards, detailCardDTO{
-			Team:   card.TeamFifaID,
+			Team:   card.Side,
 			Player: card.PlayerName,
 			Minute: card.Minute,
 			Card:   card.Card,
@@ -227,7 +227,7 @@ func toMatchDetailDTO(l *results.LiveMatch) matchDetailDTO {
 	}
 	for _, s := range l.Substitutions {
 		dto.Substitutions = append(dto.Substitutions, detailSubDTO{
-			Team:      s.TeamFifaID,
+			Team:      s.Side,
 			PlayerIn:  s.PlayerIn,
 			PlayerOut: s.PlayerOut,
 			Minute:    s.Minute,

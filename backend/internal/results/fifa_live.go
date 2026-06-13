@@ -96,13 +96,20 @@ func parseLiveMatch(resp fifaLiveResponse) *LiveMatch {
 	lm.HomeLineup = mapLineup(resp.HomeTeam)
 	lm.AwayLineup = mapLineup(resp.AwayTeam)
 
-	for _, t := range []*fifaLiveTeam{resp.HomeTeam, resp.AwayTeam} {
+	// Iterate home first, then away, so each event is tagged with the side it
+	// belongs to (the API consumer relies on "home"/"away", not the raw FIFA id).
+	for _, tt := range []struct {
+		side string
+		team *fifaLiveTeam
+	}{{"home", resp.HomeTeam}, {"away", resp.AwayTeam}} {
+		t := tt.team
 		if t == nil {
 			continue
 		}
 		for _, g := range t.Goals {
 			lm.Goals = append(lm.Goals, LiveGoal{
 				TeamFifaID: g.IdTeam,
+				Side:       tt.side,
 				ScorerName: playerName[g.IdPlayer],
 				AssistName: playerName[g.IdAssistPlayer],
 				Minute:     g.Minute,
@@ -112,6 +119,7 @@ func parseLiveMatch(resp fifaLiveResponse) *LiveMatch {
 		for _, b := range t.Bookings {
 			lm.Cards = append(lm.Cards, LiveCard{
 				TeamFifaID: b.IdTeam,
+				Side:       tt.side,
 				PlayerName: playerName[b.IdPlayer],
 				Minute:     b.Minute,
 				Card:       b.Card,
@@ -120,6 +128,7 @@ func parseLiveMatch(resp fifaLiveResponse) *LiveMatch {
 		for _, s := range t.Substitutions {
 			lm.Substitutions = append(lm.Substitutions, LiveSubstitution{
 				TeamFifaID: s.IdTeam,
+				Side:       tt.side,
 				PlayerIn:   localized(s.PlayerOnName),
 				PlayerOut:  localized(s.PlayerOffName),
 				Minute:     s.Minute,
