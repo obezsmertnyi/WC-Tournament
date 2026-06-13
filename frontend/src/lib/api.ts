@@ -7,7 +7,8 @@ import type {
   MatchReveal,
   LeaderboardEntry,
   AuditEntry,
-  ChampionBonus,
+  BonusPick,
+  TeamOption,
 } from '../types'
 
 /**
@@ -233,18 +234,43 @@ export async function fetchAudit(signal?: AbortSignal): Promise<AuditEntry[]> {
   return Array.isArray(data) ? (data as AuditEntry[]) : []
 }
 
-// ── Champion bonus ──────────────────────────────────────────────────────────
+// ── Teams ─────────────────────────────────────────────────────────────────--
 
-export async function fetchMyBonus(signal?: AbortSignal): Promise<ChampionBonus> {
-  const res = await fetch('/api/bonus/me', { ...withCreds, signal })
+/**
+ * Fetch the full team field (`GET /api/teams` → `{ teams: [...] }`). Used by the
+ * champion-bonus picker so the user can choose from all 48 nations.
+ */
+export async function fetchTeams(signal?: AbortSignal): Promise<TeamOption[]> {
+  const res = await fetch('/api/teams', { ...withCreds, signal })
   if (!res.ok) throw new ApiError(res.status)
-  return (await res.json()) as ChampionBonus
+  const data = (await res.json()) as { teams?: unknown }
+  if (!data || !Array.isArray(data.teams)) return []
+  return data.teams as TeamOption[]
 }
 
+// ── Champion bonus ──────────────────────────────────────────────────────────
+
+/**
+ * Fetch the signed-in user's tournament-wide bonus picks
+ * (`GET /api/bonus/me` → `{ picks: [...] }`).
+ */
+export async function fetchMyBonus(signal?: AbortSignal): Promise<BonusPick[]> {
+  const res = await fetch('/api/bonus/me', { ...withCreds, signal })
+  if (!res.ok) throw new ApiError(res.status)
+  const data = (await res.json()) as { picks?: unknown }
+  if (!data || !Array.isArray(data.picks)) return []
+  return data.picks as BonusPick[]
+}
+
+/**
+ * Upsert the champion pick (`PUT /api/bonus/champion {teamId}`). The backend
+ * resolves the time-tiered points and re-stamps `lockedAt` on every change.
+ * Throws ApiError(409) once the knockout stage starts (hard lock).
+ */
 export async function saveChampionBonus(
   teamId: number,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<BonusPick> {
   const res = await fetch('/api/bonus/champion', {
     ...withCreds,
     method: 'PUT',
@@ -253,4 +279,5 @@ export async function saveChampionBonus(
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as BonusPick
 }

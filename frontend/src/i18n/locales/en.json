@@ -75,7 +75,8 @@
     "subtitle": "Live leaderboard and revealed predictions.",
     "tab": {
       "leaderboard": "Leaderboard",
-      "reveals": "Predictions"
+      "reveals": "Predictions",
+      "bonus": "Bonus"
     },
     "player": "Player",
     "points": "Pts",
@@ -88,6 +89,24 @@
     "revealEmpty": "No predictions for this match.",
     "revealError": "Couldn’t load predictions.",
     "revealNoMatches": "No matches to reveal yet."
+  },
+  "bonus": {
+    "title": "Bonus picks",
+    "champion": "Champion",
+    "pickChampion": "Pick your champion",
+    "tierHint": "Pick during the group stage to lock in the most points — a pick made after the group stage is worth fewer. The pick stays open until the knockout rounds begin, but changing it re-stamps the time, so a late switch can drop your tier.",
+    "tierGroup": "Group stage",
+    "tierPostGroup": "After group stage",
+    "noPick": "No champion picked yet.",
+    "points": "{{points}} pts",
+    "locked": "Locked",
+    "lockedAt": "Locked {{date}} · {{time}}",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Couldn’t save your pick.",
+    "searchPlaceholder": "Search teams…",
+    "noResults": "No teams match your search.",
+    "signInPrompt": "Sign in to pick your champion."
   },
   "audit": {
     "title": "Audit",

@@ -126,3 +126,26 @@ export interface ChampionBonus {
   lockedAt?: string | null
   points?: number | null
 }
+
+/** A team option for the champion picker (`GET /api/teams`). */
+export interface TeamOption {
+  id: number
+  name: string
+  code: string
+  flagUrl: string
+  group: string | null
+}
+
+/**
+ * A single tournament-wide bonus pick (`GET /api/bonus/me` → `{ picks: [...] }`).
+ * `pickRef` is the picked entity reference — for `kind === 'champion'` it is the
+ * teamId as a string. `tierPoints` is the locked-in points for the pick (null
+ * when the bonus is disabled / no tier applies). `lockedAt` is the timestamp the
+ * pick was last stamped (a late edit re-stamps it and may drop the tier).
+ */
+export interface BonusPick {
+  kind: string
+  pickRef: string
+  tierPoints: number | null
+  lockedAt: string | null
+}

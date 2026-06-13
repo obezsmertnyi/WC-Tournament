@@ -19,7 +19,7 @@ import { STARS, type Star } from '../lib/stars'
  * If an image fails to load it is dropped silently (no broken <img>).
  */
 
-const DUOTONE_FILTER = 'grayscale(1) contrast(1.05) brightness(0.62) sepia(0.45)'
+const DUOTONE_FILTER = 'grayscale(0.3) contrast(1.04) brightness(0.82)'
 
 function HeroImage({
   star,
@@ -147,9 +147,9 @@ export default function StarHero({
             star={star}
             className="relative h-full flex-1"
             imgClassName="h-full w-full object-cover object-top"
-            // Stagger opacity so the band reads as a soft, layered collage,
-            // brighter toward the right edge, faintest under the title.
-            style={{ opacity: 0.16 + i * 0.05 }}
+            // Visible portraits (like the login hero), brightest toward the
+            // right; the left/bottom scrim in HeroOverlays keeps the title legible.
+            style={{ opacity: 0.5 + i * 0.07 }}
           />
         ))}
       </div>
