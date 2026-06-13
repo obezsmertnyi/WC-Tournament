@@ -91,8 +91,9 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
     fetchAdminUsers(controller.signal)
       .then((list) => {
         if (controller.signal.aborted) return
-        // Hide admins from the roster of pickable players (predict for users).
-        setPlayers(list.filter((p) => p.role !== 'admin' || p.id !== user?.id))
+        // Hide the acting admin from the roster of pickable players. IDs come
+        // off the wire as numbers; compare as strings to stay type-agnostic.
+        setPlayers(list.filter((p) => p.role !== 'admin' || String(p.id) !== String(user?.id)))
       })
       .catch(() => {
         /* leave empty; selector simply offers no players */
@@ -100,10 +101,13 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
     return () => controller.abort()
   }, [isAdmin, user?.id])
 
+  // The roster comes off the wire with numeric ids, while the <select> value is
+  // always a string — compare as strings so the lookup actually matches.
   const actingFor = asPlayerId
-    ? players.find((p) => p.id === asPlayerId) ?? null
+    ? players.find((p) => String(p.id) === asPlayerId) ?? null
     : null
-  const forUserId = actingFor ? actingFor.id : undefined
+  // Send the target id to the backend as a number (it binds `*int64`).
+  const forUserId = actingFor ? Number(actingFor.id) : undefined
 
   // The admin's own prediction lives in `byMatch`; another player's does not
   // (we never prefetch it), so the editor starts blank when a player is chosen.

@@ -172,8 +172,9 @@ export interface PredictionInput {
   /**
    * Admin-only: write this prediction on behalf of the given player. When set,
    * the backend bypasses the kickoff lock. Ignored (and rejected) for non-admins.
+   * Numeric — the backend binds it as an int64 user id.
    */
-  forUserId?: string
+  forUserId?: number
 }
 
 /** Upsert a prediction for a match. Throws ApiError(409) when locked. */

@@ -18,7 +18,7 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'locked' | 'error'
 interface PredictionsValue {
   /** matchId → the user's current prediction (optimistic). */
   byMatch: Map<number, MyPrediction>
-  saveStateOf: (matchId: number, forUserId?: string) => SaveState
+  saveStateOf: (matchId: number, forUserId?: number) => SaveState
   /**
    * Queue a debounced save for a match (called on input change/blur).
    * When `input.forUserId` is set (admin acting on behalf of a player), the
@@ -33,7 +33,7 @@ const PredictionsContext = createContext<PredictionsValue | null>(null)
 const DEBOUNCE_MS = 600
 
 /** Save-state / timer key — per match, and per target user when admin-writing. */
-function keyOf(matchId: number, forUserId?: string): string {
+function keyOf(matchId: number, forUserId?: number): string {
   return forUserId ? `${matchId}:${forUserId}` : `${matchId}`
 }
 
@@ -145,7 +145,7 @@ export function PredictionsProvider({ children }: { children: ReactNode }) {
   )
 
   const saveStateOf = useCallback(
-    (matchId: number, forUserId?: string): SaveState =>
+    (matchId: number, forUserId?: number): SaveState =>
       saveStates.get(keyOf(matchId, forUserId)) ?? 'idle',
     [saveStates],
   )
