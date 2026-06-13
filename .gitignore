@@ -1,0 +1,30 @@
+# --- Secrets / env (NEVER commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Go (backend) ---
+/backend/bin/
+/backend/tmp/
+*.test
+*.out
+coverage.*
+
+# --- Node / frontend ---
+node_modules/
+/frontend/dist/
+/frontend/.vite/
+*.local
+
+# --- Docker / data ---
+/data/
+*.pgdata
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
