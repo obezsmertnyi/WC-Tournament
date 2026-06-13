@@ -6,6 +6,7 @@ import GroupDetail from './pages/GroupDetail'
 import Competition from './pages/Competition'
 import Audit from './pages/Audit'
 import Profile from './pages/Profile'
+import Bracket from './pages/Bracket'
 import ComingSoon from './pages/ComingSoon'
 import { AuthProvider } from './auth/AuthContext'
 import { PredictionsProvider } from './predictions/PredictionsContext'
@@ -35,7 +36,7 @@ const router = createBrowserRouter([
       { path: 'competition', element: <Competition /> },
       { path: 'audit', element: <Audit /> },
       { path: 'profile', element: <Profile /> },
-      { path: 'bracket', element: <ComingSoon section="bracket" /> },
+      { path: 'bracket', element: <Bracket /> },
       { path: '*', element: <ComingSoon section="notFound" /> },
     ],
   },

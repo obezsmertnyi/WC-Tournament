@@ -159,6 +159,11 @@ export function stageLabel(stage: Stage): string {
   return i18n.t(`stage.${stage}`)
 }
 
+/** Short localized label for a knockout stage (round chips / bracket headers). */
+export function stageShortLabel(stage: Stage): string {
+  return i18n.t(`stageShort.${stage}`, { defaultValue: stageLabel(stage) })
+}
+
 /** Localized label for a match status chip. */
 export function statusLabel(status: Match['status']): string {
   return i18n.t(`status.${status}`)

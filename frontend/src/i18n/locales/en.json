@@ -130,6 +130,23 @@
     "third": "Third-place play-off",
     "final": "Final"
   },
+  "stageShort": {
+    "r32": "R32",
+    "r16": "R16",
+    "qf": "QF",
+    "sf": "SF",
+    "third": "3rd",
+    "final": "Final"
+  },
+  "bracket": {
+    "title": "Bracket",
+    "subtitle": "The road to the final · times in Kyiv",
+    "champion": "Champion",
+    "championTbd": "To be decided",
+    "thirdPlace": "Third place",
+    "empty": "The knockout bracket appears once the group stage wraps up.",
+    "selectRound": "Round"
+  },
   "status": {
     "scheduled": "Scheduled",
     "live": "LIVE",
