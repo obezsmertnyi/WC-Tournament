@@ -8,7 +8,7 @@
 > ℹ️ **Tournament structure is NOT hardcoded.** The number of teams, groups, and knockout rounds is whatever the data source reports (ADR-0007). The only things carried over from the 2022 sheet are **the participants (the friends who play)** and **the scoring method** — see §5.
 
 ## 1. Decisions locked
-- **Backend:** Go 1.24 + Gin + Postgres 17 (matches Everstake stack; `pgx`/`sqlx`).
+- **Backend:** Go 1.26 + Gin + Postgres 17 (matches Everstake stack; `pgx`).
 - **Frontend:** React + Vite + **TypeScript**, football-themed UI (Tailwind + shadcn/ui), served by nginx. Must be **production-ready and polished** — not a throwaway. Country flags are **mandatory** on every team; player avatars on leaderboard/profiles.
 - **Auth:** **Sign in with Google** (OAuth/OIDC) → backend JWT session. Players set a **nickname** in their profile (the display name everywhere). Allow-list / admin approval gates a private pool. (ADR-0005)
 - **Deployment:** `docker-compose` — `db`, `backend`, `frontend`. Single host, local.

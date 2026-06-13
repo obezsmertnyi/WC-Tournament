@@ -6,7 +6,7 @@
 We need a backend for a friends-only WC2026 prediction pool: a REST API, a scoring engine, a scheduled results sync, and persistence. The team operates a Go-heavy stack at Everstake (claimer, sre_ai_agent) and is fluent in it. The tournament is already live, so familiarity and speed-to-ship matter.
 
 ## Decision
-Backend in **Go 1.24** with **Gin** (HTTP) and **Postgres 17** (state), using `pgx`/`sqlx` for data access — mirroring the existing `claimer` service conventions (numbered packages, `internal/...` layout, `cmd/server` entrypoint with CLI subcommands).
+Backend in **Go 1.26** (latest) with **Gin** (HTTP) and **Postgres 17** (state), using `pgx` for data access — mirroring the existing `claimer` service conventions (numbered packages, `internal/...` layout, `cmd/server` entrypoint with CLI subcommands).
 
 ## Consequences
 - Reuse of known patterns and tooling → faster delivery, lower ramp.

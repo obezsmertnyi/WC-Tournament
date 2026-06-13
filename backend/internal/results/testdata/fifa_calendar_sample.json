@@ -1,0 +1,103 @@
+{
+  "ContinuationToken": null,
+  "ContinuationHash": null,
+  "Results": [
+    {
+      "IdCompetition": "17",
+      "IdSeason": "285023",
+      "IdStage": "289273",
+      "IdGroup": "289275",
+      "IdMatch": "400021443",
+      "MatchNumber": 1,
+      "StageName": [{ "Locale": "en-GB", "Description": "First Stage" }],
+      "GroupName": [{ "Locale": "en-GB", "Description": "Group A" }],
+      "Date": "2026-06-11T19:00:00Z",
+      "MatchStatus": 3,
+      "HomeTeamScore": 2,
+      "AwayTeamScore": 0,
+      "PlaceHolderA": "A1",
+      "PlaceHolderB": "A2",
+      "Home": {
+        "IdTeam": "43911",
+        "IdCountry": "MEX",
+        "Abbreviation": "MEX",
+        "PictureUrl": "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX",
+        "TeamName": [{ "Locale": "en-GB", "Description": "Mexico" }],
+        "Score": 2
+      },
+      "Away": {
+        "IdTeam": "43883",
+        "IdCountry": "RSA",
+        "Abbreviation": "RSA",
+        "PictureUrl": "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/RSA",
+        "TeamName": [{ "Locale": "en-GB", "Description": "South Africa" }],
+        "Score": 0
+      },
+      "Stadium": {
+        "Name": [{ "Locale": "en-GB", "Description": "Mexico City Stadium" }],
+        "CityName": [{ "Locale": "en-GB", "Description": "Mexico City" }],
+        "IdCountry": "MEX"
+      }
+    },
+    {
+      "IdCompetition": "17",
+      "IdSeason": "285023",
+      "IdStage": "289273",
+      "IdGroup": "289276",
+      "IdMatch": "400021500",
+      "MatchNumber": 25,
+      "StageName": [{ "Locale": "en-GB", "Description": "First Stage" }],
+      "GroupName": [{ "Locale": "fr-FR", "Description": "Groupe B" }, { "Locale": "en-GB", "Description": "Group B" }],
+      "Date": "2027-06-20T16:00:00Z",
+      "MatchStatus": 0,
+      "HomeTeamScore": null,
+      "AwayTeamScore": null,
+      "PlaceHolderA": "B1",
+      "PlaceHolderB": "B2",
+      "Home": {
+        "IdTeam": "43900",
+        "IdCountry": "CAN",
+        "Abbreviation": "CAN",
+        "PictureUrl": "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/CAN",
+        "TeamName": [{ "Locale": "fr-FR", "Description": "Canada" }, { "Locale": "en-GB", "Description": "Canada" }],
+        "Score": null
+      },
+      "Away": {
+        "IdTeam": "43901",
+        "IdCountry": "CRO",
+        "Abbreviation": "CRO",
+        "PictureUrl": "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/CRO",
+        "TeamName": [{ "Locale": "en-GB", "Description": "Croatia" }],
+        "Score": null
+      },
+      "Stadium": {
+        "Name": [{ "Locale": "en-GB", "Description": "Toronto Stadium" }],
+        "CityName": [{ "Locale": "en-GB", "Description": "Toronto" }],
+        "IdCountry": "CAN"
+      }
+    },
+    {
+      "IdCompetition": "17",
+      "IdSeason": "285023",
+      "IdStage": "289287",
+      "IdGroup": null,
+      "IdMatch": "400021600",
+      "MatchNumber": 73,
+      "StageName": [{ "Locale": "en-GB", "Description": "Round of 32" }],
+      "GroupName": [],
+      "Date": "2027-06-28T16:00:00Z",
+      "MatchStatus": 0,
+      "HomeTeamScore": null,
+      "AwayTeamScore": null,
+      "PlaceHolderA": "Winner Group A",
+      "PlaceHolderB": "Runner-up Group B",
+      "Home": null,
+      "Away": null,
+      "Stadium": {
+        "Name": [{ "Locale": "en-GB", "Description": "Los Angeles Stadium" }],
+        "CityName": [{ "Locale": "en-GB", "Description": "Los Angeles" }],
+        "IdCountry": "USA"
+      }
+    }
+  ]
+}

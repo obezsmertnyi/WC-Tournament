@@ -4,6 +4,7 @@ import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
+import 'flag-icons/css/flag-icons.min.css'
 import './index.css'
 import App from './App.tsx'
 
