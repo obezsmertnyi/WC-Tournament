@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { Match, Team } from '../types'
-import { formatKyivTime, statusLabel, stageLabel, venueCaption } from '../lib/fixtures'
+import { formatKyivTime, formatKyivDayMonth, statusLabel, stageLabel, venueCaption } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
 import { useAuth } from '../auth/AuthContext'
@@ -150,7 +150,7 @@ export default function FixtureCard({ match, index = 0, showBadge = true }: Fixt
       <header className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <time className="text-xs font-semibold tabular-nums tracking-wide text-text/90">
-            {formatKyivTime(match.kickoffAt)}
+            {formatKyivDayMonth(match.kickoffAt)} · {formatKyivTime(match.kickoffAt)}
           </time>
           {showBadge && badge && (
             <span className="truncate rounded-md border border-hairline bg-white/[0.03] px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.12em] text-muted/80">
