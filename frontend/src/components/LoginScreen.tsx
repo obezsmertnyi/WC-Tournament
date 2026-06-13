@@ -79,8 +79,10 @@ export default function LoginScreen() {
         />
       </div>
 
-      {/* language switch, top-right */}
-      <div className="absolute right-4 top-4 z-10">
+      {/* language switch, top-right. Must sit ABOVE the full-screen login-card
+          wrapper below (also z-10, later in DOM) or that transparent layer
+          swallows the clicks and the toggle appears dead. */}
+      <div className="absolute right-4 top-4 z-20">
         <LanguageSwitcher />
       </div>
 
