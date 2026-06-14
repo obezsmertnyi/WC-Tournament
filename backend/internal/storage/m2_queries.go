@@ -521,6 +521,7 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 			FROM points
 			GROUP BY user_id
 		) mp ON mp.user_id = u.id
+		-- The organizer (admin) is not a competitor — keep them off the board.
 		LEFT JOIN (
 			-- Bonus points count only once a pick is resolved correct (awarded=true);
 			-- a pending or wrong pick contributes 0. tier_points is the potential award.
@@ -529,6 +530,7 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 			WHERE tier_points IS NOT NULL AND awarded IS TRUE
 			GROUP BY user_id
 		) tp ON tp.user_id = u.id
+		WHERE u.role <> 'admin'
 		ORDER BY total_points DESC, exact_count DESC, u.nickname ASC`
 	rows, err := s.pool.Query(ctx, sql)
 	if err != nil {

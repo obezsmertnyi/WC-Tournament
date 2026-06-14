@@ -71,37 +71,75 @@ func inferStage(name string) Stage {
 	}
 }
 
-// liveWindow is how long after kickoff a match without a recorded final score
-// is still considered in-progress (regulation + ET + penalties + stoppage).
-const liveWindow = 3 * time.Hour
+const (
+	// minMatchDuration is the earliest a match can plausibly be over (90' +
+	// half-time + stoppage). A match younger than this is never "finished",
+	// even if a status code or score says otherwise — this guards against the
+	// calendar's running score being mistaken for a final result.
+	minMatchDuration = 105 * time.Minute
+	// groupMaxDuration / knockoutMaxDuration are the hard upper bounds after
+	// which a match is certainly over (used as the fallback when FIFA's status
+	// code is missing). Knockouts allow for extra time + penalties.
+	groupMaxDuration    = 140 * time.Minute
+	knockoutMaxDuration = 170 * time.Minute
+)
 
-// mapStatus derives the lifecycle state. The FIFA MatchStatus field is
-// unreliable for this purpose — observed live, upcoming WC2026 fixtures report
-// MatchStatus=1 while already-played opening matches report MatchStatus=0 — so
-// status is derived primarily from score presence and kickoff time, using the
-// code only as a strong confirming signal for the terminal "finished" state.
+// mapStatus derives the lifecycle state from kickoff time and elapsed duration,
+// using the FIFA MatchStatus code only as a *guarded* confirming signal.
 //
-//	finished : explicit finished code, OR a result is recorded and kickoff is past
-//	live     : kickoff is past and within the live window but no final recorded
-//	scheduled: everything else (future, or pre-draw with no kickoff)
-func mapStatus(code *int, hasScore bool, kickoff *time.Time, now time.Time) Status {
-	if code != nil && (*code == 3 || *code == 7) { // 3=full time, 7=after ET/pens
-		return StatusFinished
-	}
-
-	if kickoff == nil {
+// CRITICAL: the FIFA calendar reports the running score DURING play, so the
+// presence of a score does NOT mean the match is over (this previously caused
+// results to be announced at the first goal). A match is finished only once a
+// full match could have elapsed.
+//
+// FIFA MatchStatus terminal codes.
+const (
+	fifaStatusFullTime = 3 // end of regulation (in knockouts, ET/pens may follow)
+	fifaStatusComplete = 7 // match complete, after any extra time / penalties
+)
+//
+//	finished : code 7 (always over), OR code 3 when no ET is possible (group),
+//	           each only after ≥ minMatchDuration; OR the stage's max duration has
+//	           elapsed and a score is on record (fallback when codes are absent)
+//	live     : kickoff is past but the match window hasn't fully elapsed
+//	scheduled: future, pre-draw (no kickoff), or a stale anomaly with no score
+//
+// code3Final must be true only for stages that cannot go to extra time (group
+// stage): there, end-of-regulation (code 3) is the final whistle. In knockouts
+// code 3 is just the end of normal time — the match continues into ET/penalties,
+// so only code 7 (or the time-window fallback) marks it finished.
+func mapStatus(code *int, hasScore bool, kickoff *time.Time, now time.Time, maxDur time.Duration, code3Final bool) Status {
+	if kickoff == nil || now.Before(*kickoff) {
 		return StatusScheduled
 	}
+	elapsed := now.Sub(*kickoff)
 
-	past := !now.Before(*kickoff)
-	switch {
-	case hasScore && past:
-		return StatusFinished
-	case past && now.Before(kickoff.Add(liveWindow)):
+	// Trust an explicit terminal code, but only once a plausible full match has
+	// elapsed — never finish a match minutes after kickoff.
+	if code != nil && elapsed >= minMatchDuration {
+		if *code == fifaStatusComplete || (*code == fifaStatusFullTime && code3Final) {
+			return StatusFinished
+		}
+	}
+	// Still inside the match window → live (even with a running score, and even at
+	// end-of-regulation of a knockout that's heading into extra time).
+	if elapsed < maxDur {
 		return StatusLive
-	default:
-		return StatusScheduled
 	}
+	// Window elapsed: finished if a score is recorded, else a data anomaly
+	// (postponed/abandoned) — leave unresolved rather than perpetually live.
+	if hasScore {
+		return StatusFinished
+	}
+	return StatusScheduled
+}
+
+// maxMatchDuration returns the stage-appropriate upper bound for mapStatus.
+func maxMatchDuration(stage Stage) time.Duration {
+	if stage == StageGroup {
+		return groupMaxDuration
+	}
+	return knockoutMaxDuration
 }
 
 // parseCalendar maps a decoded FIFA calendar envelope to Fixtures. now is
@@ -142,7 +180,8 @@ func mapMatch(m fifaMatch, now time.Time) Fixture {
 	}
 
 	hasScore := m.HomeTeamScore != nil && m.AwayTeamScore != nil
-	f.Status = mapStatus(m.MatchStatus, hasScore, f.KickoffAt, now)
+	code3Final := f.Stage == StageGroup // groups can't go to extra time
+	f.Status = mapStatus(m.MatchStatus, hasScore, f.KickoffAt, now, maxMatchDuration(f.Stage), code3Final)
 
 	if m.Stadium != nil {
 		f.VenueStadium = localized(m.Stadium.Name)

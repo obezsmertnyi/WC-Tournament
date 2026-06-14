@@ -186,33 +186,49 @@ func TestMapStatus(t *testing.T) {
 	kickJustStarted := time.Date(2026, 6, 11, 23, 0, 0, 0, time.UTC) // 1h before now (in live window)
 	kickFuture := time.Date(2026, 7, 1, 19, 0, 0, 0, time.UTC)
 
-	// Explicit terminal code wins regardless of score/time.
-	if got := mapStatus(ptrInt(3), true, &kickPastSettled, fixedNow); got != StatusFinished {
-		t.Errorf("code 3 should be finished, got %q", got)
+	md := groupMaxDuration
+
+	// Explicit terminal code + full match elapsed → finished.
+	if got := mapStatus(ptrInt(3), true, &kickPastSettled, fixedNow, md, true); got != StatusFinished {
+		t.Errorf("code 3 (settled) should be finished, got %q", got)
 	}
 	// FIFA code 1 (upcoming) on a future fixture must be scheduled, not live.
-	if got := mapStatus(ptrInt(1), false, &kickFuture, fixedNow); got != StatusScheduled {
+	if got := mapStatus(ptrInt(1), false, &kickFuture, fixedNow, md, true); got != StatusScheduled {
 		t.Errorf("code 1 on future fixture should be scheduled, got %q", got)
 	}
-	// Score recorded + kickoff past → finished even with ambiguous code 0.
-	if got := mapStatus(ptrInt(0), true, &kickPastSettled, fixedNow); got != StatusFinished {
-		t.Errorf("code 0 + score + past should be finished, got %q", got)
+	// Score recorded + well past the window → finished even with ambiguous code 0.
+	if got := mapStatus(ptrInt(0), true, &kickPastSettled, fixedNow, md, true); got != StatusFinished {
+		t.Errorf("code 0 + score + past window should be finished, got %q", got)
 	}
-	// Kickoff just passed, no final score yet, within live window → live.
-	if got := mapStatus(ptrInt(1), false, &kickJustStarted, fixedNow); got != StatusLive {
-		t.Errorf("recent kickoff, no score, in window should be live, got %q", got)
+	// Kickoff just passed, within the match window → live.
+	if got := mapStatus(ptrInt(1), false, &kickJustStarted, fixedNow, md, true); got != StatusLive {
+		t.Errorf("recent kickoff in window should be live, got %q", got)
 	}
-	// Past kickoff but well outside the live window and no score → scheduled
-	// (defensive: treat as not-yet-resolved rather than perpetually live).
-	if got := mapStatus(ptrInt(1), false, &kickPastSettled, fixedNow); got != StatusScheduled {
+	// Past kickoff but well outside the window and no score → scheduled.
+	if got := mapStatus(ptrInt(1), false, &kickPastSettled, fixedNow, md, true); got != StatusScheduled {
 		t.Errorf("stale past kickoff, no score should be scheduled, got %q", got)
 	}
 	// No kickoff (pre-draw knockout slot) → scheduled.
-	if got := mapStatus(ptrInt(1), false, nil, fixedNow); got != StatusScheduled {
+	if got := mapStatus(ptrInt(1), false, nil, fixedNow, md, true); got != StatusScheduled {
 		t.Errorf("nil kickoff should be scheduled, got %q", got)
 	}
 	// Future fixture, no score → scheduled.
-	if got := mapStatus(ptrInt(0), false, &kickFuture, fixedNow); got != StatusScheduled {
+	if got := mapStatus(ptrInt(0), false, &kickFuture, fixedNow, md, true); got != StatusScheduled {
 		t.Errorf("future no-score should be scheduled, got %q", got)
+	}
+
+	// ── Regression: a LIVE match with a running score must NOT be finished ──
+	kickLive := fixedNow.Add(-30 * time.Minute) // 30' in
+	if got := mapStatus(ptrInt(0), true, &kickLive, fixedNow, md, true); got != StatusLive {
+		t.Errorf("live match (30') with running score must be live, got %q", got)
+	}
+	// Even a premature terminal code must not finish a 30-minute-old match.
+	if got := mapStatus(ptrInt(3), true, &kickLive, fixedNow, md, true); got != StatusLive {
+		t.Errorf("premature code 3 at 30' must stay live, got %q", got)
+	}
+	// A knockout still in extra time (150') must be live, not finished.
+	kickET := fixedNow.Add(-150 * time.Minute)
+	if got := mapStatus(ptrInt(0), true, &kickET, fixedNow, knockoutMaxDuration, false); got != StatusLive {
+		t.Errorf("knockout at 150' (ET) should be live, got %q", got)
 	}
 }

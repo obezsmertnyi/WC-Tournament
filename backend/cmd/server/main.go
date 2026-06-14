@@ -48,12 +48,10 @@ func mustLoadKyiv() *time.Location {
 
 const digestStateKey = "last_digest_day"
 
-// Background loop cadences: light DB-only tasks (announce results, pre-match
-// reminders) run often; the FIFA sync runs hourly to avoid hammering the API.
-const (
-	fastTickInterval = 5 * time.Minute
-	syncEvery        = time.Hour
-)
+// fastTickInterval is how often the background loop syncs from FIFA and runs the
+// reminder/announce/digest jobs. 5 min keeps results fresh while staying gentle
+// on the FIFA calendar endpoint (one request per tick).
+const fastTickInterval = 5 * time.Minute
 
 const (
 	defaultPort     = "8080"
@@ -426,24 +424,21 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 	tg, _ := notify.TelegramFromEnv() // nil-safe: a disabled notifier no-ops
 	ticker := time.NewTicker(fastTickInterval)
 	defer ticker.Stop()
-	lastSync := time.Now()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			// Hourly: refresh data from FIFA, then rescore.
-			if time.Since(lastSync) >= syncEvery {
-				lastSync = time.Now()
-				syncCtx, cancel := context.WithTimeout(ctx, bootSyncTimeout)
-				if _, err := syncpkg.New(results.NewFIFAClient(), store, logger).Run(syncCtx); err != nil {
-					logger.Warn("periodic sync failed (continuing)", slog.Any("error", err))
-				} else if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
-					logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
-				}
-				cancel()
+			// Every tick: refresh from FIFA + rescore so the calendar, live
+			// statuses and leaderboard stay current (one light calendar request).
+			syncCtx, cancel := context.WithTimeout(ctx, bootSyncTimeout)
+			if _, err := syncpkg.New(results.NewFIFAClient(), store, logger).Run(syncCtx); err != nil {
+				logger.Warn("periodic sync failed (continuing)", slog.Any("error", err))
+			} else if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
+				logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
 			}
+			cancel()
 
 			// Every tick: pre-match reminders + result announcements.
 			jobCtx, cancel := context.WithTimeout(ctx, syncCmdTimeout)
