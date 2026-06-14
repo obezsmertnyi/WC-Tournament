@@ -116,9 +116,9 @@ func (d *Digest) compose(results []storage.Match, board []storage.LeaderboardRow
 			if shown >= 8 { // small pool, but cap defensively
 				break
 			}
-			rank := medals[i]
-			if i >= len(medals) {
-				rank = fmt.Sprintf("%d.", i+1)
+			rank := fmt.Sprintf("%d.", i+1)
+			if i < len(medals) {
+				rank = medals[i]
 			}
 			fmt.Fprintf(&b, "%s %s — <b>%d</b>\n", rank, esc(r.Nickname), r.Points)
 			shown++

@@ -33,3 +33,16 @@ func TestComposeDigest(t *testing.T) {
 		}
 	}
 }
+
+// Regression: more players than medals must not panic (prod had 5).
+func TestComposeDigestManyPlayers(t *testing.T) {
+	d := New(nil, nil, time.UTC, nil)
+	board := []storage.LeaderboardRow{
+		{Nickname: "A", Points: 8}, {Nickname: "B", Points: 4}, {Nickname: "C", Points: 3},
+		{Nickname: "D", Points: 3}, {Nickname: "E", Points: 0},
+	}
+	msg := d.compose(nil, board, nil)
+	if !strings.Contains(msg, "4. D") || !strings.Contains(msg, "5. E") {
+		t.Errorf("expected numbered ranks beyond medals:\n%s", msg)
+	}
+}
