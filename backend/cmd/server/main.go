@@ -337,6 +337,7 @@ func run(logger *slog.Logger) error {
 
 		// These self-gate per-route (RequireUser / RequireAdmin) internally.
 		api.RegisterProfileRoutes(engine, store)
+		api.RegisterHistoryRoutes(authed, store)
 		api.RegisterPredictionRoutes(engine, store, recomputer)
 		api.RegisterBonusRoutes(engine, store)
 		api.RegisterAdminRoutes(engine, store, recomputer)

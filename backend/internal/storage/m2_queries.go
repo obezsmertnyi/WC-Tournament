@@ -432,7 +432,7 @@ func (s *Store) UpsertTournamentPick(ctx context.Context, p TournamentPick) (Tou
 // ListTournamentPicksByUser returns all tournament picks for one user.
 func (s *Store) ListTournamentPicksByUser(ctx context.Context, userID int64) ([]TournamentPick, error) {
 	const sql = `
-		SELECT id, user_id, kind, pick_ref, locked_at, tier_points, created_at, updated_at
+		SELECT id, user_id, kind, pick_ref, locked_at, tier_points, awarded, created_at, updated_at
 		FROM tournament_picks WHERE user_id = $1 ORDER BY kind`
 	rows, err := s.pool.Query(ctx, sql, userID)
 	if err != nil {
@@ -443,10 +443,49 @@ func (s *Store) ListTournamentPicksByUser(ctx context.Context, userID int64) ([]
 	for rows.Next() {
 		var p TournamentPick
 		if err := rows.Scan(&p.ID, &p.UserID, &p.Kind, &p.PickRef, &p.LockedAt,
-			&p.TierPoints, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			&p.TierPoints, &p.Awarded, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan tournament pick: %w", err)
 		}
 		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+// ListUserHistory returns a player's per-match results history: their prediction,
+// the actual result, and points earned, ordered by kickoff. Includes upcoming
+// matches they've predicted (scored=false, points pending).
+func (s *Store) ListUserHistory(ctx context.Context, userID int64) ([]UserHistoryRow, error) {
+	const sql = `
+		SELECT m.id, m.stage, COALESCE(m.group_label, ''), m.kickoff_at, m.status,
+		       COALESCE(ht.code,''), COALESCE(ht.name,''), COALESCE(ht.flag_url,''),
+		       COALESCE(at.code,''), COALESCE(at.name,''), COALESCE(at.flag_url,''),
+		       m.home_score, m.away_score,
+		       p.home_pred, p.away_pred, p.winner_pick_team_id,
+		       COALESCE(pt.points, 0),
+		       COALESCE((pt.breakdown_json->>'exact')::boolean, false),
+		       (pt.user_id IS NOT NULL) AS scored
+		FROM predictions p
+		JOIN matches m ON m.id = p.match_id
+		LEFT JOIN teams ht ON ht.id = m.home_team_id
+		LEFT JOIN teams at ON at.id = m.away_team_id
+		LEFT JOIN points pt ON pt.user_id = p.user_id AND pt.match_id = p.match_id
+		WHERE p.user_id = $1
+		ORDER BY m.kickoff_at ASC NULLS LAST, m.id ASC`
+	rows, err := s.pool.Query(ctx, sql, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list user history: %w", err)
+	}
+	defer rows.Close()
+	var out []UserHistoryRow
+	for rows.Next() {
+		var r UserHistoryRow
+		if err := rows.Scan(&r.MatchID, &r.Stage, &r.GroupLabel, &r.KickoffAt, &r.Status,
+			&r.HomeCode, &r.HomeName, &r.HomeFlag, &r.AwayCode, &r.AwayName, &r.AwayFlag,
+			&r.HomeScore, &r.AwayScore, &r.PredHome, &r.PredAway, &r.WinnerPickTeamID,
+			&r.Points, &r.Exact, &r.Scored); err != nil {
+			return nil, fmt.Errorf("scan history row: %w", err)
+		}
+		out = append(out, r)
 	}
 	return out, rows.Err()
 }

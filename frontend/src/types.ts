@@ -127,6 +127,48 @@ export interface LeaderboardEntry {
   played: number
 }
 
+// ── Personal results history (GET /api/me/history) ───────────────────────────
+
+export interface HistoryTeam {
+  code: string
+  name: string
+  flagUrl: string
+}
+
+export interface HistoryMatch {
+  matchId: number
+  stage: Stage
+  group: string
+  kickoffAt: string | null
+  status: MatchStatus
+  home: HistoryTeam
+  away: HistoryTeam
+  homeScore: number | null
+  awayScore: number | null
+  predHome: number
+  predAway: number
+  winnerPickTeamId: number | null
+  points: number
+  exact: boolean
+  /** True once the match is scored (points materialized); else pending. */
+  scored: boolean
+}
+
+export interface HistoryBonus {
+  kind: string
+  pickRef: string
+  tierPoints: number | null
+  awarded: boolean
+}
+
+export interface MyHistory {
+  matches: HistoryMatch[]
+  bonuses: HistoryBonus[]
+  matchPoints: number
+  bonusPoints: number
+  total: number
+}
+
 export type AuditAction =
   | 'prediction.submitted'
   | 'prediction.updated'

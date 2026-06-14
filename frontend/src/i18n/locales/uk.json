@@ -3,8 +3,24 @@
     "calendar": "Календар",
     "groups": "Групи",
     "competition": "Змагання",
+    "history": "Мої бали",
     "bracket": "Сітка",
     "audit": "Аудит"
+  },
+  "history": {
+    "title": "Мої бали",
+    "subtitle": "Ваші прогнози, результати та динаміка балів.",
+    "subtitleNamed": "{{name}} · прогнози, результати та динаміка балів.",
+    "empty": "Ви ще не зробили жодного прогнозу.",
+    "matchPoints": "За матчі",
+    "bonusPoints": "Бонуси",
+    "total": "Разом",
+    "yourPick": "Ваш прогноз",
+    "pending": "Очікує",
+    "runningTotal": "разом {{total}}",
+    "bonusesTitle": "Бонусні прогнози",
+    "bonusPending": "{{points}} б — якщо вгадаєте",
+    "bonusPendingNoPts": "очікує"
   },
   "auth": {
     "eyebrow": "Вітаємо",

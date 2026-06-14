@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { AuditEntry } from '../types'
-import { fetchAudit } from '../lib/api'
+import { fetchAudit, fetchMatches } from '../lib/api'
+import { teamName } from '../lib/teamNames'
 import { formatAuditTime, formatKyivDateTime } from '../lib/fixtures'
 import { ErrorState } from '../components/states'
 
@@ -11,16 +12,24 @@ const POLL_MS = 30_000
 type LoadState =
   | { phase: 'loading' }
   | { phase: 'error' }
-  | { phase: 'ready'; entries: AuditEntry[] }
+  | { phase: 'ready'; entries: AuditEntry[]; labels: Map<number, string> }
 
 /**
  * Map a raw audit action to a localized, human-readable sentence. Unknown
  * actions fall back to a generic line so the feed never shows raw keys, and we
  * NEVER surface predicted score values (the API doesn't return them).
  */
-function describe(t: (k: string, o?: Record<string, unknown>) => string, e: AuditEntry): string {
+function describe(
+  t: (k: string, o?: Record<string, unknown>) => string,
+  e: AuditEntry,
+  labels: Map<number, string>,
+): string {
   const actor = e.actor || t('audit.someone')
-  const matchRef = e.matchId != null ? ` ${t('audit.matchRef', { id: e.matchId })}` : ''
+  let matchRef = ''
+  if (e.matchId != null) {
+    const label = labels.get(e.matchId)
+    matchRef = label ? ` · ${label}` : ` ${t('audit.matchRef', { id: e.matchId })}`
+  }
   switch (e.action) {
     case 'prediction.submitted':
       return t('audit.predictionSubmitted', { actor }) + matchRef
@@ -36,21 +45,35 @@ function describe(t: (k: string, o?: Record<string, unknown>) => string, e: Audi
 }
 
 export default function Audit() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
   const [state, setState] = useState<LoadState>({ phase: 'loading' })
 
-  const load = useCallback((signal?: AbortSignal) => {
-    fetchAudit(signal)
-      .then((entries) => {
-        if (signal?.aborted) return
-        setState({ phase: 'ready', entries })
-      })
-      .catch((err) => {
-        if (signal?.aborted) return
-        if (err instanceof DOMException && err.name === 'AbortError') return
-        setState((prev) => (prev.phase === 'ready' ? prev : { phase: 'error' }))
-      })
-  }, [])
+  const load = useCallback(
+    (signal?: AbortSignal) => {
+      Promise.all([fetchAudit(signal), fetchMatches(signal)])
+        .then(([entries, matches]) => {
+          if (signal?.aborted) return
+          // Map matchId → "Home – Away" so the feed reads clearly (not "match #14").
+          const labels = new Map<number, string>()
+          for (const m of matches) {
+            if (m.home && m.away) {
+              labels.set(
+                m.id,
+                `${teamName(m.home.code, m.home.name, lang)} – ${teamName(m.away.code, m.away.name, lang)}`,
+              )
+            }
+          }
+          setState({ phase: 'ready', entries, labels })
+        })
+        .catch((err) => {
+          if (signal?.aborted) return
+          if (err instanceof DOMException && err.name === 'AbortError') return
+          setState((prev) => (prev.phase === 'ready' ? prev : { phase: 'error' }))
+        })
+    },
+    [lang],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -97,7 +120,7 @@ export default function Audit() {
                 className="relative rounded-r-xl py-2 pl-2 pr-1"
               >
                 <span className="absolute -left-[1.32rem] top-3.5 h-1.5 w-1.5 rounded-full bg-accent/70 shadow-[0_0_6px_1px_rgba(201,162,75,0.5)]" />
-                <p className="text-sm leading-snug text-text">{describe(t, e)}</p>
+                <p className="text-sm leading-snug text-text">{describe(t, e, state.labels)}</p>
                 <p
                   className="mt-0.5 text-[0.65rem] uppercase tracking-[0.12em] text-muted/60"
                   title={formatKyivDateTime(e.createdAt)}

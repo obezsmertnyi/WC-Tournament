@@ -57,8 +57,33 @@ type TournamentPick struct {
 	PickRef    string
 	LockedAt   *time.Time
 	TierPoints *int
+	Awarded    bool // true once the pick is resolved correct (points count)
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+}
+
+// UserHistoryRow is one match in a player's personal results history: their
+// prediction, the actual result, and the points earned.
+type UserHistoryRow struct {
+	MatchID          int64
+	Stage            string
+	GroupLabel       string
+	KickoffAt        *time.Time
+	Status           string
+	HomeCode         string
+	HomeName         string
+	HomeFlag         string
+	AwayCode         string
+	AwayName         string
+	AwayFlag         string
+	HomeScore        *int
+	AwayScore        *int
+	PredHome         int
+	PredAway         int
+	WinnerPickTeamID *int64
+	Points           int
+	Exact            bool
+	Scored           bool // true once points are materialized (match scored)
 }
 
 // AuditEntry is a persisted, immutable audit row (actions only, never values).

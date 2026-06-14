@@ -3,8 +3,24 @@
     "calendar": "Calendar",
     "groups": "Groups",
     "competition": "Competition",
+    "history": "My points",
     "bracket": "Bracket",
     "audit": "Audit"
+  },
+  "history": {
+    "title": "My points",
+    "subtitle": "Your predictions, results and points over time.",
+    "subtitleNamed": "{{name}} · predictions, results and points over time.",
+    "empty": "You haven't made any predictions yet.",
+    "matchPoints": "Matches",
+    "bonusPoints": "Bonuses",
+    "total": "Total",
+    "yourPick": "Your pick",
+    "pending": "Pending",
+    "runningTotal": "total {{total}}",
+    "bonusesTitle": "Bonus picks",
+    "bonusPending": "{{points}} pts — if correct",
+    "bonusPendingNoPts": "pending"
   },
   "auth": {
     "eyebrow": "Welcome",

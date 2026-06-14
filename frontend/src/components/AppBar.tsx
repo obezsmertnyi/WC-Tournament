@@ -10,6 +10,7 @@ const TABS = [
   { to: '/', labelKey: 'nav.calendar', end: true },
   { to: '/groups', labelKey: 'nav.groups', end: false },
   { to: '/competition', labelKey: 'nav.competition', end: false },
+  { to: '/history', labelKey: 'nav.history', end: false },
   { to: '/bracket', labelKey: 'nav.bracket', end: false },
   { to: '/audit', labelKey: 'nav.audit', end: false },
 ] as const

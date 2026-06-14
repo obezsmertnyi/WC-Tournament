@@ -4,6 +4,7 @@ import Calendar from './pages/Calendar'
 import Groups from './pages/Groups'
 import GroupDetail from './pages/GroupDetail'
 import Competition from './pages/Competition'
+import MyHistory from './pages/MyHistory'
 import Audit from './pages/Audit'
 import Profile from './pages/Profile'
 import Bracket from './pages/Bracket'
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: 'groups', element: <Groups /> },
       { path: 'groups/:letter', element: <GroupDetail /> },
       { path: 'competition', element: <Competition /> },
+      { path: 'history', element: <MyHistory /> },
       { path: 'audit', element: <Audit /> },
       { path: 'profile', element: <Profile /> },
       { path: 'bracket', element: <Bracket /> },

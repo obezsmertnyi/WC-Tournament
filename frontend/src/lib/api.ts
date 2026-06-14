@@ -5,6 +5,7 @@ import type {
   GroupStanding,
   Standings,
   ThirdPlaceRow,
+  MyHistory,
   User,
   AdminPlayer,
   MyPrediction,
@@ -197,6 +198,18 @@ export async function savePrediction(
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)
+}
+
+/**
+ * Fetch the signed-in user's personal results history (per-match prediction,
+ * actual result, points) plus bonus picks. `GET /api/me/history`.
+ */
+export async function fetchMyHistory(signal?: AbortSignal): Promise<MyHistory> {
+  return withRetry(async () => {
+    const res = await fetch('/api/me/history', { ...withCreds, signal })
+    if (!res.ok) throw new ApiError(res.status)
+    return (await res.json()) as MyHistory
+  }, signal)
 }
 
 // ── Admin: player roster ─────────────────────────────────────────────────────
