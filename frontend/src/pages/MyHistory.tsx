@@ -130,7 +130,19 @@ function HistoryBody({ data, lang }: { data: MyHistory; lang: string | undefined
                 <li key={b.kind} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                   <div className="min-w-0">
                     <p className="font-medium text-text">{bonusLabel(t, b.kind)}</p>
-                    <p className="truncate text-xs text-muted/80">{b.pickRef}</p>
+                    <p className="flex items-center gap-1.5 truncate text-xs text-muted/80">
+                      {b.team && (
+                        <Flag
+                          code={b.team.code}
+                          flagUrl={b.team.flagUrl}
+                          label={b.team.name}
+                          className="h-[0.7rem] w-[1.05rem]"
+                        />
+                      )}
+                      <span className="truncate">
+                        {b.team ? teamName(b.team.code, b.team.name, lang) : b.pickRef}
+                      </span>
+                    </p>
                   </div>
                   <span className="shrink-0 text-right">
                     {b.awarded ? (

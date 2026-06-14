@@ -157,6 +157,8 @@ export interface HistoryMatch {
 export interface HistoryBonus {
   kind: string
   pickRef: string
+  /** Resolved team for champion/finalist picks; null for the top-scorer (player). */
+  team: HistoryTeam | null
   tierPoints: number | null
   awarded: boolean
 }

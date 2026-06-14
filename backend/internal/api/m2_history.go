@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 type HistoryStore interface {
 	ListUserHistory(ctx context.Context, userID int64) ([]storage.UserHistoryRow, error)
 	ListTournamentPicksByUser(ctx context.Context, userID int64) ([]storage.TournamentPick, error)
+	ListTeams(ctx context.Context) ([]storage.Team, error)
 }
 
 type historyTeamDTO struct {
@@ -42,10 +44,11 @@ type historyMatchDTO struct {
 }
 
 type historyBonusDTO struct {
-	Kind       string `json:"kind"`
-	PickRef    string `json:"pickRef"`
-	TierPoints *int   `json:"tierPoints"`
-	Awarded    bool   `json:"awarded"`
+	Kind       string          `json:"kind"`
+	PickRef    string          `json:"pickRef"`
+	Team       *historyTeamDTO `json:"team"` // resolved team for champion/finalist; null for top scorer
+	TierPoints *int            `json:"tierPoints"`
+	Awarded    bool            `json:"awarded"`
 }
 
 type historyResponse struct {
@@ -76,6 +79,17 @@ func historyHandler(store HistoryStore) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load bonus picks"})
 			return
+		}
+
+		// Resolve team-referenced picks (champion/finalist) to a team for display.
+		teams, err := store.ListTeams(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load teams"})
+			return
+		}
+		teamByID := make(map[string]historyTeamDTO, len(teams))
+		for _, tm := range teams {
+			teamByID[strconv.FormatInt(tm.ID, 10)] = historyTeamDTO{Code: tm.Code, Name: tm.Name, FlagURL: tm.FlagURL}
 		}
 
 		matches := make([]historyMatchDTO, 0, len(rows))
@@ -114,9 +128,16 @@ func historyHandler(store HistoryStore) gin.HandlerFunc {
 			if p.Awarded && p.TierPoints != nil {
 				bonusPoints += *p.TierPoints
 			}
+			var team *historyTeamDTO
+			if p.Kind == "champion" || p.Kind == "finalist" {
+				if td, ok := teamByID[p.PickRef]; ok {
+					team = &td
+				}
+			}
 			bonuses = append(bonuses, historyBonusDTO{
 				Kind:       p.Kind,
 				PickRef:    p.PickRef,
+				Team:       team,
 				TierPoints: p.TierPoints,
 				Awarded:    p.Awarded,
 			})
