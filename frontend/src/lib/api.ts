@@ -6,6 +6,7 @@ import type {
   Standings,
   ThirdPlaceRow,
   MyHistory,
+  TopScorer,
   User,
   AdminPlayer,
   MyPrediction,
@@ -209,6 +210,16 @@ export async function fetchMyHistory(signal?: AbortSignal): Promise<MyHistory> {
     const res = await fetch('/api/me/history', { ...withCreds, signal })
     if (!res.ok) throw new ApiError(res.status)
     return (await res.json()) as MyHistory
+  }, signal)
+}
+
+/** Fetch the top goal scorers board (`GET /api/top-scorers?limit=N`). */
+export async function fetchTopScorers(limit = 10, signal?: AbortSignal): Promise<TopScorer[]> {
+  return withRetry(async () => {
+    const res = await fetch(`/api/top-scorers?limit=${limit}`, { ...withCreds, signal })
+    if (!res.ok) throw new ApiError(res.status)
+    const data = (await res.json()) as { scorers?: unknown }
+    return Array.isArray(data.scorers) ? (data.scorers as TopScorer[]) : []
   }, signal)
 }
 

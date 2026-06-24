@@ -102,6 +102,7 @@
     "tab": {
       "leaderboard": "Leaderboard",
       "reveals": "Predictions",
+      "scorers": "Scorers",
       "bonus": "Bonus"
     },
     "player": "Player",
@@ -141,6 +142,12 @@
     "searchPlaceholder": "Search teams…",
     "noResults": "No teams match your search.",
     "signInPrompt": "Sign in to pick your champion."
+  },
+  "scorers": {
+    "player": "Player",
+    "goals": "Goals",
+    "empty": "No goals yet — the board fills in once matches are played.",
+    "legend": "Tournament top scorers · refreshed hourly from FIFA data"
   },
   "rules": {
     "eyebrow": "Scoring",

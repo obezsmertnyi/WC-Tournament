@@ -30,6 +30,7 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/remind"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/resolve"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scorers"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
 	syncpkg "github.com/obezsmertnyi/WC-Tournament/backend/internal/sync"
@@ -376,6 +377,7 @@ func run(logger *slog.Logger) error {
 		// These self-gate per-route (RequireUser / RequireAdmin) internally.
 		api.RegisterProfileRoutes(engine, store)
 		api.RegisterHistoryRoutes(authed, store)
+		api.RegisterTopScorersRoutes(authed, store)
 		api.RegisterPredictionRoutes(engine, store, recomputer)
 		api.RegisterBonusRoutes(engine, store)
 		api.RegisterAdminRoutes(engine, store, recomputer)
@@ -452,6 +454,11 @@ func bootSync(ctx context.Context, store *storage.Store, logger *slog.Logger) {
 	} else if sent > 0 {
 		logger.Info("boot announce posted results", slog.Int("posted", sent))
 	}
+
+	// Best-effort: build the top-scorers board so it's populated immediately.
+	if err := scorers.New(store, results.NewFIFAClient(), logger).Run(syncCtx); err != nil {
+		logger.Warn("boot top-scorers aggregation failed (continuing)", slog.Any("error", err))
+	}
 }
 
 // backgroundLoop drives the recurring jobs while the server runs. Every
@@ -463,6 +470,8 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 	tg, _ := notify.TelegramFromEnv() // nil-safe: a disabled notifier no-ops
 	ticker := time.NewTicker(fastTickInterval)
 	defer ticker.Stop()
+
+	var lastScorerAgg time.Time // top-scorer aggregation is heavier → hourly
 
 	for {
 		select {
@@ -478,6 +487,17 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 				logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
 			}
 			cancel()
+
+			// Hourly: rebuild the top-scorers board (fetches match detail per
+			// finished match, so it's heavier than the calendar sync).
+			if time.Since(lastScorerAgg) >= time.Hour {
+				lastScorerAgg = time.Now()
+				aggCtx, cancelAgg := context.WithTimeout(ctx, syncCmdTimeout)
+				if err := scorers.New(store, results.NewFIFAClient(), logger).Run(aggCtx); err != nil {
+					logger.Warn("periodic top-scorers aggregation failed (continuing)", slog.Any("error", err))
+				}
+				cancelAgg()
+			}
 
 			// Every tick: pre-match reminders + result announcements.
 			jobCtx, cancel := context.WithTimeout(ctx, syncCmdTimeout)

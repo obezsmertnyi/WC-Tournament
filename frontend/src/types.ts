@@ -171,6 +171,14 @@ export interface MyHistory {
   total: number
 }
 
+/** One player on the top-scorers board (`GET /api/top-scorers`). */
+export interface TopScorer {
+  rank: number
+  name: string
+  teamCode: string
+  goals: number
+}
+
 export type AuditAction =
   | 'prediction.submitted'
   | 'prediction.updated'

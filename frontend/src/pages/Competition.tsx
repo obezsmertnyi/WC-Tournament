@@ -15,6 +15,7 @@ import { teamName } from '../lib/teamNames'
 import Leaderboard from '../components/Leaderboard'
 import MatchRevealPanel from '../components/MatchRevealPanel'
 import BonusPanel from '../components/BonusPanel'
+import TopScorers from '../components/TopScorers'
 import ScoringRules from '../components/ScoringRules'
 import DateStrip from '../components/DateStrip'
 import Flag from '../components/Flag'
@@ -24,7 +25,7 @@ import { useMountAnimation } from '../lib/motion'
 
 const POLL_MS = 30_000
 
-type Sub = 'leaderboard' | 'reveals' | 'bonus'
+type Sub = 'leaderboard' | 'reveals' | 'scorers' | 'bonus'
 
 export default function Competition() {
   const { t } = useTranslation()
@@ -43,7 +44,7 @@ export default function Competition() {
       </header>
 
       <div className="mb-5 inline-flex rounded-full border border-hairline bg-surface p-0.5 backdrop-blur-md">
-        {(['leaderboard', 'reveals', 'bonus'] as const).map((key) => {
+        {(['leaderboard', 'reveals', 'scorers', 'bonus'] as const).map((key) => {
           const active = sub === key
           return (
             <button
@@ -69,6 +70,7 @@ export default function Competition() {
 
       {sub === 'leaderboard' && <LeaderboardSection />}
       {sub === 'reveals' && <RevealsSection />}
+      {sub === 'scorers' && <TopScorers />}
       {sub === 'bonus' && (
         <>
           <ScoringRules />
@@ -191,10 +193,14 @@ function RevealsDayView({ matches }: { matches: Match[] }) {
   }
 
   const current = days.find((d) => d.key === selected) ?? days[0]
+  const selectDay = (key: string) => {
+    setSelected(key)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <div>
-      <DateStrip days={days} selected={current.key} onSelect={setSelected} />
+      <DateStrip days={days} selected={current.key} onSelect={selectDay} />
 
       <motion.div
         key={current.key}

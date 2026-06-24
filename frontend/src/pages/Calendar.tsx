@@ -73,13 +73,20 @@ function DayView({ matches }: { matches: Match[] }) {
     )
   }, [days])
 
+  // Picking a day re-renders the list in place; on mobile the page would stay
+  // scrolled mid-way, so jump back to the top to show the new day from its start.
+  const selectDay = (key: string) => {
+    setSelected(key)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   if (days.length === 0 || !selected) return <EmptyState />
 
   const current = days.find((d) => d.key === selected) ?? days[0]
 
   return (
     <div>
-      <DateStrip days={days} selected={current.key} onSelect={setSelected} />
+      <DateStrip days={days} selected={current.key} onSelect={selectDay} />
 
       <motion.div
         key={current.key}

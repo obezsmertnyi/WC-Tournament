@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import AppBar, { BottomNav } from './AppBar'
@@ -10,6 +11,12 @@ export default function Layout() {
   const location = useLocation()
   const reduce = useReducedMotion()
   const { status } = useAuth()
+
+  // Reset scroll to the top on every route change — otherwise (esp. on mobile)
+  // a new page opens still scrolled to wherever the previous one was.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
 
   // Auth wall: the whole app requires login. Anonymous → login screen only;
   // logout flips status to anonymous → this renders the login screen again.

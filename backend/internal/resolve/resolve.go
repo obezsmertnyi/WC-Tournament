@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
@@ -27,7 +26,7 @@ type Store interface {
 	GetMatchByID(ctx context.Context, id int64) (storage.Match, error)
 	TeamIDByFifaID(ctx context.Context, fifaID string) (int64, bool, error)
 	AwardBonusByKind(ctx context.Context, kind, correctPickRef string) error
-	ListFinishedFifaRefs(ctx context.Context) ([]storage.FinishedFifaRef, error)
+	ListTopScorers(ctx context.Context, limit int) ([]storage.ScorerRow, error)
 	ListTournamentPicksByKind(ctx context.Context, kind string) ([]storage.TournamentPick, error)
 	SetPickAwarded(ctx context.Context, id int64, awarded bool) error
 }
@@ -122,44 +121,19 @@ func (r *Resolver) finalWinnerLoser(ctx context.Context, final *storage.Match) (
 	}
 }
 
-// topScorer aggregates goals across all finished matches and returns the name
-// of the player with the most goals ("" if none / on error).
+// topScorer returns the name of the tournament's leading scorer from the
+// (periodically aggregated) top-scorers board, or "" if none yet.
 func (r *Resolver) topScorer(ctx context.Context) string {
-	refs, err := r.store.ListFinishedFifaRefs(ctx)
+	rows, err := r.store.ListTopScorers(ctx, 1)
 	if err != nil {
-		r.log.Warn("resolve: list finished refs failed", slog.Any("error", err))
+		r.log.Warn("resolve: load top scorer failed", slog.Any("error", err))
 		return ""
 	}
-	tally := make(map[string]int)
-	for _, ref := range refs {
-		select {
-		case <-ctx.Done():
-			return ""
-		default:
-		}
-		detail, err := r.provider.LiveMatch(ctx, ref.FifaStageID, ref.FifaID)
-		if err != nil || detail == nil {
-			continue // skip matches whose detail isn't available
-		}
-		for _, g := range detail.Goals {
-			name := strings.TrimSpace(g.ScorerName)
-			if name != "" {
-				tally[name]++
-			}
-		}
-		time.Sleep(250 * time.Millisecond) // gentle on the FIFA API
+	if len(rows) == 0 {
+		return ""
 	}
-
-	best, bestN := "", 0
-	for name, n := range tally {
-		if n > bestN {
-			best, bestN = name, n
-		}
-	}
-	if best != "" {
-		r.log.Info("resolve: top scorer", slog.String("player", best), slog.Int("goals", bestN))
-	}
-	return best
+	r.log.Info("resolve: top scorer", slog.String("player", rows[0].Name), slog.Int("goals", rows[0].Goals))
+	return rows[0].Name
 }
 
 // awardTopScorer marks each top_scorer pick awarded iff its (normalized) name

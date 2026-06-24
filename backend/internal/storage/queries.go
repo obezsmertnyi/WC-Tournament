@@ -497,6 +497,62 @@ func (s *Store) MarkMatchAnnounced(ctx context.Context, id int64) error {
 	return nil
 }
 
+// ScorerRow is one player's goal tally for the top-scorers board.
+type ScorerRow struct {
+	Name     string
+	TeamCode string
+	Goals    int
+}
+
+// ReplaceTopScorers atomically replaces the whole top_scorers table with rows.
+func (s *Store) ReplaceTopScorers(ctx context.Context, rows []ScorerRow) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin top scorers tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `DELETE FROM top_scorers`); err != nil {
+		return fmt.Errorf("clear top scorers: %w", err)
+	}
+	for _, r := range rows {
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO top_scorers (name, team_code, goals, updated_at) VALUES ($1,$2,$3, now())`,
+			r.Name, r.TeamCode, r.Goals); err != nil {
+			return fmt.Errorf("insert top scorer %q: %w", r.Name, err)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit top scorers: %w", err)
+	}
+	return nil
+}
+
+// ListTopScorers returns the leading goal scorers, most goals first (limit ≤ 0
+// means no limit).
+func (s *Store) ListTopScorers(ctx context.Context, limit int) ([]ScorerRow, error) {
+	sql := `SELECT name, team_code, goals FROM top_scorers ORDER BY goals DESC, name ASC`
+	args := []any{}
+	if limit > 0 {
+		sql += ` LIMIT $1`
+		args = append(args, limit)
+	}
+	rows, err := s.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list top scorers: %w", err)
+	}
+	defer rows.Close()
+	var out []ScorerRow
+	for rows.Next() {
+		var r ScorerRow
+		if err := rows.Scan(&r.Name, &r.TeamCode, &r.Goals); err != nil {
+			return nil, fmt.Errorf("scan scorer: %w", err)
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
 // TeamIDByFifaID resolves a team's local id from its FIFA id. (false, nil) when absent.
 func (s *Store) TeamIDByFifaID(ctx context.Context, fifaID string) (int64, bool, error) {
 	var id int64
