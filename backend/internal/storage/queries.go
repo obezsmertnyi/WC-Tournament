@@ -497,6 +497,91 @@ func (s *Store) MarkMatchAnnounced(ctx context.Context, id int64) error {
 	return nil
 }
 
+// TeamIDByFifaID resolves a team's local id from its FIFA id. (false, nil) when absent.
+func (s *Store) TeamIDByFifaID(ctx context.Context, fifaID string) (int64, bool, error) {
+	var id int64
+	err := s.pool.QueryRow(ctx, `SELECT id FROM teams WHERE fifa_id = $1`, fifaID).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, fmt.Errorf("team by fifa id %q: %w", fifaID, err)
+	}
+	return id, true, nil
+}
+
+// FinishedFifaRef identifies a finished match for live-detail fetches.
+type FinishedFifaRef struct {
+	ID          int64
+	FifaID      string
+	FifaStageID string
+}
+
+// ListFinishedFifaRefs returns the FIFA id/stage of every finished match, for
+// aggregating goal data (e.g. resolving the top scorer).
+func (s *Store) ListFinishedFifaRefs(ctx context.Context) ([]FinishedFifaRef, error) {
+	const sql = `
+		SELECT id, COALESCE(fifa_id, ''), COALESCE(fifa_stage_id, '')
+		FROM matches WHERE status = 'finished' AND fifa_id <> '' ORDER BY kickoff_at ASC NULLS LAST`
+	rows, err := s.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("list finished fifa refs: %w", err)
+	}
+	defer rows.Close()
+	var out []FinishedFifaRef
+	for rows.Next() {
+		var r FinishedFifaRef
+		if err := rows.Scan(&r.ID, &r.FifaID, &r.FifaStageID); err != nil {
+			return nil, fmt.Errorf("scan fifa ref: %w", err)
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// AwardBonusByKind marks the tournament picks of a kind awarded iff their
+// pick_ref equals the resolved correct value (idempotent: re-running re-derives
+// awarded for every pick of that kind). Used for champion/finalist.
+func (s *Store) AwardBonusByKind(ctx context.Context, kind, correctPickRef string) error {
+	const sql = `UPDATE tournament_picks SET awarded = (pick_ref = $2) WHERE kind = $1`
+	if _, err := s.pool.Exec(ctx, sql, kind, correctPickRef); err != nil {
+		return fmt.Errorf("award bonus %q: %w", kind, err)
+	}
+	return nil
+}
+
+// ListTournamentPicksByKind returns all picks of one kind across users (for the
+// top-scorer name match, where awarding can't be done by an exact SQL equality).
+func (s *Store) ListTournamentPicksByKind(ctx context.Context, kind string) ([]TournamentPick, error) {
+	const sql = `
+		SELECT id, user_id, kind, pick_ref, locked_at, tier_points, awarded, created_at, updated_at
+		FROM tournament_picks WHERE kind = $1`
+	rows, err := s.pool.Query(ctx, sql, kind)
+	if err != nil {
+		return nil, fmt.Errorf("list picks by kind %q: %w", kind, err)
+	}
+	defer rows.Close()
+	var out []TournamentPick
+	for rows.Next() {
+		var p TournamentPick
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Kind, &p.PickRef, &p.LockedAt,
+			&p.TierPoints, &p.Awarded, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan pick: %w", err)
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+// SetPickAwarded sets the awarded flag on a single tournament pick.
+func (s *Store) SetPickAwarded(ctx context.Context, id int64, awarded bool) error {
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE tournament_picks SET awarded = $2 WHERE id = $1`, id, awarded); err != nil {
+		return fmt.Errorf("set pick %d awarded: %w", id, err)
+	}
+	return nil
+}
+
 // ListTeams returns all teams ordered by group then name.
 func (s *Store) ListTeams(ctx context.Context) ([]Team, error) {
 	const sql = `

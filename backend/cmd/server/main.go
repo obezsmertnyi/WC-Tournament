@@ -28,6 +28,7 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/digest"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/notify"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/remind"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/resolve"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/results"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
@@ -46,7 +47,10 @@ func mustLoadKyiv() *time.Location {
 	return loc
 }
 
-const digestStateKey = "last_digest_day"
+const (
+	digestStateKey          = "last_digest_day"
+	bonusesResolvedStateKey = "bonuses_resolved"
+)
 
 // fastTickInterval is how often the background loop syncs from FIFA and runs the
 // reminder/announce/digest jobs. 5 min keeps results fresh while staying gentle
@@ -113,6 +117,15 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "digest" {
 		if err := runDigest(logger); err != nil {
 			logger.Error("digest failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
+	// `server resolve-bonuses` awards champion/finalist/top-scorer after the final.
+	if len(os.Args) > 1 && os.Args[1] == "resolve-bonuses" {
+		if err := runResolveBonuses(logger); err != nil {
+			logger.Error("resolve-bonuses failed", slog.Any("error", err))
 			os.Exit(1)
 		}
 		return
@@ -291,6 +304,31 @@ func runDigest(logger *slog.Logger) error {
 	return nil
 }
 
+// runResolveBonuses awards champion/finalist/top-scorer once and exits.
+func runResolveBonuses(logger *slog.Logger) error {
+	ctx, cancel := context.WithTimeout(context.Background(), syncCmdTimeout)
+	defer cancel()
+
+	store, err := openStore(ctx, logger)
+	if err != nil {
+		return err
+	}
+	if store == nil {
+		return errors.New("DATABASE_URL is required for resolve-bonuses")
+	}
+	defer store.Close()
+
+	done, err := resolve.New(store, results.NewFIFAClient(), logger).Run(ctx)
+	if err != nil {
+		return err
+	}
+	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(ctx); err != nil {
+		return err
+	}
+	logger.Info("resolve-bonuses complete", slog.Bool("finalPlayed", done))
+	return nil
+}
+
 func run(logger *slog.Logger) error {
 	// Fail closed: the server must never start with a missing/weak signing key.
 	if err := auth.ValidateSecret(); err != nil {
@@ -456,6 +494,8 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 
 			// Once per day, at/after the configured Kyiv hour, post the digest.
 			maybeDailyDigest(jobCtx, store, tg, logger)
+			// Once the final is played, award the tournament bonuses (runs once).
+			maybeResolveBonuses(jobCtx, store, logger)
 			cancel()
 		}
 	}
@@ -493,6 +533,30 @@ func maybeDailyDigest(ctx context.Context, store *storage.Store, tg *notify.Tele
 	if sent {
 		logger.Info("daily digest posted", slog.String("day", today))
 	}
+}
+
+// maybeResolveBonuses awards the tournament bonuses (champion/finalist/top
+// scorer) once the final has been played, then rescores. Gated by an app_state
+// flag so the heavy top-scorer aggregation runs at most once.
+func maybeResolveBonuses(ctx context.Context, store *storage.Store, logger *slog.Logger) {
+	if done, _, err := store.GetAppState(ctx, bonusesResolvedStateKey); err == nil && done == "true" {
+		return
+	}
+	resolved, err := resolve.New(store, results.NewFIFAClient(), logger).Run(ctx)
+	if err != nil {
+		logger.Warn("resolve bonuses failed (continuing)", slog.Any("error", err))
+		return
+	}
+	if !resolved {
+		return // final not played yet
+	}
+	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(ctx); err != nil {
+		logger.Warn("resolve: rescore failed (continuing)", slog.Any("error", err))
+	}
+	if err := store.SetAppState(ctx, bonusesResolvedStateKey, "true"); err != nil {
+		logger.Warn("resolve: write state failed (continuing)", slog.Any("error", err))
+	}
+	logger.Info("tournament bonuses resolved & awarded")
 }
 
 // envInt reads an int env var, falling back to def when unset/invalid.
