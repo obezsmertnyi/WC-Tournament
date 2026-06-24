@@ -245,26 +245,43 @@ function MobileBracket({ data }: { data: KnockoutData }) {
   const { t } = useTranslation()
   const mount = useMountAnimation(8)
 
-  // Chips include the main rounds plus a "third" chip when present.
+  // Chips in chronological order. The third-place play-off is played BEFORE the
+  // final, so its chip sits right before "final" (not tacked on at the end).
   const chips: Stage[] = useMemo(() => {
     const main = data.rounds.map((r) => r.stage)
-    return data.third ? [...main, 'third'] : main
+    if (!data.third) return main
+    const fi = main.indexOf('final')
+    return fi === -1 ? [...main, 'third'] : [...main.slice(0, fi), 'third', ...main.slice(fi)]
   }, [data])
 
-  // Default to the most advanced round present (final), so the user lands on
-  // the business end of the bracket.
-  const [selected, setSelected] = useState<Stage>(() => chips[chips.length - 1] ?? 'final')
+  const matchesForStage = useCallback(
+    (stage: Stage): Match[] =>
+      stage === 'third'
+        ? data.third
+          ? [data.third]
+          : []
+        : (data.rounds.find((r) => r.stage === stage)?.matches ?? []),
+    [data],
+  )
 
+  // Land on the round that's up next: the earliest round with an unfinished
+  // match; if everything is played, the final.
+  const defaultStage = useMemo<Stage>(() => {
+    for (const s of chips) {
+      const ms = matchesForStage(s)
+      if (ms.length > 0 && ms.some((m) => m.status !== 'finished')) return s
+    }
+    return chips[chips.length - 1] ?? 'final'
+  }, [chips, matchesForStage])
+
+  const [selected, setSelected] = useState<Stage>(defaultStage)
+
+  // Keep the user's manual choice; only re-default if it's no longer valid.
   useEffect(() => {
-    setSelected((prev) => (chips.includes(prev) ? prev : (chips[chips.length - 1] ?? 'final')))
-  }, [chips])
+    setSelected((prev) => (chips.includes(prev) ? prev : defaultStage))
+  }, [chips, defaultStage])
 
-  const ties =
-    selected === 'third'
-      ? data.third
-        ? [data.third]
-        : []
-      : (data.rounds.find((r) => r.stage === selected)?.matches ?? [])
+  const ties = matchesForStage(selected)
 
   const showChampion = selected === 'final'
 
