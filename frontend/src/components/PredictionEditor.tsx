@@ -139,6 +139,10 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
   const isKnockout = match.stage !== 'group'
   const saveState = saveStateOf(match.id, forUserId)
 
+  // A knockout draw is incomplete until you also pick who advances (ET/pens).
+  const needsAdvancer =
+    isKnockout && home !== null && away !== null && home === away && winner === null
+
   const homeId = (match.home as { id?: number } | null)?.id ?? null
   const awayId = (match.away as { id?: number } | null)?.id ?? null
   const homeLabel = match.home
@@ -150,6 +154,8 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
 
   function commit(nextHome: number | null, nextAway: number | null, nextWinner: number | null) {
     if (nextHome === null || nextAway === null) return // need both scores to save
+    // Knockout draw: don't save until the advancer is chosen (the hint shows).
+    if (isKnockout && nextHome === nextAway && nextWinner === null) return
     save(match.id, {
       home: nextHome,
       away: nextAway,
@@ -245,8 +251,12 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
 
       {isKnockout && home !== null && away !== null && home === away && (
         <div className="mt-3">
-          <p className="mb-1.5 text-center text-[0.6rem] uppercase tracking-[0.14em] text-muted/70">
-            {t('predict.advancer')}
+          <p
+            className={`mb-1.5 text-center text-[0.6rem] uppercase tracking-[0.14em] ${
+              needsAdvancer ? 'font-semibold text-accent' : 'text-muted/70'
+            }`}
+          >
+            {needsAdvancer ? t('predict.advancerRequired') : t('predict.advancer')}
           </p>
           <div className="flex gap-2">
             {[

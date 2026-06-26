@@ -58,6 +58,7 @@
   "predict": {
     "yourPick": "Your prediction",
     "advancer": "Who advances?",
+    "advancerRequired": "Draw — pick who advances",
     "scoreFor": "Score for {{team}}",
     "saving": "Saving",
     "saved": "Saved",

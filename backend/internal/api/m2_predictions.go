@@ -141,6 +141,13 @@ func upsertPredictionHandler(store PredictionStore, rc Recomputer) gin.HandlerFu
 			}
 		}
 
+		// Knockout draw must declare who advances (extra time / penalties) — the
+		// scoreline alone can't, and the +1 advancer point depends on it.
+		if match.Stage != "group" && body.Home == body.Away && body.WinnerPickTeamID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "pick who advances for a knockout draw"})
+			return
+		}
+
 		// Lock: now (UTC) >= kickoff => 409 unless admin (logged override).
 		// Admins may write regardless of the kickoff lock; this also covers the
 		// admin on-behalf-of path.
