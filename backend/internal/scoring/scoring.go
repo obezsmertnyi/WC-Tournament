@@ -9,7 +9,9 @@
 //
 // Knockout matches add a winner pick: +1 point when the predicted advancer
 // matches the team that actually advanced (resolved via extra time/penalties
-// upstream — never part of the predicted score).
+// upstream — never part of the predicted score). This +1 applies ONLY when the
+// prediction was a draw — with a decisive predicted score the advancer is
+// already implied by the scoreline, so it is not a separate point.
 package scoring
 
 // Rules carries the configurable point values. Defaults match ADR-0008
@@ -91,8 +93,13 @@ func Score(pred Prediction, m Match, rules Rules) (int, Breakdown) {
 		bd.Total += rules.Outcome
 	}
 
-	// Knockout winner pick: +1 when the predicted advancer matches the actual.
-	if m.Knockout && pred.WinnerPickTeamID != nil && m.AdvancerTeamID != nil &&
+	// Knockout winner pick: +1 ONLY when the prediction was a DRAW. With a
+	// decisive predicted scoreline the advancer is already implied by the score,
+	// so there's no separate advancer point; the pick matters only when you
+	// predicted a regulation draw and separately called who goes through (via
+	// extra time / penalties). Awarded when that pick matches the actual advancer.
+	if m.Knockout && pred.Home == pred.Away &&
+		pred.WinnerPickTeamID != nil && m.AdvancerTeamID != nil &&
 		*pred.WinnerPickTeamID == *m.AdvancerTeamID {
 		bd.WinnerPick = true
 		bd.Total += rules.KnockoutWinner

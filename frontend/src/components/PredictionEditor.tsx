@@ -243,7 +243,7 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
         />
       </div>
 
-      {isKnockout && (
+      {isKnockout && home !== null && away !== null && home === away && (
         <div className="mt-3">
           <p className="mb-1.5 text-center text-[0.6rem] uppercase tracking-[0.14em] text-muted/70">
             {t('predict.advancer')}

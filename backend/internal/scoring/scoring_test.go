@@ -63,7 +63,9 @@ func TestScore_KnockoutWinnerPick(t *testing.T) {
 		t.Fatalf("wrong advancer: pts=%d bd=%+v, want 3 no winnerPick", pts2, bd2)
 	}
 
-	// Outcome only (1) + correct advancer (1) = 2.
+	// DECISIVE prediction (3:1): the advancer is implied by the score, so NO
+	// separate +1 even though France advanced — just the outcome point. Actual
+	// 2:0 (France win): outcome correct => 1, no winnerPick.
 	m3 := Match{
 		HomeScore: ip(2), AwayScore: ip(0),
 		HomeTeamID: i64(france), AwayTeamID: i64(brazil),
@@ -71,8 +73,21 @@ func TestScore_KnockoutWinnerPick(t *testing.T) {
 	}
 	pred3 := Prediction{Home: 3, Away: 1, WinnerPickTeamID: i64(france)}
 	pts3, bd3 := Score(pred3, m3, rules)
-	if pts3 != 2 || !bd3.Outcome || !bd3.WinnerPick || bd3.Exact {
-		t.Fatalf("outcome+advancer: pts=%d bd=%+v, want 2", pts3, bd3)
+	if pts3 != 1 || !bd3.Outcome || bd3.WinnerPick || bd3.Exact {
+		t.Fatalf("decisive prediction must not get advancer +1: pts=%d bd=%+v, want 1", pts3, bd3)
+	}
+
+	// DRAW prediction 2:2, actual regulation draw 1:1 decided by ET/pens with
+	// France advancing: outcome (draw) correct => 1, advancer correct => +1 = 2.
+	m4 := Match{
+		HomeScore: ip(1), AwayScore: ip(1),
+		HomeTeamID: i64(france), AwayTeamID: i64(brazil),
+		Knockout: true, AdvancerTeamID: i64(france),
+	}
+	pred4 := Prediction{Home: 2, Away: 2, WinnerPickTeamID: i64(france)}
+	pts4, bd4 := Score(pred4, m4, rules)
+	if pts4 != 2 || !bd4.Outcome || !bd4.WinnerPick || bd4.Exact {
+		t.Fatalf("draw prediction + advancer: pts=%d bd=%+v, want 2", pts4, bd4)
 	}
 }
 

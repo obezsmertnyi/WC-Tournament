@@ -155,7 +155,7 @@
     "exact": "Exact score — you nailed the final score",
     "outcome": "Correct result — right winner or a draw, but a different score",
     "wrong": "Wrong result",
-    "knockout": "Knockout match: you also pick who advances (extra time / penalties count)",
+    "knockout": "Knockout match: if you predict a regulation draw, you also pick who advances (extra time / penalties); +1 for the right pick. With a decisive score the winner is already implied — no separate +1.",
     "knockoutExample": "Knockout example: predict 1:1 in regular time AND that France advance → 3 (exact score) + 1 (advancer) = 4 points.",
     "championBonus": "Champion bonus: pick the tournament winner below — choosing during the group stage is worth more than after it (time-tiered).",
     "bonusTitle": "Tournament bonuses",
