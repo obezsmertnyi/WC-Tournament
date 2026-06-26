@@ -1,4 +1,4 @@
-export type Team = { name: string; code: string; flagUrl: string } | null
+export type Team = { id: number; name: string; code: string; flagUrl: string } | null
 
 export type Stage = 'group' | 'r32' | 'r16' | 'qf' | 'sf' | 'final' | 'third'
 

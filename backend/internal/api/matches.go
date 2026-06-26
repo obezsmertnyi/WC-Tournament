@@ -20,6 +20,7 @@ type MatchReader interface {
 
 // teamDTO is the frontend contract for a team embedded in a match.
 type teamDTO struct {
+	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Code    string `json:"code"`
 	FlagURL string `json:"flagUrl"`
@@ -118,10 +119,10 @@ func toMatchDTO(m storage.Match) matchDTO {
 		dto.KickoffAt = &s
 	}
 	if m.Home != nil {
-		dto.Home = &teamDTO{Name: m.Home.Name, Code: m.Home.Code, FlagURL: m.Home.FlagURL}
+		dto.Home = &teamDTO{ID: m.Home.ID, Name: m.Home.Name, Code: m.Home.Code, FlagURL: m.Home.FlagURL}
 	}
 	if m.Away != nil {
-		dto.Away = &teamDTO{Name: m.Away.Name, Code: m.Away.Code, FlagURL: m.Away.FlagURL}
+		dto.Away = &teamDTO{ID: m.Away.ID, Name: m.Away.Name, Code: m.Away.Code, FlagURL: m.Away.FlagURL}
 	}
 	return dto
 }

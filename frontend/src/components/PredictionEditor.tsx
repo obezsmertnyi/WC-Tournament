@@ -143,8 +143,8 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
   const needsAdvancer =
     isKnockout && home !== null && away !== null && home === away && winner === null
 
-  const homeId = (match.home as { id?: number } | null)?.id ?? null
-  const awayId = (match.away as { id?: number } | null)?.id ?? null
+  const homeId = match.home?.id ?? null
+  const awayId = match.away?.id ?? null
   const homeLabel = match.home
     ? teamName(match.home.code, match.home.name, i18n.resolvedLanguage)
     : t('fixture.tbd')
