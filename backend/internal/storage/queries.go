@@ -595,6 +595,40 @@ func (s *Store) ListFinishedFifaRefs(ctx context.Context) ([]FinishedFifaRef, er
 	return out, rows.Err()
 }
 
+// ListKnockoutsNeedingWinner returns FIFA refs for finished knockout matches
+// whose actual advancer hasn't been resolved yet (winner_team_id IS NULL), so it
+// can be fetched from the live detail. Empty during the group stage.
+func (s *Store) ListKnockoutsNeedingWinner(ctx context.Context) ([]FinishedFifaRef, error) {
+	const sql = `
+		SELECT id, COALESCE(fifa_id, ''), COALESCE(fifa_stage_id, '')
+		FROM matches
+		WHERE status = 'finished' AND stage <> 'group' AND winner_team_id IS NULL AND fifa_id <> ''
+		ORDER BY kickoff_at ASC NULLS LAST`
+	rows, err := s.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("list knockouts needing winner: %w", err)
+	}
+	defer rows.Close()
+	var out []FinishedFifaRef
+	for rows.Next() {
+		var r FinishedFifaRef
+		if err := rows.Scan(&r.ID, &r.FifaID, &r.FifaStageID); err != nil {
+			return nil, fmt.Errorf("scan knockout ref: %w", err)
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// SetMatchWinner records the actual advancer for a knockout match.
+func (s *Store) SetMatchWinner(ctx context.Context, matchID, winnerTeamID int64) error {
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE matches SET winner_team_id = $2 WHERE id = $1`, matchID, winnerTeamID); err != nil {
+		return fmt.Errorf("set match winner %d: %w", matchID, err)
+	}
+	return nil
+}
+
 // AwardBonusByKind marks the tournament picks of a kind awarded iff their
 // pick_ref equals the resolved correct value (idempotent: re-running re-derives
 // awarded for every pick of that kind). Used for champion/finalist.

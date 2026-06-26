@@ -25,11 +25,16 @@ func NewRecomputer(store *storage.Store, rules Rules) *Recomputer {
 	return &Recomputer{store: store, rules: rules}
 }
 
-// advancer derives the actual advancing team for a knockout match from the
-// stored result. For a non-draw, the winner advances. For a regular-time draw
-// the advancer is unknown from the score alone (extra time/penalties are not
-// modeled in M2), so it returns nil and the +1 winner-pick simply doesn't score.
+// advancer derives the actual advancing team for a knockout match. The
+// authoritative source is the resolved winner_team_id (from FIFA's live detail,
+// which accounts for extra time / penalties); this is correct even when the
+// 90-minute scoreline is a draw. Only when that's unset do we fall back to the
+// scoreline (a non-draw winner); a regular-time draw with no resolved winner
+// yields nil and the +1 winner-pick simply doesn't score yet.
 func advancer(m storage.MatchScoringRow) *int64 {
+	if m.WinnerTeamID != nil {
+		return m.WinnerTeamID
+	}
 	if m.HomeScore == nil || m.AwayScore == nil {
 		return nil
 	}

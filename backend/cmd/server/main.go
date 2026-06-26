@@ -34,6 +34,7 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/scoring"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/storage"
 	syncpkg "github.com/obezsmertnyi/WC-Tournament/backend/internal/sync"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/winners"
 )
 
 // Kyiv is the display/scheduling timezone for the digest. Falls back to UTC if
@@ -441,7 +442,10 @@ func bootSync(ctx context.Context, store *storage.Store, logger *slog.Logger) {
 		logger.Warn("boot fifa sync failed (continuing)", slog.Any("error", err))
 		return
 	}
-	// Best-effort re-score after the boot sync (idempotent).
+	// Resolve any knockout advancers, then re-score (both best-effort, idempotent).
+	if _, err := winners.New(store, results.NewFIFAClient(), logger).Run(syncCtx); err != nil {
+		logger.Warn("boot winners resolve failed (continuing)", slog.Any("error", err))
+	}
 	if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
 		logger.Warn("boot recompute failed (continuing)", slog.Any("error", err))
 	}
@@ -483,8 +487,15 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 			syncCtx, cancel := context.WithTimeout(ctx, bootSyncTimeout)
 			if _, err := syncpkg.New(results.NewFIFAClient(), store, logger).Run(syncCtx); err != nil {
 				logger.Warn("periodic sync failed (continuing)", slog.Any("error", err))
-			} else if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
-				logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
+			} else {
+				// Resolve knockout advancers (ET/pens) BEFORE rescoring so the
+				// +1 advancer point is awarded correctly.
+				if _, err := winners.New(store, results.NewFIFAClient(), logger).Run(syncCtx); err != nil {
+					logger.Warn("periodic winners resolve failed (continuing)", slog.Any("error", err))
+				}
+				if err := scoring.NewRecomputer(store, scoring.DefaultRules()).RecomputeAll(syncCtx); err != nil {
+					logger.Warn("periodic recompute failed (continuing)", slog.Any("error", err))
+				}
 			}
 			cancel()
 

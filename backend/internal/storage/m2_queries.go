@@ -205,24 +205,25 @@ func (s *Store) TeamCodeExists(ctx context.Context, code string) (bool, error) {
 
 // MatchScoringRow is the minimal match data the scoring/lock logic needs.
 type MatchScoringRow struct {
-	ID         int64
-	Stage      string
-	KickoffAt  *time.Time
-	Status     string
-	HomeTeamID *int64
-	AwayTeamID *int64
-	HomeScore  *int
-	AwayScore  *int
+	ID           int64
+	Stage        string
+	KickoffAt    *time.Time
+	Status       string
+	HomeTeamID   *int64
+	AwayTeamID   *int64
+	HomeScore    *int
+	AwayScore    *int
+	WinnerTeamID *int64 // actual advancer for knockouts (incl. ET/pens), else nil
 }
 
 // GetMatchForScoring loads the scoring-relevant fields of a single match.
 func (s *Store) GetMatchForScoring(ctx context.Context, id int64) (MatchScoringRow, error) {
 	const sql = `
-		SELECT id, stage, kickoff_at, status, home_team_id, away_team_id, home_score, away_score
+		SELECT id, stage, kickoff_at, status, home_team_id, away_team_id, home_score, away_score, winner_team_id
 		FROM matches WHERE id = $1`
 	var m MatchScoringRow
 	err := s.pool.QueryRow(ctx, sql, id).Scan(
-		&m.ID, &m.Stage, &m.KickoffAt, &m.Status, &m.HomeTeamID, &m.AwayTeamID, &m.HomeScore, &m.AwayScore)
+		&m.ID, &m.Stage, &m.KickoffAt, &m.Status, &m.HomeTeamID, &m.AwayTeamID, &m.HomeScore, &m.AwayScore, &m.WinnerTeamID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MatchScoringRow{}, ErrNotFound
 	}
