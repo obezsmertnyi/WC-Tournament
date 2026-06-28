@@ -5,6 +5,7 @@ import type { Match, RevealedPrediction } from '../types'
 import { fetchMatchReveal } from '../lib/api'
 import { hasKickedOff } from '../lib/fixtures'
 import Avatar from './Avatar'
+import Flag from './Flag'
 
 type State =
   | { phase: 'loading' }
@@ -84,10 +85,21 @@ export default function MatchRevealPanel({ match }: MatchRevealPanelProps) {
     )
   }
 
+  const isKnockout = match.stage !== 'group'
+
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {state.predictions.map((p, i) => {
         const scored = typeof p.points === 'number'
+        // For a knockout draw prediction, show who they picked to advance.
+        const advTeam =
+          isKnockout && p.home === p.away && p.winnerPickTeamId != null
+            ? match.home?.id === p.winnerPickTeamId
+              ? match.home
+              : match.away?.id === p.winnerPickTeamId
+                ? match.away
+                : null
+            : null
         return (
           <motion.div
             key={p.userId}
@@ -102,6 +114,13 @@ export default function MatchRevealPanel({ match }: MatchRevealPanelProps) {
               <p className="tabular-nums text-sm font-bold text-text">
                 {p.home}–{p.away}
               </p>
+              {advTeam && (
+                <p className="mt-0.5 flex items-center gap-1 text-[0.62rem] text-muted/80">
+                  <span aria-hidden>→</span>
+                  <Flag code={advTeam.code} flagUrl={advTeam.flagUrl} label={advTeam.code} className="h-[0.6rem] w-[0.9rem]" />
+                  <span className="font-medium">{advTeam.code}</span>
+                </p>
+              )}
             </div>
             {scored && (
               <span className="shrink-0 rounded-full border border-accent/40 bg-accent/10 px-1.5 py-0.5 text-[0.6rem] font-semibold tabular-nums text-accent">
