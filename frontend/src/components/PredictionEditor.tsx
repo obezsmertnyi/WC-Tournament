@@ -159,7 +159,9 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
     save(match.id, {
       home: nextHome,
       away: nextAway,
-      winnerPickTeamId: isKnockout ? nextWinner : null,
+      // Advancer applies ONLY to a knockout draw; a decisive score implies the
+      // winner, so never carry a (possibly stale) advancer pick on it.
+      winnerPickTeamId: isKnockout && nextHome === nextAway ? nextWinner : null,
       forUserId,
     })
   }
