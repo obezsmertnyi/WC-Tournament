@@ -93,12 +93,14 @@ func Score(pred Prediction, m Match, rules Rules) (int, Breakdown) {
 		bd.Total += rules.Outcome
 	}
 
-	// Knockout winner pick: +1 ONLY when the prediction was a DRAW. With a
-	// decisive predicted scoreline the advancer is already implied by the score,
-	// so there's no separate advancer point; the pick matters only when you
-	// predicted a regulation draw and separately called who goes through (via
-	// extra time / penalties). Awarded when that pick matches the actual advancer.
-	if m.Knockout && pred.Home == pred.Away &&
+	// Knockout winner pick: +1 ONLY when BOTH the prediction AND the actual
+	// regulation result are draws — i.e. the match really went to extra time /
+	// penalties, making "who advances" a separate question. With a decisive
+	// actual result the winner is just the match winner (no advancer bonus, even
+	// if you predicted a draw and happened to name them); and a decisive
+	// prediction implies the advancer from the scoreline, so it gets no +1
+	// either. Awarded when the predicted advancer matches who actually went through.
+	if m.Knockout && pred.Home == pred.Away && actualHome == actualAway &&
 		pred.WinnerPickTeamID != nil && m.AdvancerTeamID != nil &&
 		*pred.WinnerPickTeamID == *m.AdvancerTeamID {
 		bd.WinnerPick = true

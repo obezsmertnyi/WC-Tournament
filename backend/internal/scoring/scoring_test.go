@@ -89,6 +89,20 @@ func TestScore_KnockoutWinnerPick(t *testing.T) {
 	if pts4 != 2 || !bd4.Outcome || !bd4.WinnerPick || bd4.Exact {
 		t.Fatalf("draw prediction + advancer: pts=%d bd=%+v, want 2", pts4, bd4)
 	}
+
+	// DRAW prediction but DECISIVE actual result (0:1): the match didn't go to
+	// ET/pens, so NO advancer bonus even though you named the winner. You simply
+	// got the outcome wrong (predicted draw, was a win) => 0.
+	m5 := Match{
+		HomeScore: ip(0), AwayScore: ip(1),
+		HomeTeamID: i64(france), AwayTeamID: i64(brazil),
+		Knockout: true, AdvancerTeamID: i64(brazil),
+	}
+	pred5 := Prediction{Home: 1, Away: 1, WinnerPickTeamID: i64(brazil)}
+	pts5, bd5 := Score(pred5, m5, rules)
+	if pts5 != 0 || bd5.WinnerPick || bd5.Outcome || bd5.Exact {
+		t.Fatalf("draw prediction, decisive actual: pts=%d bd=%+v, want 0 (no advancer)", pts5, bd5)
+	}
 }
 
 func TestScore_NoResult(t *testing.T) {
