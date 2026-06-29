@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { Match, Team } from '../types'
 import { formatKyivTime, formatKyivDayMonth, statusLabel } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
+import { resolveSlotLabel } from '../lib/bracket'
 import { useMountAnimation } from '../lib/motion'
 import Flag from './Flag'
 
@@ -39,14 +40,15 @@ interface SideProps {
   show: boolean
   winner: boolean
   loser: boolean
+  byNumber: Map<number, Match>
 }
 
-function Side({ team, placeholder, score, show, winner, loser }: SideProps) {
+function Side({ team, placeholder, score, show, winner, loser, byNumber }: SideProps) {
   const { t, i18n } = useTranslation()
   const isTbd = !team
   const name = team
     ? teamName(team.code, team.name, i18n.resolvedLanguage)
-    : (placeholder ?? t('fixture.tbd'))
+    : resolveSlotLabel(placeholder, byNumber, i18n.resolvedLanguage, t)
 
   return (
     <div className="flex items-center gap-2">
@@ -87,6 +89,8 @@ interface BracketTieProps {
   index?: number
   /** Highlight as a feature tie (the final). */
   emphasis?: boolean
+  /** All matches indexed by number, to resolve "W75"/"RU101" slot labels. */
+  byNumber?: Map<number, Match>
 }
 
 /**
@@ -95,8 +99,9 @@ interface BracketTieProps {
  * a status pill. Before the draw it renders the placeholder text in muted
  * italic so empty slots still read sensibly.
  */
-export default function BracketTie({ match, index = 0, emphasis = false }: BracketTieProps) {
+export default function BracketTie({ match, index = 0, emphasis = false, byNumber }: BracketTieProps) {
   const { home, away, homeScore, awayScore, status, placeholderHome, placeholderAway } = match
+  const slots = byNumber ?? new Map<number, Match>()
   const live = status === 'live'
   const finished = status === 'finished'
   const show = live || finished
@@ -134,6 +139,7 @@ export default function BracketTie({ match, index = 0, emphasis = false }: Brack
           show={show}
           winner={homeWins}
           loser={awayWins}
+          byNumber={slots}
         />
         <Side
           team={away}
@@ -142,6 +148,7 @@ export default function BracketTie({ match, index = 0, emphasis = false }: Brack
           show={show}
           winner={awayWins}
           loser={homeWins}
+          byNumber={slots}
         />
       </div>
     </motion.article>

@@ -7,6 +7,7 @@ import { groupFixtures, stageLabel, stageShortLabel } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
 import BracketTie, { tieWinner } from '../components/BracketTie'
+import { buildMatchByNumber } from '../lib/bracket'
 import Flag from '../components/Flag'
 import Trophy from '../components/Trophy'
 import StarHero from '../components/StarHero'
@@ -92,6 +93,7 @@ export default function Bracket() {
 function BracketView({ matches }: { matches: Match[] }) {
   const { t } = useTranslation()
   const data = useMemo(() => buildKnockout(matches), [matches])
+  const byNumber = useMemo(() => buildMatchByNumber(matches), [matches])
 
   if (data.rounds.length === 0) {
     return (
@@ -105,12 +107,12 @@ function BracketView({ matches }: { matches: Match[] }) {
     <>
       {/* Mobile (< lg): round selector + single stacked column */}
       <div className="lg:hidden">
-        <MobileBracket data={data} />
+        <MobileBracket data={data} byNumber={byNumber} />
       </div>
 
       {/* Desktop (>= lg): full horizontally-scrollable tree */}
       <div className="hidden lg:block">
-        <DesktopTree data={data} />
+        <DesktopTree data={data} byNumber={byNumber} />
       </div>
     </>
   )
@@ -126,7 +128,7 @@ function BracketView({ matches }: { matches: Match[] }) {
  * tree reads as a bracket and renders identically in headless captures (no
  * runtime measurement needed). The champion + third-place sit beside the final.
  */
-function DesktopTree({ data }: { data: KnockoutData }) {
+function DesktopTree({ data, byNumber }: { data: KnockoutData; byNumber: Map<number, Match> }) {
   const { t } = useTranslation()
   return (
     <div className="overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar]:h-1.5">
@@ -144,6 +146,7 @@ function DesktopTree({ data }: { data: KnockoutData }) {
                       match={m}
                       index={ri * 4 + i}
                       emphasis={round.stage === 'final'}
+                      byNumber={byNumber}
                     />
                   ))}
                 </div>
@@ -163,7 +166,7 @@ function DesktopTree({ data }: { data: KnockoutData }) {
                 <p className="mb-1.5 px-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted/70">
                   {t('bracket.thirdPlace')}
                 </p>
-                <BracketTie match={data.third} index={20} />
+                <BracketTie match={data.third} index={20} byNumber={byNumber} />
               </div>
             )}
           </div>
@@ -241,7 +244,7 @@ function ChampionCard({ champion }: { champion: Team }) {
 
 // ── Mobile: round chips + stacked ties ───────────────────────────────────────
 
-function MobileBracket({ data }: { data: KnockoutData }) {
+function MobileBracket({ data, byNumber }: { data: KnockoutData; byNumber: Map<number, Match> }) {
   const { t } = useTranslation()
   const mount = useMountAnimation(8)
 
@@ -344,7 +347,7 @@ function MobileBracket({ data }: { data: KnockoutData }) {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {ties.map((m, i) => (
-            <BracketTie key={m.id} match={m} index={i} emphasis={selected === 'final'} />
+            <BracketTie key={m.id} match={m} index={i} emphasis={selected === 'final'} byNumber={byNumber} />
           ))}
         </div>
       </motion.div>

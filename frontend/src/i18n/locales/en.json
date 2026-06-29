@@ -258,6 +258,7 @@
     "champion": "Champion",
     "championTbd": "To be decided",
     "thirdPlace": "Third place",
+    "winnerOf": "Winner {{stage}}",
     "empty": "The knockout bracket appears once the group stage wraps up.",
     "selectRound": "Round"
   },
