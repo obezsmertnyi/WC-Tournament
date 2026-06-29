@@ -7,7 +7,7 @@ import { groupFixtures, stageLabel, stageShortLabel } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { useMountAnimation } from '../lib/motion'
 import BracketTie, { tieWinner } from '../components/BracketTie'
-import { buildMatchByNumber } from '../lib/bracket'
+import { buildMatchByNumber, bracketOrderKey } from '../lib/bracket'
 import Flag from '../components/Flag'
 import Trophy from '../components/Trophy'
 import StarHero from '../components/StarHero'
@@ -37,9 +37,17 @@ function buildKnockout(matches: Match[]): KnockoutData {
   const byStage = new Map<Stage, Match[]>()
   for (const section of knockout) byStage.set(section.key, section.matches)
 
+  // Order each round by true bracket-tree position (not FIFA match number), so a
+  // tie sits between the two ties that feed it and the connectors line up.
+  const orderKey = bracketOrderKey(matches)
+  const inTreeOrder = (ms: Match[]) =>
+    [...ms].sort(
+      (a, b) => (orderKey.get(a.matchNumber ?? -1) ?? 0) - (orderKey.get(b.matchNumber ?? -1) ?? 0),
+    )
+
   const rounds = TREE_ORDER.filter((s) => byStage.has(s)).map((stage) => ({
     stage,
-    matches: byStage.get(stage) ?? [],
+    matches: inTreeOrder(byStage.get(stage) ?? []),
   }))
   const final = byStage.get('final')?.[0] ?? null
   const third = byStage.get('third')?.[0] ?? null
