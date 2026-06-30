@@ -115,10 +115,15 @@ jobs:
             context: ./backend
             smoke_port: "8080:8080"
             smoke_url: http://localhost:8080/healthz
+            smoke_run_args: ""
           - service: frontend
             context: ./frontend
             smoke_port: "8080:80"
             smoke_url: http://localhost:8080/
+            # nginx resolves the `backend` upstream host at startup; in prod
+            # compose provides it, but the lone smoke container has no such host.
+            # Point it at loopback so nginx boots and serves the SPA at /.
+            smoke_run_args: "--add-host backend:127.0.0.1"
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
@@ -142,7 +147,7 @@ jobs:
           vuln-type: os,library
       - name: Smoke test
         run: |
-          docker run -d --name smoke -p ${{ matrix.smoke_port }} wc2026-${{ matrix.service }}:ci
+          docker run -d --name smoke ${{ matrix.smoke_run_args }} -p ${{ matrix.smoke_port }} wc2026-${{ matrix.service }}:ci
           for _ in $(seq 1 20); do
             if curl -fsS "${{ matrix.smoke_url }}" >/dev/null 2>&1; then
               echo "✓ ${{ matrix.service }} responded"; curl -fsS "${{ matrix.smoke_url }}" || true; echo
