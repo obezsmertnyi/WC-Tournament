@@ -28,11 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: docker/setup-qemu-action@v3 # arm64 emulation for multi-arch
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v4 # arm64 emulation for multi-arch
+      - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -40,7 +40,7 @@ jobs:
 
       - name: Image metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/wc-tournament/${{ matrix.service }}
           tags: |
@@ -49,7 +49,13 @@ jobs:
             type=sha
 
       - name: Build & push (multi-arch)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
+        # Don't upload the buildx ".dockerbuild" build-record artifact — the
+        # release job pulls only the SBOMs, and the extra artifacts made the
+        # download step fragile.
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: "false"
+          DOCKER_BUILD_SUMMARY: "false"
         with:
           context: ${{ matrix.context }}
           push: true
@@ -66,9 +72,11 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/wc-tournament/${{ matrix.service }}:${{ steps.meta.outputs.version }}
           format: spdx-json
           output-file: sbom-${{ matrix.service }}.spdx.json
+          # We upload it ourselves below with a known name; skip the duplicate.
+          upload-artifact: false
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-${{ matrix.service }}
           path: sbom-${{ matrix.service }}.spdx.json
@@ -81,8 +89,9 @@ jobs:
       contents: write
     steps:
       - name: Download SBOMs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
+          pattern: sbom-*
           path: sboms
           merge-multiple: true
 
