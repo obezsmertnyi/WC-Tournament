@@ -22,6 +22,7 @@ type fakeAdminStore struct {
 	cascadeIDs []int64
 	createErr  error
 	matches    map[int64]storage.Match
+	demoMode   bool
 }
 
 func (f *fakeAdminStore) SetMatchResult(_ context.Context, id int64, home, away int, status string) (storage.Match, error) {
@@ -89,6 +90,25 @@ func (f *fakeAdminStore) DeleteUserCascade(_ context.Context, id int64) error {
 
 func (f *fakeAdminStore) AppendAudit(_ context.Context, e storage.AuditEntry) error {
 	f.audits = append(f.audits, e)
+	return nil
+}
+
+func (f *fakeAdminStore) SetUserAccess(_ context.Context, id int64, level string) error {
+	for i := range f.users {
+		if f.users[i].ID == id {
+			f.users[i].AccessLevel = level
+			return nil
+		}
+	}
+	return storage.ErrNotFound
+}
+
+func (f *fakeAdminStore) IsDemoMode(_ context.Context) (bool, error) {
+	return f.demoMode, nil
+}
+
+func (f *fakeAdminStore) SetDemoMode(_ context.Context, on bool) error {
+	f.demoMode = on
 	return nil
 }
 
@@ -445,5 +465,87 @@ func TestAdminSetMatchResult_UnknownMatch(t *testing.T) {
 	}
 	if len(rc.called) != 0 || len(store.audits) != 0 {
 		t.Fatalf("404 must not recompute or audit, recompute=%+v audits=%+v", rc.called, store.audits)
+	}
+}
+
+func TestAdminSetAccess(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	store := &fakeAdminStore{users: []storage.User{
+		{ID: 1, Nickname: "admin", Role: "admin", AccessLevel: "rw"},
+		{ID: 2, Nickname: "bob", Role: "player", AccessLevel: "none"},
+	}}
+	r := gin.New()
+	RegisterAdminRoutes(r, store, nil)
+
+	// Player target -> 200, level updated and echoed.
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodPut, "/api/admin/users/2/access", `{"level":"ro"}`, 1))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("set access expected 200, got %d (%s)", rec.Code, rec.Body.String())
+	}
+	var got adminUserDTO
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.AccessLevel != "ro" || store.users[1].AccessLevel != "ro" {
+		t.Fatalf("expected access ro, dto=%s stored=%s", got.AccessLevel, store.users[1].AccessLevel)
+	}
+	if len(store.audits) != 1 || store.audits[0].Action != "admin_set_access" {
+		t.Fatalf("expected admin_set_access audit, got %+v", store.audits)
+	}
+
+	// Invalid level -> 400.
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodPut, "/api/admin/users/2/access", `{"level":"god"}`, 1))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid level expected 400, got %d", rec.Code)
+	}
+
+	// Admin target -> 403 (admins are always rw).
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodPut, "/api/admin/users/1/access", `{"level":"none"}`, 1))
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("admin target expected 403, got %d", rec.Code)
+	}
+
+	// Unknown id -> 404.
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodPut, "/api/admin/users/999/access", `{"level":"rw"}`, 1))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("unknown id expected 404, got %d", rec.Code)
+	}
+}
+
+func TestAdminDemoToggle(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	store := &fakeAdminStore{users: []storage.User{{ID: 1, Nickname: "admin", Role: "admin"}}}
+	r := gin.New()
+	RegisterAdminRoutes(r, store, nil)
+
+	// Initially off.
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodGet, "/api/admin/demo", "", 1))
+	if rec.Code != http.StatusOK || rec.Body.String() != `{"enabled":false}` {
+		t.Fatalf("get demo: got %d %s", rec.Code, rec.Body.String())
+	}
+
+	// Enable.
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, adminReq(t, http.MethodPut, "/api/admin/demo", `{"enabled":true}`, 1))
+	if rec.Code != http.StatusOK || !store.demoMode {
+		t.Fatalf("enable demo: got %d stored=%v", rec.Code, store.demoMode)
+	}
+	if len(store.audits) != 1 || store.audits[0].Action != "admin_demo_mode" {
+		t.Fatalf("expected admin_demo_mode audit, got %+v", store.audits)
+	}
+
+	// Non-admin -> 403.
+	rec = httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "/api/admin/demo", strings.NewReader(`{"enabled":false}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Cookie", sessionCookie(t, 2, "player"))
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("player toggle expected 403, got %d", rec.Code)
 	}
 }

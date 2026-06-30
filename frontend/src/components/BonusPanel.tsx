@@ -12,6 +12,8 @@ import {
 } from '../lib/api'
 import { teamName } from '../lib/teamNames'
 import { useAuth } from '../auth/AuthContext'
+import { canParticipate } from '../lib/access'
+import DemoLocked from './DemoLocked'
 import { TOP_SCORERS } from '../lib/topScorers'
 import { formatKyivDayMonth, formatKyivTime } from '../lib/fixtures'
 import Flag from './Flag'
@@ -29,7 +31,7 @@ function pickOf(picks: BonusPick[], kind: string): BonusPick | null {
  */
 export default function BonusPanel() {
   const { t } = useTranslation()
-  const { status } = useAuth()
+  const { status, user } = useAuth()
 
   const [teams, setTeams] = useState<TeamOption[] | null>(null)
   const [picks, setPicks] = useState<Record<string, BonusPick | null>>({})
@@ -71,6 +73,9 @@ export default function BonusPanel() {
       </p>
     )
   }
+
+  // Restricted demo tier (none/ro): bonus picks are participation — locked.
+  if (!canParticipate(user)) return <DemoLocked reason="participate" />
 
   if (loadError && teams === null) return <ErrorState onRetry={() => load()} />
 

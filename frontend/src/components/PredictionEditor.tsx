@@ -5,6 +5,7 @@ import { hasKickedOff } from '../lib/fixtures'
 import { teamName } from '../lib/teamNames'
 import { fetchAdminUsers } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
+import { canParticipate } from '../lib/access'
 import { usePredictions, type SaveState } from '../predictions/PredictionsContext'
 
 /** Clamp a raw input value into the 0–30 score range, or null when empty. */
@@ -187,6 +188,17 @@ export default function PredictionEditor({ match }: PredictionEditorProps) {
       </select>
     </div>
   )
+
+  // ── Restricted demo tier (none/ro, not admin): cannot enter predictions ────
+  if (!isAdmin && !canParticipate(user)) {
+    return (
+      <div className="mt-3 border-t border-hairline pt-2.5">
+        <p className="text-[0.65rem] uppercase tracking-[0.14em] text-muted/60">
+          {t('demo.cannotPredict')}
+        </p>
+      </div>
+    )
+  }
 
   // ── Locked (kicked off, editing own pick): read-only summary ───────────────
   if (locked) {

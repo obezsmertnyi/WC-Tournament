@@ -95,7 +95,24 @@
     "remove": "Remove",
     "removing": "Removing…",
     "removeConfirm": "Remove {{player}}? This deletes their predictions.",
-    "removeError": "Couldn’t remove that player."
+    "removeError": "Couldn’t remove that player.",
+    "demoTitle": "Demo mode",
+    "demoSubtitle": "When on, new sign-ins can only browse until you grant them access below.",
+    "accessFor": "Access for {{player}}",
+    "accessNone": "Browse only",
+    "accessRo": "View others",
+    "accessRw": "Can play",
+    "accessError": "Couldn’t change access."
+  },
+  "demo": {
+    "banner": {
+      "none": "You’re in preview mode — explore freely. An organizer needs to grant you access to see other players and join the pool.",
+      "ro": "You can view the pool but not play yet. Ask an organizer for full access to make predictions."
+    },
+    "lockedSeeOthers": "This is locked in preview mode",
+    "lockedParticipate": "Playing is locked in preview mode",
+    "lockedHint": "Ask an organizer to grant you access.",
+    "cannotPredict": "Preview mode — predictions are locked"
   },
   "competition": {
     "title": "Competition",

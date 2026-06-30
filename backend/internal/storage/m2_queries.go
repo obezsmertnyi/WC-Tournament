@@ -17,12 +17,12 @@ var ErrNotFound = errors.New("not found")
 // ---------------------------------------------------------------------------
 
 const userCols = `id, google_sub, email, nickname, avatar_url, favorite_team_code,
-	telegram_chat_id, role, approved, created_at`
+	telegram_chat_id, role, approved, access_level, created_at`
 
 func scanUser(row pgx.Row) (User, error) {
 	var u User
 	err := row.Scan(&u.ID, &u.GoogleSub, &u.Email, &u.Nickname, &u.AvatarURL,
-		&u.FavoriteTeamCode, &u.TelegramChatID, &u.Role, &u.Approved, &u.CreatedAt)
+		&u.FavoriteTeamCode, &u.TelegramChatID, &u.Role, &u.Approved, &u.AccessLevel, &u.CreatedAt)
 	return u, err
 }
 
@@ -103,14 +103,24 @@ func (s *Store) GetUserByGoogleSub(ctx context.Context, sub string) (User, error
 }
 
 // CreateUser inserts a new user and returns the created row. The role is
-// decided by the caller (first user = admin).
+// decided by the caller (first user = admin). When the caller leaves
+// AccessLevel empty, the initial level is derived from the current demo mode:
+// 'none' while demo mode is ON (so self-service Google sign-ups land in the
+// browse-only tier until an admin grants access), otherwise 'rw'. An explicit
+// AccessLevel (e.g. admin-provisioned players) is honoured as-is.
 func (s *Store) CreateUser(ctx context.Context, u User) (User, error) {
+	var access *string
+	if u.AccessLevel != "" {
+		access = &u.AccessLevel
+	}
 	const sql = `
-		INSERT INTO users (google_sub, email, nickname, avatar_url, role)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users (google_sub, email, nickname, avatar_url, role, access_level)
+		VALUES ($1, $2, $3, $4, $5,
+			COALESCE($6, CASE WHEN (SELECT value FROM app_state WHERE key = 'demo_mode') = 'true'
+				THEN 'none' ELSE 'rw' END))
 		RETURNING ` + userCols
 	out, err := scanUser(s.pool.QueryRow(ctx, sql,
-		u.GoogleSub, u.Email, u.Nickname, u.AvatarURL, defaultRole(u.Role)))
+		u.GoogleSub, u.Email, u.Nickname, u.AvatarURL, defaultRole(u.Role), access))
 	if err != nil {
 		return User{}, fmt.Errorf("create user: %w", err)
 	}
@@ -129,7 +139,54 @@ func defaultRole(r string) string {
 // no email). A duplicate nickname surfaces as a Postgres unique violation
 // (SQLSTATE 23505) for the handler to map to 409.
 func (s *Store) CreatePlayer(ctx context.Context, nickname string) (User, error) {
-	return s.CreateUser(ctx, User{Nickname: nickname, Role: "player"})
+	// Admin-provisioned players are deliberate roster entries: grant full
+	// access regardless of demo mode.
+	return s.CreateUser(ctx, User{Nickname: nickname, Role: "player", AccessLevel: "rw"})
+}
+
+// GetUserAccess returns a user's access_level. Used by the demo-mode gate on
+// each guarded request (lightweight single-column read).
+func (s *Store) GetUserAccess(ctx context.Context, id int64) (string, error) {
+	var lvl string
+	err := s.pool.QueryRow(ctx, `SELECT access_level FROM users WHERE id = $1`, id).Scan(&lvl)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("get user access: %w", err)
+	}
+	return lvl, nil
+}
+
+// SetUserAccess updates a user's access_level. Returns ErrNotFound when no row
+// matched. The caller must validate level ∈ {none, ro, rw}.
+func (s *Store) SetUserAccess(ctx context.Context, id int64, level string) error {
+	tag, err := s.pool.Exec(ctx, `UPDATE users SET access_level = $2 WHERE id = $1`, id, level)
+	if err != nil {
+		return fmt.Errorf("set user access: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// IsDemoMode reports whether demo mode is enabled (app_state key 'demo_mode').
+func (s *Store) IsDemoMode(ctx context.Context) (bool, error) {
+	v, ok, err := s.GetAppState(ctx, "demo_mode")
+	if err != nil {
+		return false, err
+	}
+	return ok && v == "true", nil
+}
+
+// SetDemoMode enables or disables demo mode.
+func (s *Store) SetDemoMode(ctx context.Context, on bool) error {
+	v := "false"
+	if on {
+		v = "true"
+	}
+	return s.SetAppState(ctx, "demo_mode", v)
 }
 
 // DeleteUserCascade deletes a user and all of their derived rows (predictions,

@@ -26,6 +26,7 @@ type ProfileStore interface {
 	GetUserByID(ctx context.Context, id int64) (storage.User, error)
 	UpdateUserProfile(ctx context.Context, id int64, nickname, favoriteTeamCode, avatarURL *string) (storage.User, error)
 	TeamCodeExists(ctx context.Context, code string) (bool, error)
+	IsDemoMode(ctx context.Context) (bool, error)
 }
 
 type meDTO struct {
@@ -34,15 +35,31 @@ type meDTO struct {
 	AvatarURL        *string `json:"avatarUrl"`
 	FavoriteTeamCode *string `json:"favoriteTeamCode"`
 	Role             string  `json:"role"`
+	// DemoMode reports whether demo mode is globally enabled; Access is the
+	// caller's effective level (none/ro/rw). When demo mode is off Access is
+	// always "rw". The SPA uses these to gate the UI.
+	DemoMode bool   `json:"demoMode"`
+	Access   string `json:"access"`
 }
 
-func toMeDTO(u storage.User) meDTO {
+// effectiveAccess mirrors auth.ComputeAccess without a second DB read: admins
+// and everyone-when-demo-off get rw; otherwise the user's stored level applies.
+func effectiveAccess(u storage.User, demoMode bool) string {
+	if u.Role == "admin" || !demoMode {
+		return "rw"
+	}
+	return u.AccessLevel
+}
+
+func toMeDTO(u storage.User, demoMode bool) meDTO {
 	return meDTO{
 		ID:               u.ID,
 		Nickname:         u.Nickname,
 		AvatarURL:        u.AvatarURL,
 		FavoriteTeamCode: u.FavoriteTeamCode,
 		Role:             u.Role,
+		DemoMode:         demoMode,
+		Access:           effectiveAccess(u, demoMode),
 	}
 }
 
@@ -56,12 +73,18 @@ func RegisterProfileRoutes(r gin.IRouter, store ProfileStore) {
 func meHandler(store ProfileStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, _ := auth.Current(c)
-		u, err := store.GetUserByID(c.Request.Context(), claims.Sub)
+		ctx := c.Request.Context()
+		u, err := store.GetUserByID(ctx, claims.Sub)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load profile"})
 			return
 		}
-		c.JSON(http.StatusOK, toMeDTO(u))
+		demo, err := store.IsDemoMode(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load profile"})
+			return
+		}
+		c.JSON(http.StatusOK, toMeDTO(u, demo))
 	}
 }
 
@@ -121,7 +144,12 @@ func patchMeHandler(store ProfileStore) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
 			return
 		}
-		c.JSON(http.StatusOK, toMeDTO(u))
+		demo, err := store.IsDemoMode(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
+			return
+		}
+		c.JSON(http.StatusOK, toMeDTO(u, demo))
 	}
 }
 

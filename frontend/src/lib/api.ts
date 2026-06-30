@@ -9,6 +9,7 @@ import type {
   TopScorer,
   User,
   AdminPlayer,
+  AccessLevel,
   MyPrediction,
   MatchReveal,
   LeaderboardEntry,
@@ -257,6 +258,45 @@ export async function deletePlayer(id: string, signal?: AbortSignal): Promise<vo
     signal,
   })
   if (!res.ok) throw new ApiError(res.status)
+}
+
+/** Set a player's demo access level (admin only). */
+export async function setUserAccess(
+  id: string,
+  level: AccessLevel,
+  signal?: AbortSignal,
+): Promise<AdminPlayer> {
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}/access`, {
+    ...withCreds,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  return (await res.json()) as AdminPlayer
+}
+
+/** Read whether demo mode is enabled (admin only). */
+export async function fetchDemoMode(signal?: AbortSignal): Promise<boolean> {
+  const res = await fetch('/api/admin/demo', { ...withCreds, signal })
+  if (!res.ok) throw new ApiError(res.status)
+  const data = (await res.json()) as { enabled?: boolean }
+  return !!data.enabled
+}
+
+/** Enable or disable demo mode (admin only). */
+export async function setDemoMode(enabled: boolean, signal?: AbortSignal): Promise<boolean> {
+  const res = await fetch('/api/admin/demo', {
+    ...withCreds,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+    signal,
+  })
+  if (!res.ok) throw new ApiError(res.status)
+  const data = (await res.json()) as { enabled?: boolean }
+  return !!data.enabled
 }
 
 /**

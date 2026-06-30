@@ -6,6 +6,9 @@ import { fetchAudit, fetchMatches } from '../lib/api'
 import { teamName } from '../lib/teamNames'
 import { formatAuditTime, formatKyivDateTime } from '../lib/fixtures'
 import { ErrorState } from '../components/states'
+import DemoLocked from '../components/DemoLocked'
+import { useAuth } from '../auth/AuthContext'
+import { canSeeOthers } from '../lib/access'
 
 const POLL_MS = 30_000
 
@@ -46,7 +49,9 @@ function describe(
 
 export default function Audit() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const lang = i18n.resolvedLanguage
+  const blocked = !canSeeOthers(user)
   const [state, setState] = useState<LoadState>({ phase: 'loading' })
 
   const load = useCallback(
@@ -76,6 +81,7 @@ export default function Audit() {
   )
 
   useEffect(() => {
+    if (blocked) return // browse-only demo tier: don't fetch others' activity
     const controller = new AbortController()
     load(controller.signal)
     const id = setInterval(() => load(), POLL_MS)
@@ -83,7 +89,7 @@ export default function Audit() {
       controller.abort()
       clearInterval(id)
     }
-  }, [load])
+  }, [load, blocked])
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -94,7 +100,9 @@ export default function Audit() {
         <p className="mt-1 text-sm text-muted">{t('audit.subtitle')}</p>
       </header>
 
-      {state.phase === 'loading' && (
+      {blocked && <DemoLocked reason="seeOthers" />}
+
+      {!blocked && state.phase === 'loading' && (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="h-12 animate-pulse rounded-xl bg-white/[0.05]" />

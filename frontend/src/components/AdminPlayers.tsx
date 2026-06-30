@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AdminPlayer } from '../types'
-import { ApiError, createPlayer, deletePlayer, fetchAdminUsers } from '../lib/api'
+import type { AccessLevel, AdminPlayer } from '../types'
+import {
+  ApiError,
+  createPlayer,
+  deletePlayer,
+  fetchAdminUsers,
+  fetchDemoMode,
+  setDemoMode,
+  setUserAccess,
+} from '../lib/api'
 import Avatar from './Avatar'
 
 /**
@@ -21,12 +29,17 @@ export default function AdminPlayers() {
   const [removingId, setRemovingId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const [demo, setDemo] = useState<boolean | null>(null)
+  const [demoBusy, setDemoBusy] = useState(false)
+  const [accessBusyId, setAccessBusyId] = useState<string | null>(null)
+
   useEffect(() => {
     const controller = new AbortController()
-    fetchAdminUsers(controller.signal)
-      .then((list) => {
+    Promise.all([fetchAdminUsers(controller.signal), fetchDemoMode(controller.signal)])
+      .then(([list, on]) => {
         if (controller.signal.aborted) return
         setPlayers(list)
+        setDemo(on)
         setLoading(false)
       })
       .catch((err: unknown) => {
@@ -36,6 +49,32 @@ export default function AdminPlayers() {
       })
     return () => controller.abort()
   }, [])
+
+  async function onToggleDemo() {
+    if (demoBusy || demo === null) return
+    setDemoBusy(true)
+    try {
+      const next = await setDemoMode(!demo)
+      setDemo(next)
+    } catch {
+      /* leave the toggle as-is on failure */
+    } finally {
+      setDemoBusy(false)
+    }
+  }
+
+  async function onChangeAccess(player: AdminPlayer, level: AccessLevel) {
+    if (accessBusyId || level === player.accessLevel) return
+    setAccessBusyId(player.id)
+    try {
+      const updated = await setUserAccess(player.id, level)
+      setPlayers((prev) => prev.map((p) => (p.id === player.id ? { ...p, accessLevel: updated.accessLevel } : p)))
+    } catch {
+      window.alert(t('admin.accessError'))
+    } finally {
+      setAccessBusyId(null)
+    }
+  }
 
   async function onAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -86,6 +125,34 @@ export default function AdminPlayers() {
         <p className="mt-1 text-sm text-muted">{t('admin.playersSubtitle')}</p>
       </header>
 
+      {/* Demo-mode master switch. When on, new self-service sign-ups land in the
+          browse-only tier until granted access below. */}
+      {demo !== null && (
+        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-hairline bg-white/[0.02] px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-text">{t('admin.demoTitle')}</p>
+            <p className="mt-0.5 text-xs text-muted">{t('admin.demoSubtitle')}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={demo}
+            aria-label={t('admin.demoTitle')}
+            disabled={demoBusy}
+            onClick={onToggleDemo}
+            className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+              demo ? 'bg-accent' : 'bg-white/15'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                demo ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+      )}
+
       <form onSubmit={onAdd} className="mb-5 flex items-end gap-2">
         <label className="block flex-1">
           <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted/80">
@@ -127,10 +194,22 @@ export default function AdminPlayers() {
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
                 {p.nickname}
               </span>
-              {p.role === 'admin' && (
+              {p.role === 'admin' ? (
                 <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-accent">
                   {t('profile.roleAdmin')}
                 </span>
+              ) : (
+                <select
+                  aria-label={t('admin.accessFor', { player: p.nickname })}
+                  value={p.accessLevel}
+                  disabled={accessBusyId === p.id}
+                  onChange={(e) => void onChangeAccess(p, e.target.value as AccessLevel)}
+                  className="h-7 shrink-0 rounded-md border border-hairline bg-white/[0.04] px-1.5 text-xs text-text outline-none transition-colors focus:border-accent disabled:opacity-50"
+                >
+                  <option value="none">{t('admin.accessNone')}</option>
+                  <option value="ro">{t('admin.accessRo')}</option>
+                  <option value="rw">{t('admin.accessRw')}</option>
+                </select>
               )}
               <button
                 type="button"

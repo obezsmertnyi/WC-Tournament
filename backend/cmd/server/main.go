@@ -366,6 +366,12 @@ func run(logger *slog.Logger) error {
 		// Auth endpoints stay public (login/logout/Google); health is public too.
 		auth.RegisterRoutes(engine, store)
 
+		// Demo-mode gate: when demo mode is ON, non-admin users are gated by their
+		// access_level (none/ro/rw). Installed globally; it no-ops for open routes
+		// and for everyone when demo mode is OFF. Gin resolves the route before the
+		// chain runs, so it can inspect the matched path.
+		engine.Use(auth.DemoGate(store))
+
 		// Auth wall: ALL data reads require a logged-in user. Anonymous callers
 		// get 401 (the SPA shows the login screen). health + auth stay public.
 		authed := engine.Group("", auth.RequireUser())

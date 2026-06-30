@@ -5,6 +5,7 @@ import AppBar, { BottomNav } from './AppBar'
 import Spotlight from './Spotlight'
 import Footer from './Footer'
 import LoginScreen from './LoginScreen'
+import DemoBanner from './DemoBanner'
 import { useAuth } from '../auth/AuthContext'
 
 export default function Layout() {
@@ -46,6 +47,7 @@ export default function Layout() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduce ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
         >
+          <DemoBanner />
           <Outlet />
         </motion.div>
 

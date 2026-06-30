@@ -67,12 +67,19 @@ export interface Standings {
 
 export type Role = 'user' | 'admin'
 
+/** Demo-mode access tier. Ignored (server returns 'rw') when demo mode is off. */
+export type AccessLevel = 'none' | 'ro' | 'rw'
+
 export interface User {
   id: string
   nickname: string
   avatarUrl: string | null
   favoriteTeamCode: string | null
   role: Role
+  /** Whether demo mode is globally enabled. */
+  demoMode: boolean
+  /** Effective access: none (browse only), ro (see others), rw (participate). */
+  access: AccessLevel
 }
 
 /** A player as returned by the admin roster endpoint (`GET /api/admin/users`). */
@@ -82,6 +89,7 @@ export interface AdminPlayer {
   avatarUrl: string | null
   favoriteTeamCode: string | null
   role: Role
+  accessLevel: AccessLevel
 }
 
 /** A user's own prediction for one match. */

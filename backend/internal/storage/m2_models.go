@@ -13,6 +13,7 @@ type User struct {
 	TelegramChatID   *string
 	Role             string
 	Approved         bool
+	AccessLevel      string
 	CreatedAt        time.Time
 }
 

@@ -20,8 +20,11 @@ import ScoringRules from '../components/ScoringRules'
 import DateStrip from '../components/DateStrip'
 import Flag from '../components/Flag'
 import StarHero from '../components/StarHero'
+import DemoLocked from '../components/DemoLocked'
 import { ErrorState } from '../components/states'
 import { useMountAnimation } from '../lib/motion'
+import { useAuth } from '../auth/AuthContext'
+import { canSeeOthers } from '../lib/access'
 
 const POLL_MS = 30_000
 
@@ -29,7 +32,11 @@ type Sub = 'leaderboard' | 'reveals' | 'scorers' | 'bonus'
 
 export default function Competition() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [sub, setSub] = useState<Sub>('leaderboard')
+  // none/ro gating: the three "see others" tabs are locked for browse-only
+  // users; the bonus tab stays visible (rules + own picks gate inside).
+  const seeOthers = canSeeOthers(user)
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -68,9 +75,9 @@ export default function Competition() {
         })}
       </div>
 
-      {sub === 'leaderboard' && <LeaderboardSection />}
-      {sub === 'reveals' && <RevealsSection />}
-      {sub === 'scorers' && <TopScorers />}
+      {sub === 'leaderboard' && (seeOthers ? <LeaderboardSection /> : <DemoLocked reason="seeOthers" />)}
+      {sub === 'reveals' && (seeOthers ? <RevealsSection /> : <DemoLocked reason="seeOthers" />)}
+      {sub === 'scorers' && (seeOthers ? <TopScorers /> : <DemoLocked reason="seeOthers" />)}
       {sub === 'bonus' && (
         <>
           <ScoringRules />

@@ -20,6 +20,9 @@ type AdminStore interface {
 	GetUserByID(ctx context.Context, id int64) (storage.User, error)
 	DeleteUserCascade(ctx context.Context, id int64) error
 	SetMatchResult(ctx context.Context, id int64, home, away int, status string) (storage.Match, error)
+	SetUserAccess(ctx context.Context, id int64, level string) error
+	IsDemoMode(ctx context.Context) (bool, error)
+	SetDemoMode(ctx context.Context, on bool) error
 	AppendAudit(ctx context.Context, e storage.AuditEntry) error
 }
 
@@ -30,6 +33,7 @@ type adminUserDTO struct {
 	AvatarURL        *string `json:"avatarUrl"`
 	FavoriteTeamCode *string `json:"favoriteTeamCode"`
 	Role             string  `json:"role"`
+	AccessLevel      string  `json:"accessLevel"`
 }
 
 // RegisterAdminRoutes wires the admin endpoints (all RequireAdmin):
@@ -46,9 +50,14 @@ func RegisterAdminRoutes(r gin.IRouter, store AdminStore, rc Recomputer) {
 	grp.GET("", adminListUsersHandler(store))
 	grp.POST("", adminCreateUserHandler(store))
 	grp.DELETE("/:id", adminDeleteUserHandler(store))
+	grp.PUT("/:id/access", adminSetAccessHandler(store))
 
 	matches := r.Group("/api/admin/matches", auth.RequireAdmin())
 	matches.PUT("/:id/result", adminSetMatchResultHandler(store, rc))
+
+	demo := r.Group("/api/admin/demo", auth.RequireAdmin())
+	demo.GET("", adminGetDemoHandler(store))
+	demo.PUT("", adminSetDemoHandler(store))
 }
 
 // adminSetMatchResultHandler sets or overrides a match result by id. Per
@@ -137,6 +146,7 @@ func adminListUsersHandler(store AdminStore) gin.HandlerFunc {
 				AvatarURL:        u.AvatarURL,
 				FavoriteTeamCode: u.FavoriteTeamCode,
 				Role:             u.Role,
+				AccessLevel:      u.AccessLevel,
 			})
 		}
 		c.JSON(http.StatusOK, dtos)
@@ -150,6 +160,112 @@ func toAdminUserDTO(u storage.User) adminUserDTO {
 		AvatarURL:        u.AvatarURL,
 		FavoriteTeamCode: u.FavoriteTeamCode,
 		Role:             u.Role,
+		AccessLevel:      u.AccessLevel,
+	}
+}
+
+// adminSetAccessHandler sets a player's demo access level (none/ro/rw). It
+// refuses (403) to change an admin account (admins are always rw), returns 404
+// for an unknown id, and writes an admin_set_access audit row on success.
+func adminSetAccessHandler(store AdminStore) gin.HandlerFunc {
+	type req struct {
+		Level string `json:"level"`
+	}
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil || id <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+			return
+		}
+		var body req
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+			return
+		}
+		level := strings.TrimSpace(body.Level)
+		switch level {
+		case auth.AccessNone, auth.AccessRO, auth.AccessRW:
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "level must be none, ro or rw"})
+			return
+		}
+
+		ctx := c.Request.Context()
+		target, err := store.GetUserByID(ctx, id)
+		if err != nil {
+			if errors.Is(err, storage.ErrNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set access"})
+			return
+		}
+		if target.Role == "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "cannot change an admin's access"})
+			return
+		}
+
+		if err := store.SetUserAccess(ctx, id, level); err != nil {
+			if errors.Is(err, storage.ErrNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set access"})
+			return
+		}
+
+		claims, _ := auth.Current(c)
+		actor := claims.Sub
+		t := id
+		_ = store.AppendAudit(ctx, storage.AuditEntry{
+			ActorUserID:  &actor,
+			ActorRole:    claims.Role,
+			Action:       "admin_set_access",
+			TargetUserID: &t,
+		})
+
+		target.AccessLevel = level
+		c.JSON(http.StatusOK, toAdminUserDTO(target))
+	}
+}
+
+// adminGetDemoHandler reports whether demo mode is enabled.
+func adminGetDemoHandler(store AdminStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		on, err := store.IsDemoMode(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read demo mode"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"enabled": on})
+	}
+}
+
+// adminSetDemoHandler enables or disables demo mode and writes an
+// admin_demo_mode audit row.
+func adminSetDemoHandler(store AdminStore) gin.HandlerFunc {
+	type req struct {
+		Enabled bool `json:"enabled"`
+	}
+	return func(c *gin.Context) {
+		var body req
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+			return
+		}
+		ctx := c.Request.Context()
+		if err := store.SetDemoMode(ctx, body.Enabled); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set demo mode"})
+			return
+		}
+		claims, _ := auth.Current(c)
+		actor := claims.Sub
+		_ = store.AppendAudit(ctx, storage.AuditEntry{
+			ActorUserID: &actor,
+			ActorRole:   claims.Role,
+			Action:      "admin_demo_mode",
+		})
+		c.JSON(http.StatusOK, gin.H{"enabled": body.Enabled})
 	}
 }
 

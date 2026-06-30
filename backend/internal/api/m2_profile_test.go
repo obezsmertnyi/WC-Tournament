@@ -18,6 +18,11 @@ type fakeProfileStore struct {
 	user      storage.User
 	teamCodes map[string]bool
 	updated   bool
+	demoMode  bool
+}
+
+func (f *fakeProfileStore) IsDemoMode(_ context.Context) (bool, error) {
+	return f.demoMode, nil
 }
 
 func (f *fakeProfileStore) GetUserByID(_ context.Context, _ int64) (storage.User, error) {
