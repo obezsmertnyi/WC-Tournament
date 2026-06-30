@@ -15,5 +15,6 @@ Each ADR captures one significant decision: its context, the choice, and the con
 | [0009](0009-public-audit-log.md) | Public, immutable audit log with timed disclosure | Accepted |
 | [0010](0010-initial-backfill-window.md) | One-time audited backfill window for the opening matches | Accepted |
 | [0011](0011-notifications-telegram.md) | Notifications via Telegram, friendly Ukrainian copy | Accepted |
+| [0012](0012-demo-mode-access-tiers.md) | Demo mode with per-user access tiers (none/ro/rw) | Accepted |
 
 New ADR: copy the structure of an existing one, take the next number, link it here.

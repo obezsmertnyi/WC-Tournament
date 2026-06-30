@@ -10,7 +10,7 @@
 ## 1. Decisions locked
 - **Backend:** Go 1.26 + Gin + Postgres 17 (matches Everstake stack; `pgx`).
 - **Frontend:** React + Vite + **TypeScript**, football-themed UI (Tailwind + shadcn/ui), served by nginx. Must be **production-ready and polished** — not a throwaway. Country flags are **mandatory** on every team; player avatars on leaderboard/profiles.
-- **Auth:** **Sign in with Google** (OAuth/OIDC) → backend JWT session. Players set a **nickname** in their profile (the display name everywhere). Allow-list / admin approval gates a private pool. (ADR-0005)
+- **Auth:** **Sign in with Google** (OAuth/OIDC) → backend JWT session. Players set a **nickname** in their profile (the display name everywhere). A private pool is gated by **demo mode + per-user access tiers** (`none`/`ro`/`rw`): when demo mode is on, a self-service Google sign-up can only browse the UI until an admin grants access; admins and demo-off always resolve to `rw`. Enforced by one global `DemoGate` middleware. (ADR-0005, ADR-0012)
 - **Deployment:** `docker-compose` — `db`, `backend`, `frontend`. Single host, local.
 - **Results/calendar source:** **official FIFA API** `api.fifa.com/api/v3` (`IdCompetition=17`, `IdSeason=285023` — verified live for WC2026), behind a pluggable provider interface, with manual admin override always winning. ESPN hidden API (`site.api.espn.com/.../soccer/fifa.world`) and football-data.org (`/v4/competitions/WC`) as fallbacks. sport.ua scraping dropped — the official API is cleaner and gives flags + bracket placeholders.
 
