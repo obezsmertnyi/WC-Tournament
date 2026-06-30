@@ -12,7 +12,9 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
-  # Frontend npm packages.
+  # Frontend npm packages. Ignore breaking major bumps (react 19, vite 8,
+  # tailwind 4, typescript 6, …) — those are deliberate migrations, not
+  # automated; Dependabot still proposes minor/patch updates.
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -21,6 +23,9 @@ updates:
     groups:
       npm-deps:
         patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(deps)"
 
