@@ -1,0 +1,22 @@
+# Categories for the auto-generated release notes (used by release.yml's
+# generate_release_notes). PRs are grouped by label; conventional-commit
+# prefixes map to these via the labels Dependabot/maintainers apply.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: 🚀 Features
+      labels: [feature, enhancement, "feat"]
+    - title: 🐛 Fixes
+      labels: [bug, fix]
+    - title: 🔒 Security
+      labels: [security]
+    - title: 📚 Documentation
+      labels: [documentation, docs]
+    - title: ⬆️ Dependencies
+      labels: [dependencies]
+    - title: 🧹 Maintenance
+      labels: [chore, refactor, ci, test]
+    - title: Other changes
+      labels: ["*"]

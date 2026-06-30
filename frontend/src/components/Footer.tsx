@@ -24,6 +24,9 @@ export default function Footer() {
         World Cup <span className="text-accent/70 tabular-nums">2026</span>
       </p>
       <p className="mt-1 text-[0.62rem] tracking-wide text-muted/40">{t('footer.tagline')}</p>
+      <p className="mt-1 font-mono text-[0.55rem] tracking-wide text-muted/30 tabular-nums">
+        {import.meta.env.VITE_APP_VERSION ?? 'dev'}
+      </p>
     </footer>
   )
 }

@@ -37,6 +37,10 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/winners"
 )
 
+// version is the build version, injected at build time via
+// -ldflags "-X main.version=<tag>" (defaults to "dev" for local builds).
+var version = "dev"
+
 // Kyiv is the display/scheduling timezone for the digest. Falls back to UTC if
 // the zone can't be loaded.
 var kyivLoc = mustLoadKyiv()
@@ -359,6 +363,8 @@ func run(logger *slog.Logger) error {
 	engine.Use(gin.Recovery())
 	engine.Use(requestLogger(logger))
 
+	api.Version = version
+	logger.Info("starting server", slog.String("version", version))
 	api.RegisterHealthRoutes(engine)
 	if store != nil {
 		recomputer := scoring.NewRecomputer(store, scoring.DefaultRules())

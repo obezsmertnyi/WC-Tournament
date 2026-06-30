@@ -6,6 +6,10 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+# VERSION is baked into the bundle via Vite (shown in the footer); defaults to
+# "dev", the release workflow passes the git tag.
+ARG VERSION=dev
+ENV VITE_APP_VERSION=${VERSION}
 RUN npm run build
 
 # --- Serve stage ---

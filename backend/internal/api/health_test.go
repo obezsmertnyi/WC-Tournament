@@ -39,7 +39,7 @@ func TestHealthRoutes(t *testing.T) {
 				t.Fatalf("failed to decode response body %q: %v", rec.Body.String(), err)
 			}
 
-			want := healthResponse{Status: "ok", Service: serviceName}
+			want := healthResponse{Status: "ok", Service: serviceName, Version: Version}
 			if got != want {
 				t.Fatalf("unexpected body: got %+v, want %+v", got, want)
 			}
