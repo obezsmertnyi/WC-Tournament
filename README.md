@@ -15,6 +15,9 @@
 
 ---
 
+> 🗺️ **Lost in the files?** [`docs/REPO-MAP.md`](docs/REPO-MAP.md) indexes every
+> file by purpose and flags what's needed for the homework submission.
+
 ## Contents
 
 - [Overview](#overview) — what it is and who it's for
