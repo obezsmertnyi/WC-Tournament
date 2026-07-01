@@ -7,6 +7,10 @@ read this file directly). Edit **here** — do not duplicate rules into `CLAUDE.
 Keep it lean (this is the always-loaded budget); per-session state lives in the
 **dynamic** context (see boundary below), not here.
 
+**New session? Orient in 3 files:** [`docs/REPO-MAP.md`](docs/REPO-MAP.md) (indexes
+every file by purpose + a reference→ours naming crosswalk) → `current-state.md`
+(what's in flight) → `CHECKLIST.md` (live status).
+
 ## What this is
 A private, friends-only FIFA World Cup 2026 score-prediction pool. Players
 predict fixtures, the app scores them against official FIFA results, a live
