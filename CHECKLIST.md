@@ -40,7 +40,9 @@ separate review → tick. `✅ done · 🔄 in progress · ☐ todo`.
 - ✅ Integration tests — Go against real Postgres (CI service)
 - ✅ `evals/` — scoring golden-fixture evals (rubric + `@trace`), run in CI
 - ✅ `docs/qa/` — generated traceability matrix + `trace/trace.json` + `--check` ratchet (CI job)
-- ✅ `docs/qa/test-plan.md` + `demo-script.md`
+- ✅ `docs/qa/test-plan.md` + `demo-script.md` + `risk-register.md` + `mvp-acceptance-report.md`
+- ✅ Ratchets (quality only tightens): traceability · eval-surface (`check-eval-ratchet`) · backend coverage (`check-coverage-ratchet`) — CI-gated
+- ✅ `scripts/qa-verify.mjs` (`make qa`) → `docs/qa/automated-verification-latest.md` · `scripts/gate-status.mjs` (`make gates`)
 - ☐ Real-behavior proof — the demo video (*user records*, see `demo-script.md`)
 
 ## Proof point 5 — Spec-driven development (SDD) ✅

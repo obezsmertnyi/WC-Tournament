@@ -236,3 +236,29 @@ Accepted with rationale (not closed, on purpose):
 
 Not flagged (correct to omit): the project-factory plugin, OpenSpec/Spec-Kit/Fallow
 tool choices, greenfield bootstrap (app already in prod), model routing (org rule).
+
+---
+
+## project-factory best-practice adoption (2026-07-01)
+
+Read the full `koldovsky/project-factory` tree file-by-file and adopted the
+high-value, right-sized practices:
+
+**Adopted:**
+- `scripts/check-eval-ratchet.mjs` + `quality/eval-baseline.json` — eval-surface may only grow (28 cases).
+- `scripts/check-coverage-ratchet.mjs` + `quality/coverage-baseline.json` — backend coverage may only grow (≥34.5%); wired into CI backend job (with PG).
+- `scripts/qa-verify.mjs` (`make qa`) — single battery runner → committed evidence report `docs/qa/automated-verification-latest.md`.
+- `scripts/gate-status.mjs` (`make gates`) — G-trace/G-eval/G-cover PASS/FAIL/SKIP roll-up.
+- `docs/qa/risk-register.md` + `docs/qa/mvp-acceptance-report.md` — complete the QA pack.
+- CI: eval-ratchet + coverage-ratchet checks added.
+
+**Skipped (framework-scale machinery — the factory is *their* deliverable; we're a shipped app):**
+OpenSpec migration; the 5 JS fan-out workflows; the 9 orchestration agents;
+`check-trajectory` git-process audit; `vision-verify`/`vision-judge`; the LLM
+`eval-suite` judge (we grade with deterministic golden fixtures); the
+`automations/` cron layer (dependabot already covers dep drift);
+`uat-triage`/`bug-triage` (no formal UAT round); plugin/marketplace packaging +
+`sync-skill-refs`; Cursor/Copilot multi-tool shims (we run Claude Code + Codex).
+Headless demo recordings + a11y axe gate: deferred (need Playwright/browser infra
+disproportionate to a single-audience app; the narrated demo video is the
+rubric's real-behavior proof).

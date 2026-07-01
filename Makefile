@@ -46,6 +46,18 @@ test: test-backend ## Run all tests
 .PHONY: ci
 ci: vet test-backend build-frontend ## Run the local equivalent of CI gates
 
+.PHONY: qa
+qa: ## Run the full verification battery + write the evidence report
+	node scripts/qa-verify.mjs
+
+.PHONY: gates
+gates: ## Gate roll-up: traceability + eval + coverage ratchets (PASS/FAIL/SKIP)
+	node scripts/gate-status.mjs
+
+.PHONY: trace
+trace: ## Regenerate the traceability matrix + trace.json
+	node scripts/gen-traceability.mjs
+
 # ── Docker / local stack ─────────────────────────────────────────────────────
 .PHONY: up
 up: ## Start the local stack (docker compose)

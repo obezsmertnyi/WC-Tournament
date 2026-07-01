@@ -58,6 +58,11 @@ jobs:
         run: go test -race -cover ./...
       - name: scoring evals (golden fixtures)
         run: go test -tags=evals ./internal/scoring/
+      - name: coverage ratchet (backend)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wctest?sslmode=disable
+          JWT_SECRET: ci-test-secret-ci-test-secret-ci-test-secret
+        run: cd .. && node scripts/check-coverage-ratchet.mjs --check
 
   frontend:
     name: Frontend (typecheck · build)
@@ -121,6 +126,7 @@ jobs:
       # Matrix must be fresh (regenerated from @trace annotations) and coverage
       # must not regress below quality/trace-baseline.json (ADR-0014).
       - run: node scripts/gen-traceability.mjs --check
+      - run: node scripts/check-eval-ratchet.mjs --check
 
   docker:
     name: Docker (build · scan · smoke)
