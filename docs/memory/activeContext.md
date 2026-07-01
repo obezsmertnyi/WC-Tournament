@@ -18,6 +18,6 @@ loop, and a read-only MCP server. Drive it from `CHECKLIST.md` in a loop.
 - App is **live in prod** — keep `main` green; dep/code changes deploy on next release.
 
 ## Pointers
-- Loop driver: `CHECKLIST.md` · loop state: `.workflow-state.toon`
-- Conventions studied: `docs/agentic-hw-reference.md`
+- Map of the whole repo: `docs/REPO-MAP.md` · loop driver: `CHECKLIST.md`
 - Submission narrative: `docs/agentic-engineering.md` · PR body: `docs/SUBMISSION.md`
+- Reference decisions/crosswalk: `docs/qa/slide-coverage-audit.md`

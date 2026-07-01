@@ -7,6 +7,18 @@ Lost in the files? This is the index. Everything is grouped by **purpose**. The
 > [`docs/agentic-engineering.md`](agentic-engineering.md) (the 5 proof points) →
 > [`CHECKLIST.md`](../CHECKLIST.md) (live status).
 
+## How this repo is organized (three layers)
+1. **Product** — the running app: `backend/`, `frontend/`, `docker-compose.yml`.
+2. **Project docs** — what/why/how of the product: `docs/` (brief, requirements,
+   architecture, ADRs, features, dev-setup, glossary) + `README.md`.
+3. **Engineering process & submission** — the agentic layer: rules (`AGENTS.md`/
+   `CLAUDE.md`), the loop (`WORKFLOW.md`/`LOOP.md`/`CHECKLIST.md`/`.claude/`),
+   verification (`scripts/`, `quality/`, `docs/qa/`, `evals/`), and the homework
+   deliverables (`docs/agentic-engineering.md`, `docs/SUBMISSION.md`).
+
+Reference material (the course deck, project-factory) is **not** committed — only
+our *decisions* about it live here (crosswalk below; `docs/qa/slide-coverage-audit.md`).
+
 ## 🎮 The product (the app)
 | Path | What |
 |------|------|
@@ -77,6 +89,35 @@ Lost in the files? This is the index. Everything is grouped by **purpose**. The
 | **`docs/agentic-engineering.md`** | Maps to the 5 graded proof points | ⭐ |
 | `docs/qa/slide-coverage-audit.md` | 91-slide deck coverage + adoption notes | ✓ |
 | `README.md` | Badges, diagrams, overview | ✓ |
+
+## 🔀 Naming crosswalk — reference (project-factory / deck) → ours
+We deliberately kept our own naming (we're an app, not the framework). This maps
+their term to our file so nothing looks "missing" — full rationale in
+[`docs/qa/slide-coverage-audit.md`](qa/slide-coverage-audit.md) (adoption section)
+and [`docs/qa/quality-gates.md`](qa/quality-gates.md) (deviations).
+
+| Reference | Ours | Note |
+|-----------|------|------|
+| `openspec/specs/<cap>/spec.md` | `docs/features/<cap>/spec.md` | Given/When/Then; no OpenSpec CLI |
+| `openspec/changes/<slice>/{proposal,design,tasks}.md` | `docs/adr/*` + `docs/mvp-capability-plan.md` | decisions in ADRs; slices in the plan |
+| `MASTER-PROMPT.md` | `WORKFLOW.md` + `LOOP.md` | orchestration + the loop |
+| `checklists/quality-gates.md` (G0–G8) | `docs/qa/quality-gates.md` | same gates, mapped to our commands |
+| `scripts/check-traceability.mjs` | `scripts/gen-traceability.mjs` | generates matrix + `trace/trace.json` + `--check` |
+| `check-coverage-ratchet` / `check-eval-ratchet` / `qa-verify` / `gate-status` | **same names** in `scripts/` | adopted as-is |
+| `check-trajectory` / `check-recordings` / `check-a11y` / `vision-verify` | — | skipped (see audit) |
+| `templates/docs/requirements.template.md` | `docs/requirements.md` | FR/NFR/TC/BC |
+| `templates/docs/mvp-capability-plan.template.md` | `docs/mvp-capability-plan.md` | FR ownership |
+| `templates/docs/current-state.template.md` | `current-state.md` + `docs/memory/` | handoff |
+| `templates/docs/context-architecture.template.md` | `docs/adr/0013` + `.aiexclude` | static/dynamic + border |
+| `templates/adr.template.md` | `docs/adr/*.md` | MADR format |
+| `templates/docs/qa-pack.template.md` | `docs/qa/{README,test-plan,manual-test-plan,requirements-traceability-matrix,risk-register,mvp-acceptance-report}.md` | the QA pack |
+| `agents/*.md` (11 roles) | `.claude/agents/{scoring-correctness,security}-reviewer.md` | 2 reviewers; other 9 = orchestration, skipped |
+| `.claude/workflows/*.js` (fan-out) | `.claude/commands/{verify,trace,review,new-capability}.md` | our loop steps |
+| `skills/project-factory/` | `.claude/skills/wc-recap/` | we author one skill |
+| `evals/cases/*.eval.ts` | `scoring_evals_test.go` (`-tags=evals`), `mcp/evals/`, `recap.test.ts` | golden fixtures |
+| `quality/{coverage,eval}-baseline.json` | **same** | ratchets |
+| `docs/qa/demo-recordings/` (headless) | `docs/qa/demo-script.md` (manual video) | automation deferred |
+| `AGENTS.md` (SSOT) + `CLAUDE.md`→`@AGENTS.md` | **same** | one ruleset, both tools |
 
 ## 👉 What only YOU can do (no gh access for the agent)
 1. **Rotate the 4 secrets in `.env`** (Telegram / Google OAuth / `JWT_SECRET` / `ADMIN_PASSWORD`) — risk R-01.

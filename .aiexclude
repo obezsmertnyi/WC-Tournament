@@ -20,9 +20,8 @@ trace/trace.json
 docs/qa/requirements-traceability-matrix.md
 quality/trace-baseline.json
 
-# Transient loop state and research dumps
+# Transient loop state
 *.toon
-docs/agentic-hw-reference.md
 
 # Binary / diagrams (read the source docs, not the rendered assets)
 *.svg

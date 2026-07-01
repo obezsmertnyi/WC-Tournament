@@ -21,7 +21,6 @@ reviews:
     - "!**/*.webm"                   # demo recordings
     - "!**/*.toon"                   # loop state
     - "!docs/qa/requirements-traceability-matrix.md"  # generated, not hand-written
-    - "!docs/agentic-hw-reference.md"                 # research notes dump
     - "!.agents/skills/**"           # agent skill scaffolding (per fwdays tip — ~80 files of noise)
     - "!.claude/skills/**"
   path_instructions:
