@@ -38,3 +38,8 @@ Trivy → container smoke. The top gate — real behavior — is the demo video
   after every change; nothing is "done" until its gate is green and its FR is traced.
 - Dynamic state (`current-state.md`, `docs/memory/`) carries context between
   sessions so a fresh agent resumes in ~30s; static rules stay in `AGENTS.md`.
+- **Parallel slices (optional):** independent capabilities can be developed in
+  parallel `git worktree` checkouts (one branch per worktree) so agents don't
+  collide on the tree; each still passes the same gates before merge. For this
+  solo submission slices were built sequentially — the mechanism is noted for
+  scale, not required.

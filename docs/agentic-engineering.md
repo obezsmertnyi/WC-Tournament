@@ -18,6 +18,13 @@ WC-Tournament is a production, live friends-only World Cup 2026 prediction pool
   [`current-state.md`](../current-state.md) (a ~30-second handoff), and
   [`CHECKLIST.md`](../CHECKLIST.md) / `.workflow-state.toon` (loop state). The
   boundary is explicit so the always-loaded budget stays lean.
+- **Context border & token economy (measured, not vibes):** a machine-enforced
+  [`.aiexclude`](../.aiexclude) keeps generated/vendored/binary/secret files out
+  of AI context. Measured with `wc`: the always-loaded static rules (`AGENTS.md`)
+  are **≈971 tokens** — comfortably under the ≲4k budget ADR-0013 sets; the full
+  post-border repo pack is **≈431k tokens across 239 files** (so we never blindly
+  paste the whole tree — the border + the static/dynamic split are what keep the
+  working context small).
 
 ## 2. Loop engineering (loops, not step-by-step prompting)
 The work ran as a repeating cycle, not hand-held prompts — see

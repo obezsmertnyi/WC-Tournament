@@ -66,3 +66,7 @@ separate review → tick. `✅ done · 🔄 in progress · ☐ todo`.
 ## Narrative & submission ✅
 - ✅ `docs/agentic-engineering.md` — one section per proof point (EN, doubles as reference)
 - ✅ `docs/SUBMISSION.md` — uk PR body (verbatim template) + handoff steps (fork/CodeRabbit/video/PR)
+
+## Completeness audit ✅
+- ✅ `docs/qa/slide-coverage-audit.md` — slide-by-slide vs implementation (public deck, 50 slides)
+- ✅ Gaps closed: `.aiexclude` context border + token measurement · worktree note · `docs/dev-setup.md` · `docs/domain-glossary.md`
