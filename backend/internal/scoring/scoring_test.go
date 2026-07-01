@@ -5,6 +5,7 @@ import "testing"
 func ip(v int) *int      { return &v }
 func i64(v int64) *int64 { return &v }
 
+// @trace: FR-010, FR-011, FR-012
 func TestScore_GroupStage(t *testing.T) {
 	rules := DefaultRules()
 	tests := []struct {
@@ -40,6 +41,7 @@ func TestScore_GroupStage(t *testing.T) {
 	}
 }
 
+// @trace: FR-013
 func TestScore_KnockoutWinnerPick(t *testing.T) {
 	rules := DefaultRules()
 	france, brazil := int64(10), int64(20)

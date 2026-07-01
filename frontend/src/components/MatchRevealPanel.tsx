@@ -6,6 +6,7 @@ import { fetchMatchReveal } from '../lib/api'
 import { hasKickedOff } from '../lib/fixtures'
 import Avatar from './Avatar'
 import Flag from './Flag'
+import MatchRecap from './MatchRecap'
 
 type State =
   | { phase: 'loading' }
@@ -86,9 +87,17 @@ export default function MatchRevealPanel({ match }: MatchRevealPanelProps) {
   }
 
   const isKnockout = match.stage !== 'group'
+  const exactGuessers =
+    match.homeScore != null && match.awayScore != null
+      ? state.predictions
+          .filter((p) => p.home === match.homeScore && p.away === match.awayScore)
+          .map((p) => p.nickname)
+      : []
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+    <>
+      <MatchRecap match={match} exactGuessers={exactGuessers} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {state.predictions.map((p, i) => {
         const scored = typeof p.points === 'number'
         // For a knockout draw prediction, show who they picked to advance.
@@ -130,7 +139,8 @@ export default function MatchRevealPanel({ match }: MatchRevealPanelProps) {
           </motion.div>
         )
       })}
-    </div>
+      </div>
+    </>
   )
 }
 

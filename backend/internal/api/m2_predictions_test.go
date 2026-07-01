@@ -80,6 +80,7 @@ func sessionCookie(t *testing.T, id int64, role string) string {
 func i64p(v int64) *int64       { return &v }
 func tp(t time.Time) *time.Time { return &t }
 
+// @trace: FR-001, FR-002, FR-003
 func TestPutPrediction_LockedReturns409(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	past := time.Now().UTC().Add(-time.Hour)

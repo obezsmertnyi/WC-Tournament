@@ -1,0 +1,34 @@
+# CodeRabbit config — reviews in Ukrainian, mentor tone, advisory (non-blocking).
+# Mirrors the fwdays task repo's settings and focuses the bot on substance:
+# generated / vendored / scaffolding files are excluded so review effort goes to
+# real code, specs, tests and decisions.
+language: uk-UA
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/package-lock.json"        # generated lockfile
+    - "!**/go.sum"                   # generated checksums
+    - "!**/dist/**"                  # build output
+    - "!**/*.svg"                    # generated diagrams
+    - "!**/*.png"
+    - "!**/*.webm"                   # demo recordings
+    - "!**/*.toon"                   # loop state
+    - "!docs/qa/requirements-traceability-matrix.md"  # generated, not hand-written
+    - "!docs/agentic-hw-reference.md"                 # research notes dump
+    - "!.agents/skills/**"           # agent skill scaffolding (per fwdays tip — ~80 files of noise)
+    - "!.claude/skills/**"
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Review for substance: correctness/logic bugs, security (leaked secrets,
+        auth/access gaps, injection), and clarity. Leave formatting/style to the
+        linters. Treat scoring (docs/features/scoring/spec.md) and demo-mode
+        access (docs/features/demo-access/spec.md) as invariants — flag any change
+        that violates them. Be a mentor: explain the why.

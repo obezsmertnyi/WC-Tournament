@@ -205,6 +205,9 @@
   "footer": {
     "tagline": "Predict. Cheer. Win."
   },
+  "recap": {
+    "title": "AI match recap"
+  },
   "backend": {
     "checking": "Checking",
     "online": "Online",

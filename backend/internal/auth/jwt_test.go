@@ -18,6 +18,7 @@ func setTestSecret(t *testing.T) {
 	t.Setenv("JWT_SECRET", hex.EncodeToString(b)) // 64 hex chars
 }
 
+// @trace: FR-030
 func TestValidateSecret(t *testing.T) {
 	t.Setenv("JWT_SECRET", "")
 	if err := ValidateSecret(); err == nil {

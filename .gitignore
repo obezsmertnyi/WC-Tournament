@@ -31,3 +31,11 @@ Thumbs.db
 
 # workflow-memory state
 *.workflow-state.toon
+
+# MCP server build + deps
+mcp/node_modules/
+mcp/dist/
+
+# TS build cache + HW loop state
+*.tsbuildinfo
+.agentic-hw-state.toon

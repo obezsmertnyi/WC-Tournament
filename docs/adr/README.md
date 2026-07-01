@@ -16,5 +16,9 @@ Each ADR captures one significant decision: its context, the choice, and the con
 | [0010](0010-initial-backfill-window.md) | One-time audited backfill window for the opening matches | Accepted |
 | [0011](0011-notifications-telegram.md) | Notifications via Telegram, friendly Ukrainian copy | Accepted |
 | [0012](0012-demo-mode-access-tiers.md) | Demo mode with per-user access tiers (none/ro/rw) | Accepted |
+| [0013](0013-context-architecture.md) | Context architecture: static vs dynamic, with a budget | Accepted |
+| [0014](0014-requirement-id-grammar.md) | Requirement-id grammar and the generated trace chain | Accepted |
+| [0015](0015-mcp-read-only-tools.md) | Expose the pool to agents via a read-only MCP server | Accepted |
+| [0016](0016-ai-recap-grounded-guardrail.md) | AI match recap — grounded generation behind a guardrail | Accepted |
 
 New ADR: copy the structure of an existing one, take the next number, link it here.

@@ -56,6 +56,8 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/wctest?sslmode=disable
           JWT_SECRET: ci-test-secret-ci-test-secret-ci-test-secret
         run: go test -race -cover ./...
+      - name: scoring evals (golden fixtures)
+        run: go test -tags=evals ./internal/scoring/
 
   frontend:
     name: Frontend (typecheck · build)
@@ -73,6 +75,8 @@ jobs:
       - run: npm ci
       - name: Build (tsc + vite)
         run: npm run build
+      - name: Unit tests (vitest)
+        run: npm test
 
   govulncheck:
     name: Security · govulncheck
@@ -105,6 +109,18 @@ jobs:
           curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
             | tar -xz gitleaks
           ./gitleaks detect --source . --redact --no-banner
+
+  traceability:
+    name: Verification · traceability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      # Matrix must be fresh (regenerated from @trace annotations) and coverage
+      # must not regress below quality/trace-baseline.json (ADR-0014).
+      - run: node scripts/gen-traceability.mjs --check
 
   docker:
     name: Docker (build · scan · smoke)

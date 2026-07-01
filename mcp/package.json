@@ -1,0 +1,25 @@
+{
+  "name": "wc-tournament-mcp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Read-only MCP server exposing the WC-Tournament pool to agents",
+  "bin": {
+    "wc-tournament-mcp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "eval": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

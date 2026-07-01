@@ -1,0 +1,160 @@
+{
+  "requirements": 19,
+  "covered": 17,
+  "items": [
+    {
+      "id": "FR-001",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/api/m2_predictions_test.go"
+      ]
+    },
+    {
+      "id": "FR-002",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/api/m2_predictions_test.go"
+      ]
+    },
+    {
+      "id": "FR-003",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/api/m2_predictions_test.go"
+      ]
+    },
+    {
+      "id": "FR-010",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/scoring/scoring_evals_test.go",
+        "backend/internal/scoring/scoring_test.go"
+      ]
+    },
+    {
+      "id": "FR-011",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/scoring/scoring_evals_test.go",
+        "backend/internal/scoring/scoring_test.go"
+      ]
+    },
+    {
+      "id": "FR-012",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/scoring/scoring_evals_test.go",
+        "backend/internal/scoring/scoring_test.go"
+      ]
+    },
+    {
+      "id": "FR-013",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/scoring/scoring_evals_test.go",
+        "backend/internal/scoring/scoring_test.go"
+      ]
+    },
+    {
+      "id": "FR-014",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/resolve/resolve_test.go"
+      ]
+    },
+    {
+      "id": "FR-015",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/scoring/scoring_evals_test.go"
+      ]
+    },
+    {
+      "id": "FR-030",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/auth/jwt_test.go"
+      ]
+    },
+    {
+      "id": "FR-031",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/auth/access_test.go",
+        "frontend/src/lib/access.test.ts"
+      ]
+    },
+    {
+      "id": "FR-032",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/auth/access_test.go",
+        "frontend/src/lib/access.test.ts"
+      ]
+    },
+    {
+      "id": "FR-033",
+      "tag": "MVP",
+      "covered": false,
+      "tracedBy": []
+    },
+    {
+      "id": "FR-070",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "mcp/evals/tools.eval.test.ts"
+      ]
+    },
+    {
+      "id": "FR-071",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "mcp/evals/tools.eval.test.ts"
+      ]
+    },
+    {
+      "id": "FR-072",
+      "tag": "Future",
+      "covered": true,
+      "tracedBy": [
+        "mcp/evals/tools.eval.test.ts"
+      ]
+    },
+    {
+      "id": "FR-080",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "frontend/src/lib/recap.test.ts"
+      ]
+    },
+    {
+      "id": "FR-081",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "frontend/src/lib/recap.test.ts"
+      ]
+    },
+    {
+      "id": "FR-082",
+      "tag": "Future",
+      "covered": false,
+      "tracedBy": []
+    }
+  ]
+}

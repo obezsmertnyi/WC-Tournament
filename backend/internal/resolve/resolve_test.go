@@ -2,6 +2,7 @@ package resolve
 
 import "testing"
 
+// @trace: FR-014
 func TestNamesMatch(t *testing.T) {
 	cases := []struct {
 		a, b string

@@ -1,0 +1,9 @@
+# Codex project config.
+#
+# Project context and rules are in AGENTS.md (repo root), which Codex loads
+# automatically. AGENTS.md is the single source of truth; CLAUDE.md imports the
+# same file via `@AGENTS.md`, so Claude Code and Codex share one ruleset with no
+# drift. Do not duplicate rules here — edit AGENTS.md.
+#
+# User-specific settings (model, approval_policy, sandbox_mode) belong in your
+# personal ~/.codex/config.toml, not in the repo.

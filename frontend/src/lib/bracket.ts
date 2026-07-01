@@ -52,11 +52,15 @@ export function bracketOrderKey(matches: Match[]): Map<number, number> {
     if (af != null) parent.set(af, { p: m.matchNumber!, s: 1 })
   }
 
+  // The real main line is r32→r16→qf→sf→final = 4 hops; a `seen` set makes a
+  // malformed feeder cycle deterministic (treat the repeat as a root) instead of
+  // silently mis-ordering, and the depth bound is tied to the true tree height.
+  const MAX_DEPTH = 5
   const memo = new Map<number, number>()
-  const idx = (n: number, depth = 0): number => {
+  const idx = (n: number, depth = 0, seen: ReadonlySet<number> = new Set()): number => {
     if (memo.has(n)) return memo.get(n)!
-    const par = depth > 8 ? undefined : parent.get(n) // depth guard against cycles
-    const v = par ? idx(par.p, depth + 1) * 2 + par.s : 0
+    const par = depth >= MAX_DEPTH || seen.has(n) ? undefined : parent.get(n)
+    const v = par ? idx(par.p, depth + 1, new Set(seen).add(n)) * 2 + par.s : 0
     memo.set(n, v)
     return v
   }

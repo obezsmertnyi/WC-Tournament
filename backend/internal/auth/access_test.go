@@ -24,6 +24,7 @@ func (f *fakeAccessStore) GetUserAccess(_ context.Context, id int64) (string, er
 	return f.levels[id], nil
 }
 
+// @trace: FR-031, FR-032
 func TestComputeAccess(t *testing.T) {
 	cases := []struct {
 		name  string

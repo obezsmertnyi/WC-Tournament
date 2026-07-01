@@ -205,6 +205,9 @@
   "footer": {
     "tagline": "Прогнозуй. Вболівай. Перемагай."
   },
+  "recap": {
+    "title": "AI-огляд матчу"
+  },
   "backend": {
     "checking": "Перевірка",
     "online": "Online",
