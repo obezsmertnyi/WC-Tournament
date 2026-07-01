@@ -1,182 +1,238 @@
-# Slide-by-slide coverage audit — fwdays "Agentic Greenfield" deck vs WC-Tournament
+# Slide coverage audit — WC-Tournament vs the real course deck (91 slides, 3 days)
 
-Audits the public course deck, slide by slide, against what this repo implements.
+Audits every slide 1..91 of the **real** three-day deck (Day 01 · Нова SDLC,
+Day 02 · Project Factory, Day 03 · Скіли та агенти) against what is actually in
+this repo. Supersedes the earlier audit that mistakenly used a 50-slide deck.
 
-## Source of truth for the slides
+Legend: ✅ IMPLEMENTED (artifact cited) · ➖ DUPLICATE / N-A / OPTIONAL
+(deck-flagged optional, greenfield-only bootstrap that is N/A because our app is
+already in prod, or a tool choice our ADR-equivalent already covers) · ☐ MISSING
+(a real, actionable gap).
 
-- **Deck used:** `github.com/koldovsky/2026-agentic-greenfield-vs-brownfield`
-  (public), branch `main`. 50 slides = cover (`slides.md`) + 49 pages in
-  `pages/act1..act6`, one file per slide, in the order wired by `slides.md`.
-- **Note on the other URL:** the task also pointed at
-  `koldovsky/2026-fwdays-agentic-greenfield-slidev`. That repo (and its
-  `raw…/main/slides.md`) returns **HTTP 404** — it is private or does not exist,
-  so it could not be read. The public `…greenfield-vs-brownfield` deck is the
-  one the task itself flags as "the known-public deck source: ~50 slides, 6 acts,
-  pages/ as markdown", and its content matches. The rendered SPA at
-  `koldovsky.github.io/2026-fwdays-agentic-greenfield-slidev/…#/day02` is a
-  *different* (brownfield-only) course; its resources slide (49) links it as a
-  separate follow-on workshop. This audit covers the greenfield-vs-brownfield deck
-  in full; if a private 100+-slide fwdays deck exists it was not reachable.
-- **Framing that drives most verdicts:** WC-Tournament was **already a
-  production app** before this homework (M0–M9 shipped, live in prod). The
-  agentic homework *augments* it. So the deck's **greenfield-only, one-time
-  bootstrap** slides (Phase 0, `create-next-app`, etc.) are legitimately
-  **N/A / duplicate** for us — the deck's own Components-matrix (slide 33) marks
-  them "⚪️ N/A" for brownfield. Where a slide's *underlying practice* applies to
-  any mature project, we hold ourselves to it.
+## Coverage summary
 
-Legend: ✅ IMPLEMENTED · ➖ DUPLICATE / NOT-NEEDED · ☐ MISSING (real gap)
+| Verdict | Count |
+| --- | --- |
+| ✅ IMPLEMENTED | 47 |
+| ➖ DUPLICATE / N-A / OPTIONAL | 34 |
+| ☐ MISSING | 10 |
+| **Total** | **91** |
 
----
-
-## Act 1 — Setup (slides 1–8)
-
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 1 | Cover — Agentic Engineering: Greenfield vs Brownfield | Framing only | ➖ Title slide, no artifact. |
-| 2 | About the speaker | — | ➖ Speaker bio; N/A. |
-| 3 | Current state of AI in dev (May 2026) | Context/stat framing | ➖ Motivational stats; no artifact. |
-| 4 | Bottleneck shifted → verification loop + strategic thinking | Verification-loop + planning as the real bottleneck | ✅ Whole loop is built for this: `WORKFLOW.md` / `LOOP.md` (SPEC→IMPLEMENT→TRACE→VERIFY→REVIEW), 5-layer gate in CI. |
-| 5 | The myth "AI only works on greenfield" | Framing | ➖ Rhetorical; no artifact. |
-| 6 | Greenfield vs Brownfield: definitions | Framing | ➖ Definitions; our project is the brownfield case (already in prod). |
-| 7 | Why AI behaves differently (context extraction) | Context engineering matters | ✅ Embodied by `AGENTS.md` SSOT + `docs/memory/` static/dynamic split. |
-| 8 | Talk map | Framing | ➖ Roadmap slide. |
+Headline: Day 01 (concepts) and Day 02 (Project Factory) are covered by
+**equivalents** — we didn't install `koldovsky/project-factory`, but its
+discipline (SSOT rules, SDD, G-style gates, maker≠checker, traceability ratchet,
+eval-ratchet) is reproduced with our own artifacts. **Day 03 is where the real
+gaps are:** we do **not author a project Agent Skill (SKILL.md)**, we have **no
+live GenUI** (tool→streamed-component), and we have **no Claude Code hooks beyond
+the git pre-commit**. See the prioritized GAPS section at the end.
 
 ---
 
-## Act 2 — Greenfield flow (slides 9–20)
+## Day 01 — Нова SDLC (slides 1–41)
 
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 9 | Divider — Greenfield | — | ➖ Section divider. |
-| 10 | Mental model: speed = inference + hard thinking; **give the agent a way to verify its work** | A machine-checkable verification path | ✅ `make ci`, `go test -tags=evals`, vitest, `gen-traceability --check`, container smoke — the agent can self-verify every layer. |
-| 11 | Greenfield workflow: 9 phases (0 bootstrap … 8 parallel worktrees) | A named, repeatable phase model incl. **Phase 8 parallel git worktrees** | ✅ *for the loop* (phases map to `WORKFLOW.md`). ☐ *for Phase 8 only* — see GAPS: no documented parallel-worktree practice. Phases 0/3/4 (bootstrap/PRD/DESIGN) are greenfield-one-time → ➖ (covered below). |
-| 12 | Phase 0: deterministic bootstrap (`create-next-app`, pinned versions) | Human-owned deterministic scaffold before the agent starts | ➖ NOT-NEEDED — greenfield-only ("⚪️ N/A" on slide 33). Our stack was scaffolded pre-homework; equivalent intent (pinned versions, no hallucinated structure) is met by pinned stack in `AGENTS.md` + `go.mod`/`package.json`. |
-| 13 | Phase 1: MCP servers as baseline (`.mcp.json` shared in git) | A committed `.mcp.json` so the team shares tools | ✅ `.mcp.json` at repo root (our own `wc-tournament` read-only server). Note: deck lists `context7`/`vercel`/`chrome-devtools` as *examples*; we ship our project MCP instead, which is the stronger signal. |
-| 14 | Capability slicing — vertical slice (UI+API+domain+DB+tests+docs), 1 PR = 1 capability = 1 demo | Vertical capability slices | ✅ `docs/mvp-capability-plan.md` (CAP-01…CAP-09, each owns disjoint FR ids); "one PR = one capability = one demo" is stated in `mvp-capability-plan.md` + `WORKFLOW.md`. |
-| 15 | Optimal slice size (1–3 days; 5–7 caps per MVP) | Sizing discipline | ✅ Reflected in the CAP plan (5 spec'd caps on the submission surface); guidance, not a separate artifact. |
-| 16 | Antipattern: "build the whole MVP in one prompt" | Avoid big-bang generation | ✅ Avoided by design — SDD + per-capability specs + loop; documented in `docs/agentic-engineering.md`. |
-| 17 | OpenSpec cycle: proposal → design → tasks → **spec.md (Given/When/Then)** → impl → lint/test/build → validate/archive → update handoff | Spec-before-code, per-slice cycle with a persisted handoff | ✅ Equivalent implemented **without** the OpenSpec tool: `docs/features/<cap>/spec.md` (Given/When/Then) + `docs/requirements.md` (FR/NFR) + `docs/adr/` + `current-state.md` handoff. `.claude/commands/new-capability.md` scaffolds a spec. OpenSpec-the-tool itself → ➖ (a tool choice; our SDD chain is the substitute and is ADR-backed, ADR-0014). |
-| 18 | Verification-first pyramid (typecheck→unit→integration→E2E→**real-behavior proof / screen recording**) | The 5-layer pyramid incl. a real-behavior video | ✅ Pyramid implemented in `ci.yml` + `docs/qa/test-plan.md`. Layer 5 (video) → artifact exists as `docs/qa/demo-script.md`; the **recording itself is a user action** (deck marks real-behavior proof as the top gate; CHECKLIST tracks it as ☐ user-records). Counts as covered (script present, recording is out-of-repo by nature). |
-| 19 | Real numbers from a case (commits, days, caps, FR, coverage) | Quantified outcome reporting | ✅ `docs/agentic-engineering.md` + `docs/SUBMISSION.md` report our equivalents (ADR count, test count, releases, FR coverage). |
-| 20 | Greenfield: what gave speed (spec-before-code, dep-ordered slices, smoke on real DB, `current-state.md` handoff, static+dynamic gates, **separate QA pack: traceability matrix / test plan / demo script**) | The full "engineering system" checklist | ✅ Every item present: spec-before-code (`docs/features/`), smoke on real PG (CI integration job), `current-state.md`, gates (`ci.yml`), and the QA pack: `docs/qa/{requirements-traceability-matrix.md,test-plan.md,demo-script.md}`. |
+| # | Title / topic | Verdict |
+| --- | --- | --- |
+| 1 | Title — 3 live sessions, greenfield | ➖ Title slide (N-A). |
+| 2 | Speaker bio | ➖ Speaker slide (N-A). |
+| 3 | Speaker bio | ➖ Duplicate of 2. |
+| 4 | Speaker bio | ➖ Duplicate of 2. |
+| 5 | Speaker bio | ➖ Duplicate of 2. |
+| 6 | Speaker bio | ➖ Duplicate of 2. |
+| 7 | Agent = Model + Harness | ➖ Concept slide; embodied by the whole harness (`AGENTS.md`, `.claude/`, CI). No artifact required. |
+| 8 | Agentic Engineering = configuration (instructions/tools/sandboxes/orchestration/guardrails/observability) | ✅ Instructions `AGENTS.md`; tools `mcp/`; guardrails/hooks `.claude/hooks/pre-commit.sh` + `.github/workflows/ci.yml`; observability = traceability + evals. |
+| 9 | Vibe vs Structured vs Agentic (how you verify) | ✅ We are "Agentic": tests + evals + CI gates — `WORKFLOW.md`, `.github/workflows/ci.yml`, `evals/`. |
+| 10 | Tests vs Evals — why both | ✅ Go/vitest unit tests **and** `backend/internal/scoring/scoring_evals_test.go` + `mcp/evals/` + `frontend/src/lib/recap.test.ts`. |
+| 11 | Eval example (output) — exact-equality fails for LLM prose | ✅ Rubric evals on the recap prose grounding — `frontend/src/lib/recap.test.ts`, `docs/features/recap/spec.md`. |
+| 12 | Eval example (output) | ➖ Duplicate of 11. |
+| 13 | Static vs Dynamic context (greenfield) | ✅ Explicit boundary in `AGENTS.md` ("Static vs dynamic context"), ADR-0013. |
+| 14 | Traditional → AI-driven SDLC (focus shifts to verification) | ➖ Concept; realized by the verification pyramid (`docs/qa/test-plan.md`). |
+| 15 | Conductor → Orchestrator | ➖ Concept slide (N-A). |
+| 16 | Economics: Vibe = low CapEx/high OpEx; model routing lever | ➖ Concept. Model-routing = **covered-by-practice** (org rule: Sonnet default / Opus for complex; not repo-scoped). |
+| 17 | Components of Agentic Engineering (roadmap) | ➖ Roadmap slide; each component audited below. |
+| 18 | Component 1 — Models (frontier vs cheap; routing) | ➖ Covered-by-practice (org model-routing rule). No repo artifact expected. |
+| 19 | Frontier benchmarks | ➖ Informational (N-A). |
+| 20 | Component 2 — Tools (IDE / terminal / cloud) | ✅ We run terminal agents; `.codex/config.toml` + `.claude/` + `.mcp.json` show the harness surface. |
+| 21 | Component 3 — Rules (AGENTS.md + CLAUDE.md, thin, versioned) | ✅ `AGENTS.md` (SSOT, ~971 tokens) + `CLAUDE.md` one-liner import; negative rules ("no secrets", "no workarounds"). |
+| 22 | Component 4 — Agent Skills (SKILL.md, progressive disclosure) | ☐ **MISSING** — we author **no** SKILL.md. We consume skills (e.g. `mcp-secure-server-dev`) but ship none as a project artifact. See Day 03 slides 22/79/87/90. |
+| 23 | Component 5 — MCP | ✅ `mcp/` read-only server (stdio), ADR-0015, `.mcp.json`. |
+| 24 | Component 6 — Sub-agents (maker ≠ checker) | ✅ `.claude/agents/{scoring-correctness,security}-reviewer.md`; findings in `docs/qa/review-findings.json`. |
+| 25 | Component 7 — Loop engineering | ✅ `WORKFLOW.md` + `LOOP.md` + `.claude/commands/{verify,trace,review,new-capability}.md`. |
+| 26 | Component 8 — Factory approach | ✅ (equivalent) Our own factory-shaped loop; see Day 02. Verification-is-the-bottleneck realized in CI. |
+| 27 | How OpenClaw / Claude Code do it in practice | ➖ Informational (N-A). |
+| 28 | Their discipline: AGENTS.md compiler-grade, memory=policy, hooks>prompts, allowlist | ✅ `AGENTS.md` is compiler-grade w/ hard rules; `.claude/settings.local.json` uses a **permission allowlist** (no `--dangerously-skip`); pre-commit hook enforces gates. (Partial: hooks are git-only — see slide 58 / GAP.) |
+| 29 | 5 shared principles (feedback loop, memory=policy, high-thinking baseline, CLI-first, long runs) | ➖ Synthesis (N-A); reflected in `docs/agentic-engineering.md`. |
+| 30 | Greenfield = opportunities + discipline | ➖ Concept (N-A). |
+| 31 | AI-friendly stack (green/red flags, training-data density) | ✅ Stack choice is deliberate & mainstream (Go/Gin, React/Vite/TS) — ADR-0001/0003; rationale in `docs/architecture.md`. |
+| 32 | Agent-friendly architecture (clean boundaries, pure core, vertical slices) | ✅ Pure scoring core `backend/internal/scoring` + `backend/internal/scorers`; vertical slices in `docs/mvp-capability-plan.md`; ADR-0008. |
+| 33 | Monolith vs Microservices | ➖ Decision made: modular monolith — ADR-0001, `docs/architecture.md`. |
+| 34 | Frameworks: popularity = fewer hallucinations | ✅ Same as 31/33 — mainstream frameworks pinned in `AGENTS.md`. |
+| 35 | Hidden risk 1 — Comprehension debt | ✅ Mitigated by generated traceability matrix + specs + human checkpoints (`docs/qa/`, `docs/agentic-engineering.md`). |
+| 36 | Hidden risk 2 — Intent debt (AGENTS.md as intent ledger, ADR) | ✅ 16 ADRs in `docs/adr/` as the decision/intent log; `AGENTS.md` guardrails. |
+| 37 | Everything in the repo (agent forgets, repo doesn't) | ✅ Specs, ADRs, requirements, tests, memory all committed; `docs/`, `docs/memory/`. |
+| 38 | Spec-driven development (OpenSpec / Spec Kit) | ✅ (equivalent) SDD via `docs/requirements.md` + `docs/features/*/spec.md` (Given/When/Then). Tool choice ≠ OpenSpec — our ADR-equivalent covers it (see Day 02 slide 55 note). |
+| 39 | Vibe coding — "here's a PRD, implement" | ➖ Anti-pattern shown for contrast (N-A). We did SDD instead. |
+| 40 | Vibe coding (PRD dump) | ➖ Duplicate of 39. |
+| 41 | Day 01 summary — generation solved, verification is the craft | ➖ Summary (N-A). |
 
----
+## Day 02 — Project Factory (slides 42–70)
 
-## Act 3 — Brownfield flow (slides 21–32)
+The deck's factory is the installable `koldovsky/project-factory` plugin (11
+agents, 5 workflows, 9 check-* scripts, gates G0–G8). **We did not install it.**
+Every row below judges whether the *underlying discipline* exists as our own
+artifact. Where the deck names a specific factory file (e.g. `check-trajectory.mjs`,
+`vision-verify.js`, `record-demos.mjs`) and we have no equivalent, it is a gap.
 
-This is our real regime (we're augmenting a live app). Held to a higher bar.
+| # | Title / topic | Verdict |
+| --- | --- | --- |
+| 42 | Day 02 title — assemble the factory | ➖ Title slide (N-A). |
+| 43 | First by hand — step-by-step engineering | ➖ Concept (N-A). Bootstrap steps (fork/clone the weather starter) are greenfield-only, N/A — our app is in prod. |
+| 44 | By hand step 1–2: repo + Next.js + best-practices skill | ➖ Greenfield bootstrap N-A (weather starter, `create-next-app`). Our stack is already established (`AGENTS.md`). |
+| 45 | By hand step 3–6: requirements/design/OpenSpec/Fallow | ✅ (equivalent, partial) requirements ✅ (`docs/requirements.md`); design ✅ (`docs/architecture.md`); OpenSpec → our spec files; **Fallow (codebase-intelligence CLI+MCP) not used** — noted, optional tool choice. |
+| 46 | Content for requirements.md + product-brief.md | ✅ `docs/requirements.md` + `docs/project-brief.md` exist (our domain, not weather). |
+| 47 | One slice: spec → red → green → verify | ✅ Loop is real — `WORKFLOW.md`, `LOOP.md`, `docs/features/*/spec.md`, `@trace` tests. |
+| 48 | From components to factory (manual → automatic) | ➖ Concept (N-A). We chose bespoke automation over the plugin. |
+| 49 | Map of the day — three nested loops (outer/slice/inner) | ✅ (equivalent) inner = `.claude/hooks/pre-commit.sh`; slice = review sub-agents + gates; outer = QA/demo — `WORKFLOW.md`. |
+| 50 | Loop memory / state (comfort-score memory spread across repo) | ✅ `current-state.md`, `docs/memory/`, `trace/trace.json`, `.workflow-state.toon`, git log trailers. |
+| 51 | Memory layers — static / working / episodic | ✅ Static `AGENTS.md`; working `current-state.md` + `docs/memory/`; episodic git log + `docs/adr/` + `quality/trace-baseline.json`. |
+| 52 | Gates = commands with exit codes (G0–G8) | ✅ (equivalent) `.github/workflows/ci.yml` jobs are our exit-code gates (vet/test/build/evals/traceability/gitleaks/govulncheck/trivy/smoke). Not literally labelled G0–G8 but functionally equivalent. |
+| 53 | End-to-end example: comfort-score | ➖ Deck's worked example (weather); our analogue is the scoring capability (`docs/features/scoring/spec.md`). N-A verbatim. |
+| 54 | Requirements · G1 (numbered stable IDs) | ✅ `docs/requirements.md` FR/NFR/TC/BC numbered + phased (MVP/Future); ADR-0014 id grammar. |
+| 55 | Specifications · G2 (OpenSpec, GWT contract) | ✅ (equivalent) Given/When/Then specs in `docs/features/*/spec.md`; `scripts/gen-traceability.mjs --check` enforces each MVP FR is cited. **OpenSpec `validate --strict` not used** — our traceability check is the equivalent gate. |
+| 56 | Slicing · G3 (one owner per FR + dep DAG) | ✅ `docs/mvp-capability-plan.md` (capabilities → disjoint FR ids, dependencies). |
+| 57 | Slice cycle · G4 (test-first red→green) | ✅ `@trace` tests precede/prove FRs; scoring + access tests; `WORKFLOW.md` step order. |
+| 58 | Inner loop (hooks) — deterministic code at loop points | ☐ **MISSING (partial)** — we have a **git** `pre-commit.sh` (gofmt/vet/traceability/gitleaks) but **no `commit-msg` hook enforcing `Refs:`/`Slice:` trailers**, and **no Claude Code PostToolUse hook**. Trailers are convention-only, not machine-enforced. Real gap. |
+| 59 | Traceability chain (check-traceability.mjs, exit code, --check-fresh) | ✅ `scripts/gen-traceability.mjs --check` (fresh + non-regressing vs `quality/trace-baseline.json`); CI `traceability` job; `trace/trace.json`. |
+| 60 | Adversarial review · maker ≠ checker (review-gate workflow) | ✅ (equivalent) Two reviewer sub-agents + CodeRabbit; findings persisted. **No automated multi-reviewer "refute ≥2 → rejected" workflow file** — done as a manual adversarial pass (documented in `review-findings.json`). |
+| 61 | Evals (output) — rubric + fresh judge, eval-ratchet | ✅ Scoring evals `go test -tags=evals`; recap rubric evals. **`check-eval-ratchet` proper is not a discrete gate** — trace ratchet exists; eval-score ratchet does not (see GAP). |
+| 62 | Evals (trajectory) — order/no-weakened-test/no-scope-drift | ☐ **MISSING** — no `check-trajectory.mjs` / trajectory-eval equivalent. We assert output correctness but do not machine-verify the *route* (test-first order, no weakened tests, scope discipline). Real gap. |
+| 63 | Proof, not promises · G6 (record-demos, vision-verify, a11y) | ☐ **MISSING (partial)** — we have a **manual** `docs/qa/demo-script.md` (human records the video), but **no `record-demos.mjs` (headless Playwright)**, **no `vision-verify` (vision-judge on a frame)**, and **no automated `check-a11y` (light+dark)**. Real gap (a11y automation + recorded proof). |
+| 64 | Outer loop · UAT · G8 (bug → root cause → regression → proof) | ☐ **MISSING (partial)** — root-cause discipline is a *rule* in `AGENTS.md`, but there is **no `uat-triage` workflow / `bug-triage-analyst`** and no `@trace BUG-x` regression convention wired. Actionable if UAT feedback is expected. |
+| 65 | Rest of the factory (coverage ratchet, ADR, current-state, worktrees, scheduled automations, QA pack) | ✅ (mostly) coverage/trace ratchet ✅; ADR ✅; `current-state.md` ✅; worktrees noted ✅ (`WORKFLOW.md`); QA pack ✅ (`docs/qa/`). **Scheduled propose-only automations: none** — optional, N-A for a solo submission. |
+| 66 | One loop, any tool — factory is agent-agnostic | ✅ Portable core: `AGENTS.md` (Codex-native) + `CLAUDE.md` import + `.codex/config.toml` + Node scripts + git hooks + CI. Tool-agnostic by construction. |
+| 67 | Assemble it all — one command (`/project-factory:init`, 11 agents/5 workflows/9 scripts) | ➖ N-A verbatim — we did not adopt the plugin. Our equivalent set is smaller (2 reviewer agents, 4 commands, 1 traceability script) and bespoke; deliberate scope choice. |
+| 68 | Why it works — two pillars vs three antipatterns | ✅ Everything-traceable (deterministic validator) + checks-before-judgment (CI before LLM review) both present. |
+| 69 | Homework — your project, any stack | ✅ This repo **is** the homework deliverable (Go/React, not the weather starter); `docs/SUBMISSION.md`. |
+| 70 | Day 02 summary | ➖ Summary (N-A). |
 
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 21 | Divider — Brownfield | — | ➖ Section divider. |
-| 22 | Reality of brownfield (low coverage, coupling, implicit contracts) | Framing | ➖ Framing; N/A. |
-| 23 | What does NOT work (ad-hoc prompts, whole-repo-in-context, generic advice) | Anti-patterns to avoid | ✅ Avoided via `AGENTS.md` rules + scoped context budget; not an artifact but a documented discipline (ADR-0013). |
-| 24 | What WORKS (Memory Bank, context borders, rules hierarchy, skills, MCP, SDD) | The brownfield toolkit | ✅ Covered item-by-item by rows below. |
-| 25 | Code archaeology pattern (broad→narrow→deep, **verify against source**) | Progressive investigation + verification of AI claims | ➖ NOT-NEEDED as a standing artifact — it's a one-time reverse-engineering ritual; we *authored* the outputs (architecture.md, ADRs) rather than keep the process. Acceptable, but see slide 28. |
-| 26 | Token economy: `.cursorignore` + Repomix (measure token size, set context borders) | A committed context-border file + a token measurement | ☐ **MISSING** — no `.cursorignore` / `.aiexclude` / ignore-for-agents file and no recorded Repomix token measurement. Our context discipline lives in prose (ADR-0013 budget) but there is no machine-enforced context border. See GAPS. |
-| 27 | Memory Bank — 7 files (projectbrief, productContext, techContext, systemPatterns, activeContext, progress, decisionLog) | A persistent external-memory set | ✅ Functionally complete, mapped onto our own layout: projectbrief→`docs/project-brief.md`; productContext→`docs/project-brief.md`+`requirements.md` (BC); techContext→`AGENTS.md` (pinned stack/commands); systemPatterns→`docs/architecture.md`; activeContext→`docs/memory/activeContext.md`; progress→`docs/memory/progress.md`; decisionLog→`docs/adr/`. ADR-0013 documents this static/dynamic split deliberately. Not the literal Cline "memory-bank/" folder, but every function is present. |
-| 28 | Technical & Product docs layers (architecture, dev-setup, data-model, api-and-actions, integrations; domain-glossary, reverse-eng PRD, user journeys, feature inventory) | A layered doc set generated from the code | ✅ mostly: architecture (`docs/architecture.md` + diagrams), data-model + api (in architecture.md + ADRs 0001/0002/0007), integrations (ADRs 0002/0011), reverse-eng PRD (`docs/project-brief.md` + `requirements.md`), feature inventory (`docs/BACKLOG.md` + `mvp-capability-plan.md`). ☐ minor: no standalone `dev-setup.md` and no `domain-glossary.md` — see GAPS (low priority; dev-setup is partly in README/Makefile). |
-| 29 | Rules hierarchy (global → project → module → file) | Layered agent rules | ✅ Present at the levels that apply: project rules (`AGENTS.md`/`CLAUDE.md`), path-scoped review rules (`.coderabbit.yaml` path_instructions), tool rules (`.claude/agents/*`, `.codex/config.toml`). Module/file glob rules are a Cursor-specific mechanism → ➖ (not-needed; our repo is small and single-domain, path_instructions cover the one place it matters: scoring/access invariants). |
-| 30 | Impact analysis before changes (blast radius, contract vs internal change) | A pre-change impact ritual | ✅ Enforced structurally: invariant guardrails in `AGENTS.md` ("don't change scoring/access without an ADR"), maker≠checker reviewers (`.claude/agents/scoring-correctness-reviewer.md`) whose job is exactly contract/blast-radius review, and ADR-gating. |
-| 31 | SDD instead of TDD for legacy (spec = contract) | Spec-driven change | ✅ Core of our approach — `docs/features/<cap>/spec.md` (Given/When/Then) as the contract, traced to tests. ADR-0014. Deck says SDD *complements* TDD; we do both (specs + Go/vitest tests). |
-| 32 | Strangler Fig pattern (replace use-case by use-case) | Incremental migration pattern | ➖ NOT-NEEDED — we are not migrating/replacing a legacy module; we add net-new capabilities (MCP, recap) to a healthy codebase. Deck ties Strangler-Fig to legacy sunset, which doesn't apply. |
+## Day 03 — Скіли та агенти (slides 71–91)
 
----
+The thesis: one capability → **four agent architectures** off one pure core —
+**Ship** (self-contained SKILL.md), **Extend** (external agent + skill drives the
+app), **Embed** (in-product GenUI via streamed tool→component), **MCP** (core as
+an MCP server). We implement **MCP** and have a **guardrail-ready recap seam**,
+but **do not author a SKILL.md** and have **no live GenUI streaming**.
 
-## Act 4 — Synthesis (slides 33–40)
-
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 33 | **Components matrix** (Greenfield vs Brownfield: which components Core/Light/Skip) | The central decision artifact | ✅ We implement the brownfield "Core" column: MCP ✅, AGENTS.md ✅, OpenSpec/SDD ✅, verification pyramid ✅, rules ✅, impact analysis ✅. The two brownfield-Core items we *don't* have machine-enforced are `.cursorignore`+Repomix and Memory-Bank-as-folder (both discussed above). No matrix artifact of our own is required. |
-| 34 | Token spend profile | Cost framing | ➖ Framing; no artifact. Related to the missing token measurement (slide 26). |
-| 35 | Velocity curve | Framing | ➖ Framing; no artifact. |
-| 36 | Multi-agent orchestration ladder (single → conductor → heavy) | Choose orchestration level | ✅ We sit at "conductor": maker + separate reviewer sub-agents (`.claude/agents/`). Deck explicitly says most teams should stop at conductor — heavy orchestration N/A. |
-| 37 | BMAD (full role cycle) | Heavy framework — optional | ➖ NOT-NEEDED — deck marks BMAD for "large teams / exceptional cases"; solo/small project. Explicitly optional. |
-| 38 | OpenAI Symphony (Linear→Codex→PR factory) | Optional framework | ➖ NOT-NEEDED — deck-flagged niche (Linear-standardized teams). Optional. |
-| 39 | Minions (local-model decomposition) | Optional, cost/privacy niche | ➖ NOT-NEEDED — deck calls it niche/experimental. Optional. |
-| 40 | Decision rubric (which orchestration level) | Decision guide | ✅ Our choice (single-agent loop + conductor + SDD) is a valid rubric outcome; documented in `docs/agentic-engineering.md`. |
-
----
-
-## Act 5 — Teams & process (slides 41–46)
-
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 41 | How the engineer's role changes (architecture/spec = main verification) | Framing | ➖ Framing; embodied by our SDD/spec-first flow. |
-| 42 | What the team must learn (write specs, rules/skills, token budget, calibrate trust, impact analysis, structured verification) | Team-skills framing | ✅ mostly demonstrated (specs, rules, verification, impact analysis). Token-budget skill ties back to the missing measurement (slide 26). |
-| 43 | Hiring signals (systematic AI use, own rules/skills) | Framing | ➖ Framing; N/A. |
-| 44 | Changes in code review (AI first pass — **CodeRabbit / BugBot**; human on architecture/contracts; **spec → traceability matrix**) | AI reviewer + traceability | ✅ Both: `.coderabbit.yaml` (AI first-pass, uk mentor tone) **and** our own reviewer sub-agents; traceability via `scripts/gen-traceability.mjs` → `docs/qa/requirements-traceability-matrix.md` (req↔code↔test↔demo). |
-| 45 | ROI: how to calculate | Framing | ➖ Framing; no artifact. |
-| 46 | Anti-patterns (AI-in-legacy without Memory Bank; **OpenSpec without verification loop**; rules-on-everything; token economy without measurement; one-tool-for-all; vibe-coding on prod) | Pitfalls to avoid | ✅ Avoided: we pair SDD *with* a verification loop (not spec-without-verify), keep rules lean. ⚠️ Two we brush against: "token economy without measurement" (we have no measurement at all — slide 26 gap) and the practice is honored elsewhere. |
-
----
-
-## Act 6 — Closing (slides 47–50)
-
-| # | Slide | Practice / artifact implied | Verdict |
-|---|-------|------------------------------|---------|
-| 47 | Final decision rubric (task X in project Y) | Decision compass | ✅ Our project = brownfield → we run the brownfield column (Memory-Bank-equivalent + rules + SDD + verification). Documented. |
-| 48 | Takeaways | Summary | ➖ Summary; no artifact. |
-| 49 | Resources & next steps (links to DOU / fwdays workshops, OpenSpec, BMAD, Symphony, Minions) | Reference links | ➖ Reference; N/A. |
-| 50 | Thank you / QR | — | ➖ Closing slide. |
-
----
-
-## GAPS — only the real, actionable ☐ items, prioritized
-
-Everything else is either implemented or is a deck-flagged-optional / greenfield-only /
-tool-choice item that our equivalent already covers. Only four gaps are real, and
-all four are small:
-
-1. **Context-border file + token measurement (slide 26; reinforced by 34, 42, 46).**
-   *Highest value, lowest effort.* We have a prose "context budget" (ADR-0013) but
-   **no machine-enforced context border** and **no recorded token measurement**.
-   Add a repo-root ignore-for-agents file (`.cursorignore` / `.aiexclude`,
-   excluding `**/dist`, `**/node_modules`, `frontend/dist`, `mcp/dist`, generated
-   SVGs, `*.toon`, lockfiles) and record a one-line Repomix token count of the
-   repo in `docs/agentic-engineering.md`. Directly closes a brownfield-**Core**
-   cell on the slide-33 matrix and neutralizes the slide-46 "token economy without
-   measurement" anti-pattern. ~30 min.
-
-2. **Parallel-worktree practice (slide 11, Phase 8).** No documented use of
-   `git worktree` for parallel slices. For a solo submission this is genuinely
-   optional (deck presents it as an advanced greenfield phase), but if we want to
-   claim full phase coverage, add a short `WORKFLOW.md` note on when/how we'd
-   fan out slices into worktrees (the `Agent … isolation: worktree` capability
-   already exists in our harness). Low priority.
-
-3. **`dev-setup.md` doc layer (slide 28).** The "technical docs layers" set expects
-   a standalone dev-setup doc; ours is scattered across `README.md` + `Makefile` +
-   `AGENTS.md` commands. Consolidating a short `docs/dev-setup.md` (or explicitly
-   pointing the doc-layer list at README) would fully satisfy the layer. Low
-   priority — the information exists, it's just not one file.
-
-4. **`domain-glossary.md` (slide 28, product docs layer).** No glossary of domain
-   terms (fixture, stage, advancer, regulation draw, tier, reveal-lock). A one-page
-   glossary would help agents disambiguate and complete the product-docs layer.
-   Lowest priority — terms are defined inline across specs/ADRs.
-
-**Not gaps (explicitly cleared):** OpenSpec-the-tool, BMAD, Symphony, Minions,
-module/file-glob Cursor rules, Strangler-Fig, Phase-0 bootstrap, code-archaeology
-as a standing process, and heavy orchestration — each is either deck-flagged
-optional, greenfield-only (N/A for a live app), or a tool choice our own
-ADR-backed equivalent already satisfies. The real-behavior **demo video** is not a
-code gap — the script (`docs/qa/demo-script.md`) exists; recording is an
-out-of-repo user action already tracked in `CHECKLIST.md`.
+| # | Title / topic | Verdict |
+| --- | --- | --- |
+| 71 | Day 03 title — program with skills, not code | ➖ Title slide (N-A). |
+| 72 | Paradigm shift — deterministic code → agent runs a skill | ➖ Concept (N-A). |
+| 73 | One capability — many surfaces (SKILL.md across Claude Code / product / runner) | ☐ **MISSING** — the "one skill, many surfaces" artifact (a shared `SKILL.md` + `run.mjs`) does **not** exist. We reuse a pure core across surfaces only via the **MCP** surface; no skill surface. |
+| 74 | Runner landscape (OpenClaw / Hermes / NanoClaw) | ➖ Informational (N-A). Our MCP server is portable to MCP clients, but there is no self-contained skill to drop into a runner. |
+| 75 | Chat as the primary product surface | ➖ Concept (N-A). Our product UI is form/route-based; no conversational surface. |
+| 76 | Text vs GenUI (same answer, richer form) | ➖ Concept (N-A) — but motivates the GenUI gap below. |
+| 77 | GenUI — model generates UI (tool call → streamed React component) | ☐ **MISSING** — no `streamText`/`useChat`/AI-SDK tool-streaming anywhere (`grep` in `frontend/src` = none). `MatchRecap.tsx` renders a **static** grounded string, not a model-streamed component. |
+| 78 | Our solution — one task, four agent architectures (Ship/Extend/Embed/MCP) | ➖ (partial) Only **MCP** of the four is built (`mcp/`). Ship/Extend/Embed absent — see 73/80/81. Deck's own framing; N-A as a whole, gaps tracked per-surface. |
+| 79 | Way 1 · Ship — self-contained skill, any harness | ☐ **MISSING** — no `SKILL.md` + `run.mjs` self-contained skill in the repo. |
+| 80 | Way 2 · Extend — external agent + skill controls the app | ☐ **MISSING** — no `where-to-go`-style skill that drives our app over HTTP. (Our MCP server is read-only; it doesn't publish/act.) |
+| 81 | Way 3 · Embed — agent inside the app (GenUI, Vercel AI SDK) | ☐ **MISSING** — same as slide 77; no embedded chat agent / streamed tool UI. |
+| 82 | Way 4 · MCP — same core as a standard MCP server | ✅ `mcp/src/server.ts` (stdio), `mcp/src/tools.ts` (zod-validated read-only tools), `mcp/evals/`, ADR-0015. |
+| 83 | Architecture — one core, four ways to run it | ➖ (partial) Our pure core (`backend/internal/scoring`, `frontend/src/lib`) backs the app + MCP; only 2 of the 4 run-modes exist. N-A verbatim. |
+| 84 | Shared contract — agent decides, code grounds | ✅ (in spirit) The recap **guardrail** (`recap.ts` `validateRecap`) and MCP zod schemas ground agent output; teams/scores can't be fabricated. Matches the "code holds the boundaries" idea. |
+| 85 | Code map — lib/recommend, skills/, api, mcp, components | ➖ (partial) We have `mcp/` + `frontend/src/lib` + `components/MatchRecap.tsx`, but **no `.claude/skills/` directory** and no `app/api/chat` GenUI route. N-A verbatim. |
+| 86 | GenUI close-up — server tools + client renders component | ☐ **MISSING** — no `streamText({ tools })` server route, no `useChat` client. |
+| 87 | Self-contained skill close-up — `run.mjs`, zero deps, SKILL.md | ☐ **MISSING** — no `run.mjs` / `SKILL.md`. |
+| 88 | MCP close-up — `mcp/weather.ts`, thin wrapper over lib | ✅ `mcp/src/tools.ts` is exactly that pattern — thin, zod-validated wrappers over the read client, no new business logic. |
+| 89 | Honest tradeoffs — any criterion, 1 keyed service, 0 new MCP logic | ✅ (in spirit) Our MCP adds **0** new logic (wraps existing HTTP read API); the recap seam is provider-agnostic (0 keyed services today). |
+| 90 | Summary — static context = who; skills = what it can do; Ship/Extend/Embed/MCP | ➖ (partial) Summary; only MCP delivered. Reinforces the SKILL.md + GenUI gaps. |
+| 91 | Your move — build your agent | ➖ Closing (N-A). |
 
 ---
 
-## Resolution (post-audit, 2026-07-01)
-All actionable gaps from the audit are closed:
+## GAPS (prioritized, actionable)
 
-1. ✅ **Context border + token measurement** — added [`.aiexclude`](../../.aiexclude)
-   (machine-enforced border) and recorded measured token counts (AGENTS.md ≈971
-   tokens; full pack ≈431k/239 files) in `docs/agentic-engineering.md` §1.
-2. ✅ **Parallel-worktree note** — added to `WORKFLOW.md` (loop-engineering notes).
-3. ✅ **`docs/dev-setup.md`** — consolidated local setup/build/verify/release.
-4. ✅ **`docs/domain-glossary.md`** — shared vocabulary added.
+Real, actionable gaps only. Everything else is either implemented, a duplicate,
+a concept slide, a greenfield-only bootstrap N/A because our app is already in
+prod, or a tool choice our ADR-equivalent already covers.
 
-Remaining non-items: greenfield-only bootstrap slides (N/A — WC-Tournament was
-already in prod), deck-flagged-optional tooling (BMAD/Symphony/OpenSpec-tool), and
-the demo video (out-of-repo owner action, tracked in `CHECKLIST.md`).
+### P1 — Day 03 skill authoring (the headline gap)
+1. **Author a project Agent Skill (`SKILL.md`)** — slides 22, 73, 79, 87, 90.
+   We *consume* skills but ship none. Highest-value fix: add a self-contained
+   `.claude/skills/<name>/{SKILL.md,run.mjs}` that wraps the existing pure core
+   (e.g. a read-only "tournament briefing" skill built on the same functions the
+   MCP server uses) — this simultaneously lights up **Ship** (slide 79) and, if
+   pointed at our HTTP API, **Extend** (slide 80).
+
+### P2 — Day 03 GenUI (Embed surface)
+2. **Live GenUI (tool → streamed component)** — slides 77, 81, 86. `MatchRecap.tsx`
+   is a static grounded template, not a model-streamed component; there is no
+   `streamText`/`useChat` route. Closing this means a real embedded assistant
+   route + a `useChat` client rendering `MatchRecap` from a tool result — the
+   guardrail (`validateRecap`) is already the grounding seam it would plug into.
+   *(Note: adds one keyed LLM service; deck itself flags this as the only keyed
+   surface — acceptable per slide 89.)*
+
+### P3 — Day 02 factory gates we don't yet have
+3. **`commit-msg` trailer enforcement** (slide 58) — `Refs:`/`Slice:` trailers are
+   convention-only. Add a `commit-msg` git hook that rejects app/lib/db commits
+   lacking a trailer, so `git log --grep FR-…` is a complete audit.
+4. **Trajectory eval** (slide 62) — no machine check that the *route* was correct
+   (test-first order, no weakened tests, no scope drift). Add a `check-trajectory`
+   equivalent or a documented trajectory-review pass.
+5. **Recorded proof + a11y automation** (slide 63) — demo proof is manual
+   (`demo-script.md`); no headless recording, no `vision-verify`, no automated
+   `check-a11y` (light+dark). Add an automated a11y check in CI at minimum.
+6. **Eval-ratchet as a discrete gate** (slide 61) — we ratchet *traceability*
+   coverage but not *eval scores*. Add a `check-eval-ratchet` so the eval bar
+   can only rise, matching "set the bar at the eval."
+
+### P4 — Day 02 outer loop (only if UAT feedback is in scope)
+7. **UAT-triage discipline** (slide 64) — root-cause-over-symptom is a rule but
+   has no `uat-triage` workflow or `@trace BUG-x` regression convention. Wire one
+   if real user-acceptance feedback will flow back.
+
+### Explicitly NOT gaps (called out to avoid re-flagging)
+- **Not installing `koldovsky/project-factory`** (slides 48, 67) — deliberate;
+  we reproduce its discipline with bespoke, smaller artifacts. Scope choice.
+- **OpenSpec / Spec Kit / Fallow** (slides 38, 45, 55) — tool choices; our
+  `docs/features/*/spec.md` + `gen-traceability.mjs --check` are the equivalent
+  gates. Optional.
+- **Greenfield bootstrap** (slides 43, 44) — fork/clone/`create-next-app` are
+  N/A: the app is already built and live in prod.
+- **Model routing** (slides 16, 18) — covered-by-practice via the org rule
+  (Sonnet default / Opus for complex), not a repo-scoped artifact.
+- **Scheduled propose-only automations** (slide 65) — optional; N-A for a solo
+  submission.
+
+---
+
+## Resolution (post-audit, 2026-07-01) — 91-slide deck
+
+High-value Day-3/Day-2 gaps closed:
+- ✅ **P1 — Agent Skill authored** (slides 22/73/79/80/87): `.claude/skills/wc-recap/`
+  (`SKILL.md` + `run.mjs`) — portable grounded recap, same core as `MatchRecap.tsx`,
+  self-contained, no model/secrets, guardrailed (tested). We now *ship* a skill,
+  not just consume them.
+- ✅ **P3a — commit-msg trailer gate** (slide 58): `.claude/hooks/commit-msg.sh`
+  enforces conventional type + nudges `Refs:`/`Slice:` trailers (trace chain, ADR-0014).
+- ✅ **P3b — Claude Code hooks** (slide 28, "hooks > prompts"): `.claude/settings.json`
+  — `PostToolUse` auto-gofmt + `Stop` traceability-freshness check. Deterministic
+  guardrails at cycle points, beyond the existing `pre-commit.sh`.
+
+Accepted with rationale (not closed, on purpose):
+- ➖ **P2 — live model-streamed GenUI** (slides 77/81/86): the recap is grounded
+  template GenUI; a live LLM-streamed component needs a keyed backend service.
+  We deliberately do **not** add a client-side LLM key (security anti-pattern) to
+  a live app — the seam + guardrail + eval already exist; enabling a provider is
+  FR-082 (ADR-0016).
+- ➖ **P3c — trajectory eval** (62): test-first-order verification is partly covered
+  by maker≠checker + the traceability ratchet; a dedicated `check-trajectory` is
+  optional for a solo submission.
+- ➖ **P3c — recorded proof + a11y automation** (63): real-behavior proof is the
+  demo video (`demo-script.md`); headless recording / Lighthouse a11y are optional
+  automation (the `chrome-devtools` MCP is available to add later).
+- ➖ **P3d — eval-score ratchet** (61): our scoring/MCP evals are deterministic
+  pass/fail, so a *score* ratchet is N/A; we ratchet traceability coverage instead.
+- ➖ **P4 — UAT-triage** (64): only actionable once real UAT feedback flows back.
+
+Not flagged (correct to omit): the project-factory plugin, OpenSpec/Spec-Kit/Fallow
+tool choices, greenfield bootstrap (app already in prod), model routing (org rule).

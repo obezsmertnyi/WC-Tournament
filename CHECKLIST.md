@@ -68,5 +68,7 @@ separate review → tick. `✅ done · 🔄 in progress · ☐ todo`.
 - ✅ `docs/SUBMISSION.md` — uk PR body (verbatim template) + handoff steps (fork/CodeRabbit/video/PR)
 
 ## Completeness audit ✅
-- ✅ `docs/qa/slide-coverage-audit.md` — slide-by-slide vs implementation (public deck, 50 slides)
-- ✅ Gaps closed: `.aiexclude` context border + token measurement · worktree note · `docs/dev-setup.md` · `docs/domain-glossary.md`
+- ✅ `docs/qa/slide-coverage-audit.md` — slide-by-slide vs impl against the **real 91-slide deck** (3 days), 47 ✅ / 34 ➖ / 10 ☐
+- ✅ Day-1/2 gaps closed: `.aiexclude` context border + token measurement · worktree note · `docs/dev-setup.md` · `docs/domain-glossary.md`
+- ✅ Day-3 high-value gaps closed: **Agent Skill** `.claude/skills/wc-recap/` · **commit-msg** trailer hook · **Claude Code hooks** `.claude/settings.json` (PostToolUse gofmt + Stop traceability)
+- ➖ Accepted with rationale: live model-streamed GenUI (FR-082, no client key), trajectory/eval-score ratchets, UAT-triage — see audit resolution
