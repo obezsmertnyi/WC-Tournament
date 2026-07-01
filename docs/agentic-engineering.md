@@ -21,7 +21,7 @@ WC-Tournament is a production, live friends-only World Cup 2026 prediction pool
 - **Context border & token economy (measured, not vibes):** a machine-enforced
   [`.aiexclude`](../.aiexclude) keeps generated/vendored/binary/secret files out
   of AI context. Measured with `wc`: the always-loaded static rules (`AGENTS.md`)
-  are **≈971 tokens** — comfortably under the ≲4k budget ADR-0013 sets; the full
+  are **≈1302 tokens** — comfortably under the ≲4k budget ADR-0013 sets; the full
   post-border repo pack is **≈431k tokens across 239 files** (so we never blindly
   paste the whole tree — the border + the static/dynamic split are what keep the
   working context small).

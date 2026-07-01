@@ -55,6 +55,26 @@ cd backend && go test -tags=evals ./...    # scoring evals
 - Major structural changes get an **ADR** first. Run `make ci` after changes.
 - Commits are SSH-signed; branch names `feat/* fix/* chore/*`.
 
+## Correctness rules (learned from bugs)
+Hard-won invariants — each cost a real bug. Do not "simplify" them away.
+- **FIFA `MatchStatus` is unreliable:** `0` = played/finished, `1` = not started,
+  `3` = LIVE (stays `3` through extra time / penalties). Never treat code `3` or
+  a merely-present score as full-time — finish only on `0` (+ score + past kickoff).
+- **Knockout advancer +1** is awarded **only when both the prediction and the
+  actual regulation result are draws** and the pick matches. A decisive result
+  (either side) gets no +1 (`0:1` predicted `1:1` must score 0, not +1).
+- **Bracket order = tree geometry**, not FIFA match number (feeder→parent slot);
+  ordering by number misaligns the connectors.
+- **AI recap grounding is scoreline-only** — keep stage labels digit-free, and a
+  non-grounded provider without a team registry must fall back to the template
+  (never display raw model output).
+- **Admin "predict on behalf":** the `<select>` value is a string, the API sends
+  the id as a number — compare as strings (`String(a) === b`).
+- **Bounds-check before indexing** (e.g. `medals[i]`) — the digest panicked with
+  >3 players. Guard first.
+- **Ship multi-arch images** (amd64+arm64) via CI/GHCR — never `docker save|load`
+  a local arm64 image onto amd64 prod (`exec format error`).
+
 ## Static vs dynamic context (the boundary)
 - **Static** (here + committed): this file (`AGENTS.md`, imported by `CLAUDE.md`),
   `docs/` (brief, requirements, capability plan, specs, ADRs, architecture).
