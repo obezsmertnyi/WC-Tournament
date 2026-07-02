@@ -22,5 +22,6 @@ Each ADR captures one significant decision: its context, the choice, and the con
 | [0016](0016-ai-recap-grounded-guardrail.md) | AI match recap — grounded generation behind a guardrail | Accepted |
 | [0017](0017-ai-assistant-gemini-guardrail.md) | Football-only AI assistant — Gemini via keyless WIF, layered guardrail | Accepted |
 | [0018](0018-ai-grounding-function-calling.md) | Ground the AI in live app data via function-calling (summary agent) | Accepted |
+| [0019](0019-file-based-specs-over-openspec.md) | File-based specs over the OpenSpec CLI — and when to choose OpenSpec | Accepted |
 
 New ADR: copy the structure of an existing one, take the next number, link it here.

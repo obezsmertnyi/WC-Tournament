@@ -32,7 +32,7 @@ Lost in the files? This is the index. Everything is grouped by **purpose**.
 | **`docs/requirements.md`** | FR/NFR/TC/BC (numbered, MVP/Future) |
 | `docs/mvp-capability-plan.md` | Capabilities → FR ownership |
 | `docs/features/*/spec.md` | Given/When/Then per capability |
-| `docs/adr/0001–0018` | Decisions (why it won) |
+| `docs/adr/0001–0019` | Decisions (why it won; 0019 = specs approach + when to use OpenSpec) |
 | `docs/domain-glossary.md`, `docs/dev-setup.md` | Vocabulary; how to build |
 
 ## ✅ Verification

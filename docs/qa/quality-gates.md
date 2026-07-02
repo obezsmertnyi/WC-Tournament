@@ -25,6 +25,6 @@ A G0–G8 gate model for our stack (Go/React/Postgres, `docs/features/*` specs, 
 PASS/FAIL/SKIP. `make qa` runs the full battery and writes the evidence report.
 
 ## Deviations from the reference (deliberate)
-- **Specs, not a spec CLI** — we keep specs as `docs/features/<cap>/spec.md` (Given/When/Then) + ADRs rather than adopting a dedicated spec-management CLI such as **OpenSpec**; validated via our `gen-traceability --check`.
+- **Specs, not a spec CLI** — we keep specs as `docs/features/<cap>/spec.md` (Given/When/Then) + ADRs rather than adopting a dedicated spec-management CLI such as **OpenSpec**; validated via our `gen-traceability --check`. Full rationale + when OpenSpec *is* the right choice (greenfield/teams) and how to adopt it: [ADR-0019](../adr/0019-file-based-specs-over-openspec.md).
 - **G6 headless recordings + a11y/vision** deferred — the narrated demo video is the real-behavior proof (`demo-script.md`); browser-automation infra is disproportionate for a single-audience app.
 - **G8** informal — no external QA round.
