@@ -1,0 +1,29 @@
+# AI-assistant overlay (ADR-0017) — prod opts in to enable "Pitchside".
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gemini.yml up -d
+#
+# Keyless auth via Workload Identity Federation: Teleport `tbot` on the host keeps
+# a JWT-SVID fresh at /opt/workload-identity/jwt_svid; /etc/gemini/cred.json is the
+# external-account credential-config that points at it. Both are mounted read-only
+# at the SAME paths the config expects (the token is exchanged in memory — nothing
+# is written to disk, so the backend's read-only rootfs is unaffected). No API key,
+# no SA-key, nothing to rotate. See docs/gemini-wif.md.
+#
+# Local dev does NOT use this file: plain `docker compose up` leaves AI_ENABLED unset,
+# so the assistant logs "DISABLED" and its endpoints return 503 (the rest of the app
+# is unaffected). Local devs who want it on use `gcloud auth application-default login`.
+services:
+  backend:
+    environment:
+      AI_ENABLED: "true"
+      GOOGLE_GENAI_USE_VERTEXAI: "true"
+      GOOGLE_CLOUD_PROJECT: <GCP_PROJECT>
+      GOOGLE_CLOUD_LOCATION: us-central1
+      GOOGLE_APPLICATION_CREDENTIALS: /etc/gemini/cred.json
+    volumes:
+      - /etc/gemini/cred.json:/etc/gemini/cred.json:ro
+      - /opt/workload-identity/jwt_svid:/opt/workload-identity/jwt_svid:ro
+    # The backend runs a read-only rootfs; give the WIF/ADC token exchange a
+    # writable scratch dir so the first Vertex call can't fail on an unwritable /tmp.
+    tmpfs:
+      - /tmp

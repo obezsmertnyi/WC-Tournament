@@ -1,6 +1,6 @@
 {
-  "requirements": 19,
-  "covered": 17,
+  "requirements": 24,
+  "covered": 22,
   "items": [
     {
       "id": "FR-001",
@@ -155,6 +155,46 @@
       "tag": "Future",
       "covered": false,
       "tracedBy": []
+    },
+    {
+      "id": "FR-090",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/gemini/gemini_test.go"
+      ]
+    },
+    {
+      "id": "FR-091",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/gemini/gemini_test.go"
+      ]
+    },
+    {
+      "id": "FR-092",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/gemini/gemini_test.go"
+      ]
+    },
+    {
+      "id": "FR-093",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/gemini/gemini_test.go"
+      ]
+    },
+    {
+      "id": "FR-100",
+      "tag": "MVP",
+      "covered": true,
+      "tracedBy": [
+        "backend/internal/gemini/gemini_test.go"
+      ]
     }
   ]
 }

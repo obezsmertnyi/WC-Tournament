@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Match } from '../types'
 import { recap } from '../lib/recap'
+import { teamName } from '../lib/teamNames'
 
 /**
  * Generative-UI panel: a short AI-style recap of a finished match. The text
@@ -9,8 +10,20 @@ import { recap } from '../lib/recap'
  * Renders nothing until the match has a result.
  */
 export default function MatchRecap({ match, exactGuessers }: { match: Match; exactGuessers?: string[] }) {
-  const { t } = useTranslation()
-  const text = recap(match, { exactGuessers })
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  // For a knockout draw, name the team that actually advanced (penalties/ET).
+  let advancer: string | undefined
+  if (match.stage !== 'group' && match.winnerTeamId != null) {
+    const w =
+      match.winnerTeamId === match.home?.id
+        ? match.home
+        : match.winnerTeamId === match.away?.id
+          ? match.away
+          : null
+    if (w) advancer = teamName(w.code, w.name, lang)
+  }
+  const text = recap(match, { exactGuessers, lang, advancer })
   if (!text) return null
   return (
     <div className="mb-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-3.5 py-2.5 backdrop-blur-md">

@@ -8,6 +8,7 @@ import MyHistory from './pages/MyHistory'
 import Audit from './pages/Audit'
 import Profile from './pages/Profile'
 import Bracket from './pages/Bracket'
+import AI from './pages/AI'
 import ComingSoon from './pages/ComingSoon'
 import { AuthProvider } from './auth/AuthContext'
 import { PredictionsProvider } from './predictions/PredictionsContext'
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: 'audit', element: <Audit /> },
       { path: 'profile', element: <Profile /> },
       { path: 'bracket', element: <Bracket /> },
+      { path: 'ai', element: <AI /> },
       { path: '*', element: <ComingSoon section="notFound" /> },
     ],
   },

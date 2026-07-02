@@ -7,6 +7,7 @@ import { hasKickedOff } from '../lib/fixtures'
 import Avatar from './Avatar'
 import Flag from './Flag'
 import MatchRecap from './MatchRecap'
+import ErrorBoundary from './ErrorBoundary'
 
 type State =
   | { phase: 'loading' }
@@ -96,7 +97,11 @@ export default function MatchRevealPanel({ match }: MatchRevealPanelProps) {
 
   return (
     <>
-      <MatchRecap match={match} exactGuessers={exactGuessers} />
+      {/* AI recap is a strictly additive layer — if it throws, the predictions
+          grid below still renders (error-isolated). */}
+      <ErrorBoundary>
+        <MatchRecap match={match} exactGuessers={exactGuessers} />
+      </ErrorBoundary>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {state.predictions.map((p, i) => {
         const scored = typeof p.points === 'number'

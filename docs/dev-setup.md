@@ -38,13 +38,25 @@ pre-commit install                                               # if using .pre
 make release VERSION=v0.1.x   # tags + pushes → CI builds multi-arch GHCR images + a GitHub Release
 ```
 
+## AI assistant (local)
+Off by default. To try "Pitchside" locally, authenticate ADC and enable the flag:
+```bash
+gcloud auth application-default login          # keyless; no API/SA key
+export AI_ENABLED=true GOOGLE_GENAI_USE_VERTEXAI=true \
+       GOOGLE_CLOUD_PROJECT=<GCP_PROJECT> GOOGLE_CLOUD_LOCATION=us-central1
+```
+Leave `AI_ENABLED` unset → the assistant logs "DISABLED" and `/api/ai/*` returns 503
+(the rest of the app is unaffected). Prod uses the `docker-compose.gemini.yml`
+overlay instead (keyless WIF mounts). Guardrail evals: `go test ./internal/gemini/`.
+See ADR-0017 and `docs/gemini-wif.md`.
+
 ## MCP server (agent tool)
 Build it (`cd mcp && npm run build`), then connect via repo-root `.mcp.json`
 (Claude Code auto-detects). Point `WC_API_BASE` at a read-reachable API (local
 `docker compose up`); never bake a session token in. See `mcp/README.md`.
 
 ## Where things are
-Product design & decisions: `docs/` (product-brief, architecture, ADRs). What to
+Product design & decisions: `docs/` (project-brief, architecture, ADRs). What to
 build & why: `docs/requirements.md` + `docs/mvp-capability-plan.md` +
 `docs/features/<cap>/spec.md`. How we work: `WORKFLOW.md` / `LOOP.md`. Live
 status: `CHECKLIST.md`.

@@ -1,6 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '◆ Spec-driven LOOP active (see LOOP.md). Changing behavior = a slice: spec→implement→trace(@trace FR-id)→verify→review(maker≠checker)→commit. Entry commands: /new-capability /verify /trace /review. A red gate is a STOP — fix it, never bypass. Deterministic gates (hooks+CI) fire automatically; you own the process order + the separate review.'"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
@@ -18,6 +28,10 @@
           {
             "type": "command",
             "command": "cd \"$CLAUDE_PROJECT_DIR\" && node scripts/gen-traceability.mjs --check >/dev/null 2>&1 || echo '⚠ traceability stale or regressed — run: node scripts/gen-traceability.mjs'"
+          },
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node scripts/check-doc-links.mjs --check >/dev/null 2>&1 || echo '⚠ doc-graph drift — a bootstrap doc points at a missing file; run: node scripts/check-doc-links.mjs'"
           }
         ]
       }

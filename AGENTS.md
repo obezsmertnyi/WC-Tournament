@@ -11,6 +11,12 @@ Keep it lean (this is the always-loaded budget); per-session state lives in the
 every file by purpose + a reference→ours naming crosswalk) → `current-state.md`
 (what's in flight) → `CHECKLIST.md` (live status).
 
+**About to change behavior? That's a *slice* — load [`LOOP.md`](LOOP.md) and follow the
+cycle:** spec → implement → trace (`@trace FR-id`) → verify → review (maker≠checker)
+→ commit. Entry commands: `/new-capability`, `/verify`, `/trace`, `/review`. A red
+gate is a **STOP** — fix it, never bypass (deterministic gates fire on their own via
+hooks + CI; the *order* and the *review* are on you).
+
 ## What this is
 A private, friends-only FIFA World Cup 2026 score-prediction pool. Players
 predict fixtures, the app scores them against official FIFA results, a live
@@ -29,7 +35,7 @@ mobile-first. Live at `wc2026.mtgrd-das.app`.
 ## Layout
 - `backend/` — Go service (`cmd/server`, `internal/{api,auth,scoring,storage,…}`, `migrations/`)
 - `frontend/` — React SPA (`src/{pages,components,lib,auth,…}`)
-- `docs/` — SDD + decisions: `product-brief`, `requirements`, `mvp-capability-plan`, `architecture`, `features/<cap>/spec.md`, `adr/`, `qa/`, `diagrams/`
+- `docs/` — SDD + decisions: `project-brief`, `requirements`, `mvp-capability-plan`, `architecture`, `features/<cap>/spec.md`, `adr/`, `qa/`, `diagrams/`
 - `mcp/` — read-only MCP server exposing the pool to agents
 - `evals/` — golden-fixture evals (the quality bar)
 - `.github/` — CI (`ci.yml`) + release (`release.yml`) + dependabot
@@ -67,6 +73,15 @@ Hard-won invariants — each cost a real bug. Do not "simplify" them away.
 - **Knockout advancer +1** is awarded **only when both the prediction and the
   actual regulation result are draws** and the pick matches. A decisive result
   (either side) gets no +1 (`0:1` predicted `1:1` must score 0, not +1).
+- **Extra-time GOAL wins mis-score without a manual override.** The FIFA feed
+  (`fifa_types.go`) carries only the *final* `HomeTeamScore/AwayTeamScore`
+  (aet-inclusive) + a separate `HomeTeamPenaltyScore` — there is **no
+  regulation-90 field**. A knockout won by an ET goal therefore stores the aet
+  score (e.g. `3:2`), which the regulation-based scoring reads as *decisive*,
+  robbing correct `2:2`-draw + advancer predictions. Penalty draws are unaffected
+  (regulation = stored = `1:1`). Remedy = **manual override** (ADR-0006): set the
+  score to the *regulation* result, keep `winner_team_id` = advancer, then
+  `server recompute-scores`. (Applied to match #81 BEL–SEN on 2026-07-02.)
 - **Bracket order = tree geometry**, not FIFA match number (feeder→parent slot);
   ordering by number misaligns the connectors.
 - **AI recap grounding is scoreline-only** — keep stage labels digit-free, and a

@@ -1,11 +1,35 @@
 {
+  "app": {
+    "newVersion": "New version — reload"
+  },
   "nav": {
     "calendar": "Calendar",
     "groups": "Groups",
     "competition": "Competition",
     "history": "My points",
     "bracket": "Bracket",
+    "ai": "AI",
     "audit": "Audit"
+  },
+  "ai": {
+    "title": "Football AI",
+    "subtitle": "Ask about football & World Cup 2026",
+    "empty": "Ask about a team, player, match, or WC 2026 — or type a player or club name and tap the card button for a card.",
+    "placeholder": "Ask about football…",
+    "send": "Send",
+    "cardHint": "Get a club/player card",
+    "thinking": "Thinking…",
+    "error": "Something went wrong — try again.",
+    "unavailable": "The AI assistant is currently unavailable.",
+    "disclaimer": "AI can be wrong; football knowledge may be out of date. Not affiliated with FIFA.",
+    "mayBeOutdated": "may be outdated",
+    "mayBeOutdatedHint": "From model knowledge — may not reflect recent moves.",
+    "card": {
+      "fullName": "Full name",
+      "country": "Country",
+      "club": "Club",
+      "position": "Position"
+    }
   },
   "history": {
     "title": "My points",

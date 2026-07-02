@@ -21,6 +21,7 @@ export interface Match {
   away: Team
   homeScore: number | null
   awayScore: number | null
+  winnerTeamId: number | null // knockout advancer (ET/penalties); null otherwise
   venue: Venue
   placeholderHome: string | null
   placeholderAway: string | null

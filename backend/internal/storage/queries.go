@@ -138,7 +138,7 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 			m.kickoff_at, m.status, m.home_score, m.away_score,
 			COALESCE(m.venue_stadium, ''), COALESCE(m.venue_city, ''), COALESCE(m.venue_country, ''),
 			COALESCE(m.placeholder_home, ''), COALESCE(m.placeholder_away, ''),
-			m.result_source, m.updated_at,
+			m.result_source, m.updated_at, m.winner_team_id,
 			ht.id, COALESCE(ht.name, ''), COALESCE(ht.code, ''), COALESCE(ht.flag_url, ''),
 			at.id, COALESCE(at.name, ''), COALESCE(at.code, ''), COALESCE(at.flag_url, '')
 		FROM matches m
@@ -165,7 +165,7 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 			&m.KickoffAt, &m.Status, &m.HomeScore, &m.AwayScore,
 			&m.VenueStadium, &m.VenueCity, &m.VenueCountry,
 			&m.PlaceholderHome, &m.PlaceholderAway,
-			&m.ResultSource, &m.UpdatedAt,
+			&m.ResultSource, &m.UpdatedAt, &m.WinnerTeamID,
 			&homeID, &hName, &hCode, &hFlag,
 			&awayID, &aName, &aCode, &aFlag,
 		); err != nil {

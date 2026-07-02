@@ -6,6 +6,7 @@ import Spotlight from './Spotlight'
 import Footer from './Footer'
 import LoginScreen from './LoginScreen'
 import DemoBanner from './DemoBanner'
+import VersionWatcher from './VersionWatcher'
 import { useAuth } from '../auth/AuthContext'
 
 export default function Layout() {
@@ -55,6 +56,7 @@ export default function Layout() {
       </main>
 
       <BottomNav />
+      <VersionWatcher />
     </div>
   )
 }

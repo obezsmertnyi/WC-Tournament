@@ -31,6 +31,7 @@ type Match struct {
 	PlaceholderAway string
 	ResultSource    string
 	UpdatedAt       time.Time
+	WinnerTeamID    *int64 // knockout advancer (ET/penalties); nil for group or unresolved
 
 	// Joined team data (nil before the draw / when not yet assigned).
 	Home *Team

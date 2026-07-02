@@ -23,12 +23,37 @@ const KNOWN = ['Brazil', 'Argentina', 'BRA', 'ARG', 'Germany', 'GER', 'France', 
 
 describe('AI recap — grounded generation (CAP-09)', () => {
   // @trace FR-080
-  it('buildRecap summarizes only the real facts', () => {
+  it('buildRecap gives outcome + pool insight, NOT the raw scoreline (shown above)', () => {
     const r = buildRecap(match({}))
     expect(r).toContain('Brazil')
     expect(r).toContain('Argentina')
-    expect(r).toContain('2:1')
+    expect(r).toContain('Winner:') // label form, not a conjugated verb
     expect(r).toContain('last sixteen') // digit-free stage label (guardrail C2)
+    expect(r).not.toContain('2:1') // don't restate the score that's already visible
+  })
+
+  // @trace FR-080
+  it('buildRecap renders Ukrainian in case/gender-safe label form (no score)', () => {
+    const r = buildRecap(match({}), { lang: 'uk' })
+    expect(r).toContain('останніх шістнадцяти') // UA r16 stage label
+    expect(r).toContain('Переможець —') // label form avoids accusative/gender declension
+    expect(r).not.toContain('2:1')
+    expect(r.toLowerCase()).not.toContain('beat')
+  })
+
+  // @trace FR-080
+  it('buildRecap returns nothing for a LIVE match (scores present but not full-time)', () => {
+    expect(buildRecap(match({ status: 'live' }))).toBe('')
+  })
+
+  // @trace FR-080
+  it('buildRecap names the advancer on a knockout draw (penalties)', () => {
+    const r = buildRecap(match({ homeScore: 1, awayScore: 1 }), { advancer: 'Argentina' })
+    expect(r).toContain('a draw')
+    expect(r).toContain('Argentina advanced on penalties')
+    const uk = buildRecap(match({ homeScore: 1, awayScore: 1 }), { lang: 'uk', advancer: 'Аргентина' })
+    expect(uk).toContain('нічия')
+    expect(uk).toContain('У серії пенальті далі — Аргентина')
   })
 
   // @trace FR-081

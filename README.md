@@ -41,7 +41,7 @@ It is **not** a public service — access is gated (see [demo mode](docs/adr/001
 
 ## Architecture
 
-<a href="docs/diagrams/architecture.svg"><img alt="WC-Tournament runtime architecture — browser → Cloudflare → HAProxy → frontend (nginx) → backend (Gin) → Postgres, with FIFA / Telegram / Google OAuth integrations" width="820" src="docs/diagrams/architecture.svg"></a>
+<a href="docs/diagrams/architecture.svg"><img alt="WC-Tournament runtime architecture — browser → Cloudflare → HAProxy → frontend (nginx) → backend (Gin) → Postgres, with FIFA / Telegram / Google OAuth integrations and the opt-in Gemini (Vertex AI) assistant over keyless WIF" width="820" src="docs/diagrams/architecture.svg"></a>
 
 <sub>↑ click to open full-size. The request path is solid; integrations (FIFA, Telegram, Google) are off the request path.</sub>
 
@@ -134,6 +134,12 @@ Production runs the same `docker-compose.yml` behind HAProxy + Cloudflare. The
 multi-arch GHCR images mean prod can pull a tagged release instead of building
 locally (which also avoids the `amd64`/`arm64` mismatch). See
 [ADR-0004](docs/adr/0004-local-docker-compose-deployment.md).
+
+The **AI assistant** is opt-in: prod adds the `docker-compose.gemini.yml` overlay
+(`docker compose -f docker-compose.yml -f docker-compose.gemini.yml up -d`), which
+mounts the keyless WIF credentials and sets `AI_ENABLED=true` (ADR-0017). Without
+it the assistant stays off (503) and the app is unaffected. Full backup/rollback
+runbook: [`VERIFY.md`](VERIFY.md).
 
 ## Documentation
 

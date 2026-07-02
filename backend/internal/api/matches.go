@@ -45,6 +45,7 @@ type matchDTO struct {
 	Away            *teamDTO `json:"away"`
 	HomeScore       *int     `json:"homeScore"`
 	AwayScore       *int     `json:"awayScore"`
+	WinnerTeamID    *int64   `json:"winnerTeamId"` // knockout advancer (ET/pens); nil otherwise
 	Venue           venueDTO `json:"venue"`
 	PlaceholderHome *string  `json:"placeholderHome"`
 	PlaceholderAway *string  `json:"placeholderAway"`
@@ -110,6 +111,7 @@ func toMatchDTO(m storage.Match) matchDTO {
 		Status:          m.Status,
 		HomeScore:       m.HomeScore,
 		AwayScore:       m.AwayScore,
+		WinnerTeamID:    m.WinnerTeamID,
 		Venue:           venueDTO{Stadium: m.VenueStadium, City: m.VenueCity, Country: m.VenueCountry},
 		PlaceholderHome: emptyToNil(m.PlaceholderHome),
 		PlaceholderAway: emptyToNil(m.PlaceholderAway),

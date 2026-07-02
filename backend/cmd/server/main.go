@@ -26,6 +26,7 @@ import (
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/api"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/auth"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/digest"
+	"github.com/obezsmertnyi/WC-Tournament/backend/internal/gemini"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/notify"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/remind"
 	"github.com/obezsmertnyi/WC-Tournament/backend/internal/resolve"
@@ -394,6 +395,14 @@ func run(logger *slog.Logger) error {
 		api.RegisterPredictionRoutes(engine, store, recomputer)
 		api.RegisterBonusRoutes(engine, store)
 		api.RegisterAdminRoutes(engine, store, recomputer)
+
+		// Football AI assistant (ADR-0017): auth-only (on the authed group) but
+		// NOT tier-gated — every logged-in user incl. `none` can use it. If ADC/WIF
+		// is absent the assistant is Unavailable and its endpoints return 503.
+		// Grounded in the app's live tournament data via tools (ADR-0018).
+		aiAssistant := gemini.New(context.Background())
+		aiAssistant.SetTools(api.NewAITools(store))
+		api.RegisterAIRoutes(authed, aiAssistant)
 	}
 
 	srv := &http.Server{

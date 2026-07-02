@@ -65,6 +65,15 @@ separate review → tick. `✅ done · 🔄 in progress · ☐ todo`.
 - ✅ recap evals (`recap.test.ts`, 8 tests) — guardrail rejects hallucinated score/team; traced FR-080/FR-081
 - ✅ `docs/features/recap/spec.md` + ADR-0016 (grounded generation behind a guardrail)
 
+## AI assistant "Pitchside" (bonus) — football-only chat + cards ✅
+- ✅ `backend/internal/gemini/` — layered fail-closed guardrail (L0 caps · L1 flash-lite gate · L2 hardened prompt · L3 output validation); Gemini 2.5-flash via keyless WIF
+- ✅ guardrail evals (`gemini_test.go`, 12 cases) — input caps, off-topic refusal, classify fail-closed, card unmarshal, availability/503; traced FR-090..093
+- ✅ `backend/internal/api/ai.go` — `/api/ai/{status,chat,card}`, auth-only (all tiers incl `none`), per-user rate limit, SSE
+- ✅ frontend AI tab (`pages/AI.tsx`, `lib/aiApi.ts`, `components/AiCard.tsx`) + i18n (uk/en); FE build+tests green
+- ✅ opt-in `AI_ENABLED` (+ 503 degradation); prod overlay `docker-compose.gemini.yml` (keyless WIF mounts); `docs/features/ai-assistant/spec.md` + ADR-0017
+- ✅ deploy runbook `VERIFY.md` (backup + rollback); doc-graph gate `scripts/check-doc-links.mjs` (CI + Stop hook)
+- ☐ prod deploy — *owner* (tag `make release` + on-host pull/up + `pg_dump` backup; no gh/prod-SSH for the agent)
+
 ## Narrative & submission ✅
 - ✅ `docs/agentic-engineering.md` — one section per proof point (EN, doubles as reference)
 - ✅ `docs/SUBMISSION.md` — uk PR body (verbatim template) + handoff steps (fork/CodeRabbit/video/PR)

@@ -37,11 +37,11 @@ our *decisions* about it live here (crosswalk below; `docs/qa/slide-coverage-aud
 ## 📐 What & why — SDD (proof point 5)
 | Path | What | Submission? |
 |------|------|:--:|
-| `docs/product-brief.md` | Narrative scope | ✓ |
+| `docs/project-brief.md` | Narrative scope | ✓ |
 | **`docs/requirements.md`** | FR/NFR/TC/BC (numbered, MVP/Future) | ⭐ |
 | `docs/mvp-capability-plan.md` | Capabilities → FR ownership | ✓ |
 | `docs/features/*/spec.md` | Given/When/Then per capability | ⭐ |
-| `docs/adr/0001–0016` | Decisions (why it won) | ⭐ |
+| `docs/adr/0001–0018` | Decisions (why it won) | ⭐ |
 | `docs/domain-glossary.md`, `docs/dev-setup.md` | Vocabulary; how to build | |
 
 ## ✅ Verification (proof point 4)
@@ -76,10 +76,25 @@ our *decisions* about it live here (crosswalk below; `docs/qa/slide-coverage-aud
 | `.claude/skills/wc-recap/` | Authored Agent Skill | ✓ |
 | `frontend/src/lib/recap.ts`, `components/MatchRecap.tsx` | GenUI AI recap (grounded + guardrail) | ⭐ |
 
+## 🤖 AI assistant "Pitchside" (ADR-0017)
+| Path | What |
+|------|------|
+| `backend/internal/gemini/gemini.go` | Guardrailed façade (L0–L3, fail-closed) — football-only |
+| `backend/internal/gemini/vertex.go` | Vertex AI generator; `AI_ENABLED` opt-in + graceful 503 |
+| `backend/internal/gemini/gemini_test.go` | Guardrail + grounding evals (`@trace FR-090..093, FR-100`) |
+| `backend/internal/gemini/grounding.go` | Tools interface + fact structs + tool dispatch (grounding, ADR-0018) |
+| `backend/internal/api/ai_tools.go` | Tools impl over storage — live overview/results/standings/leaderboard |
+| `backend/internal/api/ai.go` | `/api/ai/{status,chat,card}` — auth-only, rate-limited, SSE |
+| `frontend/src/pages/AI.tsx`, `lib/aiApi.ts`, `components/AiCard.tsx` | Chat tab + card UI |
+| `docker-compose.gemini.yml` | Prod overlay: mounts keyless WIF creds + turns AI on |
+| `docs/gemini-wif.md`, `docs/adr/0017-*.md` | WIF host config; the decision record |
+
 ## 🚀 CI/CD & release
 | Path | What |
 |------|------|
 | `.github/workflows/{ci,release}.yml` | CI gates + multi-arch GHCR release |
+| `VERIFY.md` | dev→prod verification, backup & rollback runbook |
+| `scripts/check-doc-links.mjs` | Doc-graph integrity — every bootstrap pointer resolves |
 | `.github/dependabot.yml`, `Makefile`, `docs/diagrams/*.svg` | Deps; dev tasks; architecture diagrams |
 
 ## 📄 Submission artifacts

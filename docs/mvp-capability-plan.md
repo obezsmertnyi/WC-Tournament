@@ -12,6 +12,7 @@ is **one PR = one capability = one demo**.
 | **CAP-05** Auth & access | Google/admin auth, demo-mode tiers | FR-030…FR-033 | `features/demo-access/spec.md` | ✅ shipped |
 | **CAP-08** Tools/MCP | read-only MCP server for agents | FR-070, FR-071 (FR-072 Future) | `features/mcp/spec.md` | ✅ this submission |
 | **CAP-09** AI recap (GenUI) | grounded match recap + guardrail | FR-080, FR-081 (FR-082 Future) | `features/recap/spec.md` | ✅ this submission |
+| **CAP-10** AI assistant | football-only Gemini chat + cards (keyless WIF) | FR-090…093 | `features/ai-assistant/spec.md` | 🔄 this submission |
 
 > Capabilities CAP-03 (leaderboard/reveals), CAP-04 (bracket), CAP-06 (Telegram
 > bot), CAP-07 (admin) are shipped and documented in `architecture.md` + the

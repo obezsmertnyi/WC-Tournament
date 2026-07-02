@@ -16,8 +16,9 @@ cd backend && go test -race ./... && cd ../frontend && npm test
 # 4 evals
 cd ../backend && go test -tags=evals ./internal/scoring/
 cd ../mcp && npm run eval
-# traceability (fresh + non-regressing)
+# traceability (fresh + non-regressing) + doc-graph integrity
 cd .. && node scripts/gen-traceability.mjs --check
+node scripts/check-doc-links.mjs --check   # no bootstrap doc points at a missing file
 ```
 
 Report which layers passed. If a gate is red, propose a root-cause fix (never a

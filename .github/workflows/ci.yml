@@ -127,6 +127,9 @@ jobs:
       # must not regress below quality/trace-baseline.json (ADR-0014).
       - run: node scripts/gen-traceability.mjs --check
       - run: node scripts/check-eval-ratchet.mjs --check
+      # Doc-graph integrity: no bootstrap doc points at a missing file (broken
+      # file-pointers fail; dir/prose shorthand is advisory only).
+      - run: node scripts/check-doc-links.mjs --check
 
   docker:
     name: Docker (build · scan · smoke)

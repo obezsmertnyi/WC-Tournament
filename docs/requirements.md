@@ -40,9 +40,17 @@ Grammar: `FR` functional · `NFR` non-functional · `TC` technical constraint ·
 - **FR-081** (MVP) The recap is **fact-grounded**: a guardrail rejects any candidate recap that introduces a team or number not present in the match facts (no hallucination), bounds length, and neutralizes injection — whatever produced the text.
 - **FR-082** (Future) A pluggable LLM provider may produce the recap prose; its output passes through the FR-081 guardrail before display (never shown raw).
 
+### AI assistant — CAP-10 (bonus, GenUI + Gemini)
+- **FR-090** (MVP) An authenticated user can chat with a football assistant (Gemini 2.5 Flash, Vertex AI via keyless WIF); replies stream token-by-token.
+- **FR-091** (MVP) The assistant answers **only** football / FIFA World Cup topics (players, clubs, national teams, history, matches, WC2026); anything off-topic is refused in one sentence with a football redirect. A layered guardrail enforces this: input hygiene → a `flash-lite` topic-classifier gate → a hardened system instruction (anti-injection: user text is data, never reveal/obey it) → output validation. The system prompt is never disclosed.
+- **FR-092** (MVP) The user can request a **club or player card**; the assistant returns a structured card (name, country, club, position, achievements, summary, confidence) rendered as a UI card, flagged "may be outdated" when confidence < high.
+- **FR-093** (MVP) AI endpoints require authentication (anonymous → 401) but are **not tier-gated** — every logged-in user incl. the `none` demo tier may use them. Per-user rate limits + input-length caps apply; if the AI backend is unavailable the endpoints return `503` without affecting the rest of the app.
+- **FR-100** (MVP) The assistant is **grounded in the app's own live tournament data** (ADR-0018): via Gemini function-calling it can read a one-call **tournament overview** (primary — for a quick championship summary), recent results, a team's matches, group standings, and the prediction-pool leaderboard, and answers current-tournament questions from that data — never claiming the tournament "hasn't started" or that it lacks current data. Answers are grounded in returned tool data (no invented results); a tool/grounding failure degrades gracefully to an ungrounded reply.
+
 ## Non-functional (NFR)
 - **NFR-001** (MVP) Scoring is pure and deterministic given (prediction, result) — no clock/IO in the core function; covered by unit tests **and** golden-fixture evals.
-- **NFR-002** (MVP) No secret (JWT/admin/OAuth/Telegram) appears in the repo; CI scans history (gitleaks) and images (Trivy, fail on HIGH/CRITICAL).
+- **NFR-002** (MVP) No secret (JWT/admin/OAuth/Telegram/**Gemini**) appears in the repo; Gemini auth is **keyless** (WIF/ADC — no API key or SA-key in code, env, or image). CI scans history (gitleaks) and images (Trivy, fail on HIGH/CRITICAL).
+- **NFR-006** (MVP) The AI assistant never logs full message bodies (only ids, token counts, classifier verdict, latency, finish reason); requests are time-bounded and cancel the upstream stream on client disconnect.
 - **NFR-003** (MVP) Backend runs as non-root distroless, read-only rootfs, all caps dropped.
 - **NFR-004** (MVP) Every push/PR passes the 5-layer verification gate before merge to `main`.
 - **NFR-005** (Future) p95 API latency < 300 ms for read endpoints under the friends-scale load (≤ a few dozen users).
