@@ -427,18 +427,22 @@ func (s *Store) ListUpcomingUnremindedMatches(ctx context.Context, window time.D
 	return out, rows.Err()
 }
 
-// ListUsersMissingPrediction returns the nicknames of non-admin users who have
-// NOT submitted a prediction for the given match. Used by the pre-match reminder.
-func (s *Store) ListUsersMissingPrediction(ctx context.Context, matchID int64) ([]string, error) {
+// ListUsersMissingPrediction returns the nicknames of non-admin users who can
+// currently predict but have NOT submitted a prediction for the given match —
+// used by the pre-match reminder. When demo mode is on, only the `rw` tier can
+// submit predictions (none/ro are preview-only, ADR-0012), so they are excluded
+// from the nudge; when demo is off, every non-admin user is a participant.
+func (s *Store) ListUsersMissingPrediction(ctx context.Context, matchID int64, demoOn bool) ([]string, error) {
 	const sql = `
 		SELECT u.nickname
 		FROM users u
 		WHERE u.role <> 'admin'
+		  AND (NOT $2 OR u.access_level = 'rw')
 		  AND NOT EXISTS (
 		      SELECT 1 FROM predictions p WHERE p.user_id = u.id AND p.match_id = $1
 		  )
 		ORDER BY u.nickname ASC`
-	rows, err := s.pool.Query(ctx, sql, matchID)
+	rows, err := s.pool.Query(ctx, sql, matchID, demoOn)
 	if err != nil {
 		return nil, fmt.Errorf("query users missing prediction: %w", err)
 	}

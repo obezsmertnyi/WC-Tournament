@@ -21,7 +21,8 @@ const LeadTime = time.Hour
 // Store is the storage capability the reminder needs.
 type Store interface {
 	ListUpcomingUnremindedMatches(ctx context.Context, window time.Duration) ([]storage.Match, error)
-	ListUsersMissingPrediction(ctx context.Context, matchID int64) ([]string, error)
+	ListUsersMissingPrediction(ctx context.Context, matchID int64, demoOn bool) ([]string, error)
+	IsDemoMode(ctx context.Context) (bool, error)
 	MarkMatchReminded(ctx context.Context, id int64) error
 }
 
@@ -52,10 +53,16 @@ func (r *Reminder) Run(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	// In demo mode only the rw tier can submit predictions, so the reminder must
+	// not nudge none/ro (preview-only) users who couldn't predict anyway.
+	demoOn, err := r.store.IsDemoMode(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("remind: read demo mode: %w", err)
+	}
 
 	sent := 0
 	for _, m := range matches {
-		missing, err := r.store.ListUsersMissingPrediction(ctx, m.ID)
+		missing, err := r.store.ListUsersMissingPrediction(ctx, m.ID, demoOn)
 		if err != nil {
 			r.log.Warn("remind: load missing predictors failed", slog.Int64("match", m.ID), slog.Any("error", err))
 			continue
