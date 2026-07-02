@@ -2,6 +2,9 @@
 
 > A friends-only **FIFA World Cup 2026** score-prediction pool — predict match scores, earn points, climb a live leaderboard. A proof-of-concept for the friends group, built production-grade.
 
+### 🔗 Live site → **[wc2026.mtgrd-das.app](https://wc2026.mtgrd-das.app)**
+
+[![Live](https://img.shields.io/badge/live-wc2026.mtgrd--das.app-C9A24B.svg?logo=googlechrome&logoColor=white)](https://wc2026.mtgrd-das.app)
 [![CI](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/ci.yml/badge.svg)](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/ci.yml)
 [![Release](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/release.yml/badge.svg)](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

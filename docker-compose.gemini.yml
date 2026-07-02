@@ -17,8 +17,9 @@ services:
     environment:
       AI_ENABLED: "true"
       GOOGLE_GENAI_USE_VERTEXAI: "true"
-      GOOGLE_CLOUD_PROJECT: <GCP_PROJECT>
-      GOOGLE_CLOUD_LOCATION: us-central1
+      # Real project id lives in the host .env (gitignored), never in the repo.
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?set GOOGLE_CLOUD_PROJECT in .env}
+      GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-us-central1}
       GOOGLE_APPLICATION_CREDENTIALS: /etc/gemini/cred.json
     volumes:
       - /etc/gemini/cred.json:/etc/gemini/cred.json:ro
