@@ -186,7 +186,7 @@ type Card struct {
 	WikiTitle    string     `json:"wiki_title,omitempty"` // exact Wikipedia article title for the photo (disambiguated), e.g. "Кріштіану Роналду" not "Роналду"
 	Clarify      string     `json:"clarify,omitempty"`    // set INSTEAD of a card when the name is ambiguous: a short question asking which entity is meant
 	ImageURL     string     `json:"imageUrl,omitempty"`   // player/club photo (Wikipedia), set by the handler
-	Stats        []CardStat `json:"stats,omitempty"`    // key numeric stats (goals, apps, …) from grounded search
+	Stats        []CardStat `json:"stats,omitempty"`      // key numeric stats (goals, apps, …) from grounded search
 }
 
 // CardStat is one label/value statistic shown on a card (e.g. {"Голи","672"}).
