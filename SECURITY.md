@@ -8,7 +8,8 @@ and shipped with a real security posture.
 
 Please **do not** open a public issue for a security problem. Report privately
 via GitHub **Security Advisories** ("Report a vulnerability" on the repo's
-Security tab), or email the maintainer at `25085507+obezsmertnyi@users.noreply.github.com`.
+Security tab), or contact the maintainer through GitHub
+([@obezsmertnyi](https://github.com/obezsmertnyi)).
 Expect an acknowledgement within a few days.
 
 ## Supported versions
