@@ -15,7 +15,6 @@ Every artifact that turns "seems to work" into checkable evidence. See
 | [`mvp-acceptance-report.md`](mvp-acceptance-report.md) | Per-capability acceptance sign-off table |
 | [`review-findings.json`](review-findings.json) | maker≠checker adversarial review results (clean flag) |
 | [`automated-verification-latest.md`](automated-verification-latest.md) | Latest `make qa` battery run (generated evidence) |
-| [`slide-coverage-audit.md`](slide-coverage-audit.md) | Course-deck (91 slides) coverage audit + adoption notes |
 
 Baselines that ratchet (in [`../../quality/`](../../quality/)): traceability
 (`trace-baseline.json`), eval-surface (`eval-baseline.json`), backend coverage

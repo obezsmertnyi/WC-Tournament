@@ -1,8 +1,7 @@
 # Agent context border (machine-enforced token economy).
 # Keeps generated, vendored, binary, and secret files out of AI context so the
 # model reads signal, not noise. gitignore syntax. Honored by agent tools that
-# read .aiexclude (and mirrored by .gitignore for git). See ADR-0013 and the
-# "Context border & token economy" note in docs/agentic-engineering.md.
+# read .aiexclude (and mirrored by .gitignore for git). See ADR-0013.
 
 # Secrets — never in context
 .env

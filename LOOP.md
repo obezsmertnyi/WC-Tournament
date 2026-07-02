@@ -52,7 +52,7 @@ to (`WORKFLOW.md`, `docs/qa/quality-gates.md`, `AGENTS.md`), not duplicated here
 
 Repeat per capability slice. Never advance past a red gate; never mark a
 requirement done until a `@trace`'d test proves it and a separate checker has
-looked. Full detail in `WORKFLOW.md`; live status in `CHECKLIST.md`.
+looked. Full detail in `WORKFLOW.md`.
 
 Commands (`.claude/commands/`): `/verify` (run the gates), `/trace` (regenerate +
 check the traceability matrix), `/review` (dispatch the reviewer sub-agents),
@@ -89,9 +89,7 @@ check the traceability matrix), `/review` (dispatch the reviewer sub-agents),
 
 ## Deliberately out of scope
 
-Kept lean vs the project-factory template — this is a friends PoC, not an
-agent factory. Not implemented (and intentionally so; see
-`docs/qa/slide-coverage-audit.md`): a `check-trajectory` process eval, a
-`uat-triage` agent + `@trace BUG-x` regression convention, scheduled
-propose-only automations, and a conductor/orchestrator mode split. Revisit if the
-project outgrows a PoC.
+Kept lean — this is a friends PoC, not an agent factory. Not implemented (and
+intentionally so): a `check-trajectory` process eval, a `uat-triage` agent +
+`@trace BUG-x` regression convention, scheduled propose-only automations, and a
+conductor/orchestrator mode split. Revisit if the project outgrows a PoC.

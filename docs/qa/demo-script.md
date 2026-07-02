@@ -1,9 +1,8 @@
 # Demo script — 1–2 min video (real-behavior proof)
 
 The top of the verification pyramid: a short screen recording that proves the
-product actually works end-to-end (layer 5, `test-plan.md`). Also the homework's
-required video demo. Record at `wc2026.mtgrd-das.app` (or a local `docker compose
-up`), save to `docs/qa/demo-recordings/`, and link it in the PR.
+product actually works end-to-end (layer 5, `test-plan.md`). Record at
+`wc2026.mtgrd-das.app` (or a local `docker compose up`).
 
 Keep it to ~90 seconds. Suggested beat sheet:
 
@@ -17,9 +16,9 @@ Keep it to ~90 seconds. Suggested beat sheet:
    bracket in correct tree order.
 4. **(1:00–1:20) Demo-mode gate.** As a fresh/`none` user, show the preview
    banner and a locked panel; as `rw`, show full participation (FR-031).
-5. **(1:20–1:40) Agentic angle (the point of the homework).** Show the MCP server
+5. **(1:20–1:40) Agentic angle.** Show the MCP server
    answering a question about the pool from an agent (e.g. "who's leading?"),
-   and flash the artifacts: `CHECKLIST.md`, `docs/qa/requirements-traceability-matrix.md`,
+   and flash the artifacts: `docs/qa/requirements-traceability-matrix.md`,
    the CI run green, a reviewer sub-agent's `review-findings.json`.
 
 Narration focus: not just *what* the product does, but *how it was built

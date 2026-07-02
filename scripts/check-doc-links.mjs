@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Doc-graph integrity: starting from the always-loaded bootstrap chain
 // (CLAUDE.md → AGENTS.md → LOOP.md → …), verify every pointer to an OUR-repo path
-// resolves. A dangling pointer = a dead end a fresh session would hit. Reference-repo
-// crosswalk paths (project-factory) are expected to be absent and are not flagged.
+// resolves. A dangling pointer = a dead end a fresh session would hit. A few
+// external tooling paths are expected to be absent and are not flagged (REF_PREFIX).
 //
 //   node scripts/check-doc-links.mjs           # report
 //   node scripts/check-doc-links.mjs --check   # exit 1 on genuine drift (gate mode)
@@ -13,17 +13,14 @@ const REPO = process.env.CLAUDE_PROJECT_DIR || process.cwd()
 const CHECK = process.argv.includes('--check')
 
 const seed = [
-  'CLAUDE.md', 'AGENTS.md', 'LOOP.md', 'WORKFLOW.md', 'CHECKLIST.md',
-  'docs/REPO-MAP.md', 'current-state.md', 'docs/current-state.md',
+  'CLAUDE.md', 'AGENTS.md', 'LOOP.md', 'WORKFLOW.md',
+  'docs/REPO-MAP.md',
   '.claude/commands/verify.md', '.claude/commands/trace.md',
   '.claude/commands/review.md', '.claude/commands/new-capability.md',
 ].filter((f) => existsSync(join(REPO, f)))
 
-// Paths belonging to the reference project-factory repo, documented in REPO-MAP's
-// crosswalk — intentionally absent here.
-const REF_PREFIX = ['openspec/', 'templates/', 'checklists/', 'skills/project-factory/',
-  '.claude/workflows/', 'agents/', 'MASTER-PROMPT.md', 'scripts/check-traceability.mjs',
-  'docs/qa/demo-recordings/']
+// External/tooling paths intentionally absent from this repo — not flagged as broken.
+const REF_PREFIX = []
 const isRef = (p) => REF_PREFIX.some((r) => p === r || p.startsWith(r))
 const asCmd = (t) => `.claude/commands/${t.slice(1)}.md`
 

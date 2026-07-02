@@ -3,7 +3,7 @@
 The engineering loop this repo runs. It replaces step-by-step prompting with a
 repeating, verifiable cycle; a **checker that is not the maker** gates each
 change; and every requirement is traced to a test. See also `LOOP.md` (the tight
-cycle), `CHECKLIST.md` (the live driver), and `AGENTS.md` (rules/context).
+cycle) and `AGENTS.md` (rules/context).
 
 ## Roles
 - **Maker** — the agent implementing a slice (writes code + tests).
@@ -23,7 +23,7 @@ cycle), `CHECKLIST.md` (the live driver), and `AGENTS.md` (rules/context).
    findings; CodeRabbit reviews the PR.
 6. **Commit** — conventional message + `Slice:` / `Refs:` trailers; push; CI is
    the gate to `main`.
-7. **Handoff** — update `current-state.md` + `docs/memory/progress.md`.
+7. **Handoff** — update `docs/memory/progress.md`.
 
 ## Verification gates (must be green before merge — see `docs/qa/test-plan.md`)
 `gofmt · go vet · tsc · actionlint` → `go test` (unit + integration on real PG) +
@@ -34,12 +34,12 @@ Trivy → container smoke. The top gate — real behavior — is the demo video
 
 ## Loop-engineering notes
 - **One PR = one capability = one demo.** Slices are vertical (spec→UI/API→tests→docs).
-- **Plan + Verify** over freehand prompting: the CHECKLIST is re-checked in-loop
+- **Plan + Verify** over freehand prompting: the plan is re-checked in-loop
   after every change; nothing is "done" until its gate is green and its FR is traced.
-- Dynamic state (`current-state.md`, `docs/memory/`) carries context between
+- Dynamic state (`docs/memory/`) carries context between
   sessions so a fresh agent resumes in ~30s; static rules stay in `AGENTS.md`.
 - **Parallel slices (optional):** independent capabilities can be developed in
   parallel `git worktree` checkouts (one branch per worktree) so agents don't
   collide on the tree; each still passes the same gates before merge. For this
-  solo submission slices were built sequentially — the mechanism is noted for
+  solo project slices were built sequentially — the mechanism is noted for
   scale, not required.

@@ -58,5 +58,4 @@ Build it (`cd mcp && npm run build`), then connect via repo-root `.mcp.json`
 ## Where things are
 Product design & decisions: `docs/` (project-brief, architecture, ADRs). What to
 build & why: `docs/requirements.md` + `docs/mvp-capability-plan.md` +
-`docs/features/<cap>/spec.md`. How we work: `WORKFLOW.md` / `LOOP.md`. Live
-status: `CHECKLIST.md`.
+`docs/features/<cap>/spec.md`. How we work: `WORKFLOW.md` / `LOOP.md`.

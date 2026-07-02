@@ -10,14 +10,14 @@ is **one PR = one capability = one demo**.
 | **CAP-01** Predictions | submit/edit, kickoff lock, knockout advancer | FR-001, FR-002, FR-003 | `features/predictions/spec.md` | ✅ shipped |
 | **CAP-02** Scoring | exact/outcome/advancer + bonuses, deterministic recompute | FR-010…FR-015 | `features/scoring/spec.md` | ✅ shipped · evals |
 | **CAP-05** Auth & access | Google/admin auth, demo-mode tiers | FR-030…FR-033 | `features/demo-access/spec.md` | ✅ shipped |
-| **CAP-08** Tools/MCP | read-only MCP server for agents | FR-070, FR-071 (FR-072 Future) | `features/mcp/spec.md` | ✅ this submission |
-| **CAP-09** AI recap (GenUI) | grounded match recap + guardrail | FR-080, FR-081 (FR-082 Future) | `features/recap/spec.md` | ✅ this submission |
-| **CAP-10** AI assistant | football-only Gemini chat + cards (keyless WIF) | FR-090…093 | `features/ai-assistant/spec.md` | 🔄 this submission |
+| **CAP-08** Tools/MCP | read-only MCP server for agents | FR-070, FR-071 (FR-072 Future) | `features/mcp/spec.md` | ✅ shipped |
+| **CAP-09** AI recap (GenUI) | grounded match recap + guardrail | FR-080, FR-081 (FR-082 Future) | `features/recap/spec.md` | ✅ shipped |
+| **CAP-10** AI assistant | football-only Gemini chat + cards (keyless WIF) | FR-090…093 | `features/ai-assistant/spec.md` | 🔄 in progress |
 
 > Capabilities CAP-03 (leaderboard/reveals), CAP-04 (bracket), CAP-06 (Telegram
 > bot), CAP-07 (admin) are shipped and documented in `architecture.md` + the
 > ADRs; they are not re-spec'd here to keep the SDD set focused on the
-> verification-and-bonus surface that this submission demonstrates.
+> verification-and-bonus surface demonstrated here.
 
 ## Trace chain (the differentiator)
 `FR-id` → cited in the capability `spec.md` → owned by one row above →

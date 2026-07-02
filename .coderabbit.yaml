@@ -1,7 +1,6 @@
 # CodeRabbit config — reviews in Ukrainian, mentor tone, advisory (non-blocking).
-# Mirrors the fwdays task repo's settings and focuses the bot on substance:
-# generated / vendored / scaffolding files are excluded so review effort goes to
-# real code, specs, tests and decisions.
+# Focuses the bot on substance: generated / vendored / scaffolding files are
+# excluded so review effort goes to real code, specs, tests and decisions.
 language: uk-UA
 
 reviews:
@@ -21,7 +20,7 @@ reviews:
     - "!**/*.webm"                   # demo recordings
     - "!**/*.toon"                   # loop state
     - "!docs/qa/requirements-traceability-matrix.md"  # generated, not hand-written
-    - "!.agents/skills/**"           # agent skill scaffolding (per fwdays tip — ~80 files of noise)
+    - "!.agents/skills/**"           # agent skill scaffolding (~80 files of noise)
     - "!.claude/skills/**"
   path_instructions:
     - path: "**"

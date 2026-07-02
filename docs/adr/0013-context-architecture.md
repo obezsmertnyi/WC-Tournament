@@ -17,8 +17,7 @@ Split context into **static** and **dynamic** with a clear home for each:
   + `docs/` SDD (product brief, requirements, capability plan, specs, ADRs,
   architecture). Changes here are deliberate and reviewed.
 - **Dynamic** (changes often, loaded to resume): `docs/memory/activeContext.md`
-  + `docs/memory/progress.md`, `current-state.md` (one-screen fast handoff),
-  `CHECKLIST.md` (loop driver), `.workflow-state.toon` (loop state).
+  + `docs/memory/progress.md`, `.workflow-state.toon` (loop state).
 
 **Cross-tool, no drift:** the rules live in **`AGENTS.md`** (which Codex and
 other tools read directly). `CLAUDE.md` is a one-liner that imports it
@@ -29,7 +28,7 @@ that was just a *copy* of `CLAUDE.md` and immediately drifted; the import fixes 
 
 ## Consequences
 - The always-loaded budget stays small and current; session resume is fast
-  (read `current-state.md` + memory).
+  (read `docs/memory/`).
 - One source of truth for rules (no `AGENTS.md`/`CLAUDE.md` drift).
 - Requires discipline: per-slice state goes to dynamic files, not `CLAUDE.md`.
 

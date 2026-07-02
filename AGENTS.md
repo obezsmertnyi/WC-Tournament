@@ -7,9 +7,8 @@ read this file directly). Edit **here** — do not duplicate rules into `CLAUDE.
 Keep it lean (this is the always-loaded budget); per-session state lives in the
 **dynamic** context (see boundary below), not here.
 
-**New session? Orient in 3 files:** [`docs/REPO-MAP.md`](docs/REPO-MAP.md) (indexes
-every file by purpose + a reference→ours naming crosswalk) → `current-state.md`
-(what's in flight) → `CHECKLIST.md` (live status).
+**New session? Orient here:** [`docs/REPO-MAP.md`](docs/REPO-MAP.md) (indexes every
+file by purpose) → `docs/memory/` (dynamic context / what's in flight).
 
 **About to change behavior? That's a *slice* — load [`LOOP.md`](LOOP.md) and follow the
 cycle:** spec → implement → trace (`@trace FR-id`) → verify → review (maker≠checker)
@@ -99,9 +98,8 @@ Hard-won invariants — each cost a real bug. Do not "simplify" them away.
   `docs/` (brief, requirements, capability plan, specs, ADRs, architecture).
   Stable across sessions.
 - **Dynamic** (per session/slice): `docs/memory/activeContext.md` +
-  `progress.md`, `current-state.md` (fast handoff), `.workflow-state.toon`
-  (loop state), `CHECKLIST.md`. Read these to resume; don't bloat the static
-  context with them.
+  `progress.md`, `.workflow-state.toon` (loop state). Read these to resume;
+  don't bloat the static context with them.
 
 ## Spec-driven flow
 Change a behavior → update/author the capability spec (`docs/features/<cap>/spec.md`,

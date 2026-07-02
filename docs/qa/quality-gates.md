@@ -4,9 +4,9 @@ Gates are **deterministic command-exit criteria** — judgment (reviews, sign-of
 sits *atop* green commands, never instead. A red command is a STOP: fixing the
 check is allowed, **weakening or bypassing it is not** (AGENTS.md).
 
-Adapted from the project-factory G0–G8 model to *our* stack (Go/React/Postgres,
-`docs/features/*` specs instead of OpenSpec, our `scripts/check-*`). Most gates
-map onto `.github/workflows/ci.yml` + `make ci` + `make qa`/`make gates`.
+A G0–G8 gate model for our stack (Go/React/Postgres, `docs/features/*` specs, our
+`scripts/check-*`). Most gates map onto `.github/workflows/ci.yml` + `make ci` +
+`make qa`/`make gates`.
 
 | Gate | What it proves | Commands (must exit 0) |
 |------|----------------|------------------------|
@@ -25,6 +25,6 @@ map onto `.github/workflows/ci.yml` + `make ci` + `make qa`/`make gates`.
 PASS/FAIL/SKIP. `make qa` runs the full battery and writes the evidence report.
 
 ## Deviations from the reference (deliberate)
-- **No OpenSpec CLI** — specs are `docs/features/<cap>/spec.md` (Given/When/Then) + ADRs; `openspec validate` → our `gen-traceability --check`.
+- **Specs, not a spec CLI** — specs are `docs/features/<cap>/spec.md` (Given/When/Then) + ADRs; validated via our `gen-traceability --check`.
 - **G6 headless recordings + a11y/vision** deferred — the narrated demo video is the real-behavior proof (`demo-script.md`); browser-automation infra is disproportionate for a single-audience app.
 - **G8** informal — no external QA round.
