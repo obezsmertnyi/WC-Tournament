@@ -27,6 +27,14 @@ vet: ## go vet the backend
 fmt: ## gofmt the backend
 	cd $(BACKEND) && gofmt -w .
 
+.PHONY: fmt-check
+fmt-check: ## Fail if any backend Go file needs gofmt (CI + pre-commit gate)
+	@cd $(BACKEND) && unformatted="$$(gofmt -l .)"; \
+	if [ -n "$$unformatted" ]; then \
+		echo "gofmt needs running on:"; echo "$$unformatted"; \
+		echo "fix: make fmt"; exit 1; \
+	fi
+
 .PHONY: vuln
 vuln: ## Run govulncheck on the backend
 	cd $(BACKEND) && go run golang.org/x/vuln/cmd/govulncheck@latest ./...
