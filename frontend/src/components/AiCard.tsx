@@ -20,15 +20,18 @@ export default function AiCard({ card }: { card: Card }) {
     <article className="rounded-2xl border border-accent/30 bg-gradient-to-b from-accent/[0.07] to-white/[0.02] p-4 backdrop-blur-md">
       <header className="mb-2 flex items-center gap-3">
         {card.imageUrl && (
-          <img
-            src={card.imageUrl}
-            alt={card.name}
-            loading="lazy"
-            className="h-14 w-14 shrink-0 rounded-xl border border-hairline object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-          />
+          <div className="ai-crest-ring h-14 w-14 shrink-0 rounded-xl p-0.5">
+            <img
+              src={card.imageUrl}
+              alt={card.name}
+              loading="lazy"
+              className="h-full w-full rounded-[10px] object-cover"
+              onError={(e) => {
+                const ring = e.currentTarget.parentElement
+                if (ring) ring.style.display = 'none'
+              }}
+            />
+          </div>
         )}
         <h3 className="min-w-0 flex-1 truncate text-base font-bold text-text">{card.name}</h3>
         {card.confidence !== 'high' && (

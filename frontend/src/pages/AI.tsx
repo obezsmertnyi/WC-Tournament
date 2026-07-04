@@ -28,10 +28,26 @@ function TypingDots() {
   )
 }
 
+/** Small gold-ringed football mark that tags every assistant turn (SVG, not an
+ *  emoji) — gives the thread a clear "who's speaking" rhythm. */
+function Crest() {
+  return (
+    <span className="ai-crest-ring mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full p-[1.5px]">
+      <span className="grid h-full w-full place-items-center rounded-full bg-bg">
+        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-accent" fill="none" stroke="currentColor" strokeWidth="1.6">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 8.2l3.4 2.5-1.3 4h-4.2l-1.3-4L12 8.2z" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </span>
+  )
+}
+
 /**
- * "Pitchside" — the football AI assistant (ADR-0017). Available to any logged-in
- * user (incl. demo `none`). Streams chat replies; a 🃏 button fetches a
- * structured club/player card. Guardrail + master prompt live server-side.
+ * "Pitchside" — the football AI assistant (ADR-0017, refreshed per ADR-0021).
+ * Available to any logged-in user (incl. demo `none`). Streams chat replies; a
+ * card button fetches a structured club/player card. Guardrail + master prompt
+ * live server-side.
  */
 export default function AI() {
   const { t } = useTranslation()
@@ -57,10 +73,12 @@ export default function AI() {
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'model', text: m.text }))
   }
 
-  async function onChat() {
-    const q = input.trim()
+  // preset lets a suggestion chip send its label directly (without touching the
+  // input field); a plain submit reads and clears the input.
+  async function onChat(preset?: string) {
+    const q = (preset ?? input).trim()
     if (!q || busy) return
-    setInput('')
+    if (preset === undefined) setInput('')
     setBusy(true)
     const history = historyFor()
     setMessages((m) => [...m, { id: nextId(), role: 'user', text: q }])
@@ -100,11 +118,14 @@ export default function AI() {
     }
   }
 
+  const canSend = !!input.trim() && !busy
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col">
       <header className="relative mb-4 -mx-4 overflow-hidden rounded-b-3xl px-4 pb-5 pt-4 sm:-mx-6 sm:px-6">
         <StarHero variant="band" />
         <div className="relative">
+          <p className="mb-1 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-accent">{t('ai.eyebrow')}</p>
           <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{t('ai.title')}</h1>
           <p className="mt-1 text-sm text-muted">{t('ai.subtitle')}</p>
         </div>
@@ -118,35 +139,63 @@ export default function AI() {
         <>
           <div ref={threadRef} className="min-h-[40vh] space-y-3 overflow-y-auto pb-4">
             {messages.length === 0 && (
-              <p className="px-2 py-8 text-center text-sm text-muted/70">{t('ai.empty')}</p>
-            )}
-            {messages.map((m) =>
-              'card' in m ? (
-                <div key={m.id} className="ai-msg-in mr-6">
-                  <AiCard card={m.card} />
+              <div className="ai-msg-in px-1 py-8">
+                <p className="mb-3.5 text-center text-sm text-muted/70">{t('ai.empty')}</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {(['results', 'scorers', 'leader'] as const).map((k) => {
+                    const label = t(`ai.suggest.${k}`)
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => void onChat(label)}
+                        disabled={busy}
+                        className="rounded-full border border-hairline bg-white/[0.04] px-3.5 py-1.5 text-sm text-text/90 transition hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/[0.08] disabled:opacity-40"
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
                 </div>
-              ) : (
-                <div
-                  key={m.id}
-                  className={`ai-msg-in max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                    m.role === 'user'
-                      ? 'ml-auto bg-accent/15 text-text'
-                      : 'mr-auto border border-hairline bg-white/[0.04] text-text/90'
-                  }`}
-                >
-                  {m.text
-                    ? m.text
-                    : m.role === 'assistant' && 'streaming' in m && m.streaming
-                      ? <TypingDots />
-                      : ''}
-                </div>
-              ),
+              </div>
             )}
+            {messages.map((m) => {
+              if ('card' in m) {
+                return (
+                  <div key={m.id} className="ai-msg-in flex items-start gap-2">
+                    <Crest />
+                    <div className="min-w-0 max-w-[88%] flex-1">
+                      <AiCard card={m.card} />
+                    </div>
+                  </div>
+                )
+              }
+              if (m.role === 'user') {
+                return (
+                  <div key={m.id} className="ai-msg-in flex justify-end">
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-accent/15 px-3.5 py-2.5 text-sm leading-relaxed text-text">
+                      {m.text}
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div key={m.id} className="ai-msg-in flex items-start gap-2">
+                  <Crest />
+                  <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-hairline bg-white/[0.04] px-3.5 py-2.5 text-sm leading-relaxed text-text/90">
+                    {m.text ? m.text : 'streaming' in m && m.streaming ? <TypingDots /> : ''}
+                  </div>
+                </div>
+              )
+            })}
             {/* Card generation has no streaming placeholder — show the indicator
                 for the 3-7s wait so the click has immediate feedback. */}
             {busy && !messages.some((m) => 'streaming' in m && m.streaming) && (
-              <div className="ai-msg-in mr-auto max-w-[85%] rounded-2xl border border-hairline bg-white/[0.04] px-3.5 py-2.5">
-                <TypingDots />
+              <div className="ai-msg-in flex items-start gap-2">
+                <Crest />
+                <div className="rounded-2xl rounded-tl-md border border-hairline bg-white/[0.04] px-3.5 py-2.5">
+                  <TypingDots />
+                </div>
               </div>
             )}
           </div>
@@ -170,7 +219,7 @@ export default function AI() {
               <button
                 type="button"
                 onClick={() => void onCard()}
-                disabled={busy || !input.trim()}
+                disabled={!canSend}
                 title={t('ai.cardHint')}
                 aria-label={t('ai.cardHint')}
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/[0.07] hover:text-accent active:scale-90 disabled:opacity-30"
@@ -183,10 +232,10 @@ export default function AI() {
               </button>
               <button
                 type="submit"
-                disabled={busy || !input.trim()}
+                disabled={!canSend}
                 aria-label={t('ai.send')}
                 title={t('ai.send')}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-bg transition hover:opacity-90 active:scale-90 disabled:opacity-30"
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-bg transition hover:opacity-90 active:scale-90 disabled:opacity-30 ${canSend ? 'ai-send-active' : ''}`}
               >
                 <svg viewBox="0 0 24 24" className="h-[1.1rem] w-[1.1rem]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 2 11 13" />

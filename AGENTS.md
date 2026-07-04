@@ -61,6 +61,10 @@ cd backend && go test -tags=evals ./...    # scoring evals
 - **Demo-mode access gating** (`docs/adr/0012`): when demo mode is on, non-admin
   access tiers (none/ro/rw) gate the API; admins/`demo-off` resolve to `rw`.
 - **Manual result override beats a later FIFA sync** (`docs/adr/0006`).
+- **UI is design-first** (ADR-0021): produce a reviewable design artifact before
+  implementing; honor existing tokens (`frontend/tailwind.config.js`) + real i18n
+  copy; **no emoji** anywhere (app or docs) — use inline SVG icons or typographic
+  marks. Playbook: `docs/design-first-workflow.md`.
 - Major structural changes get an **ADR** first. Run `make ci` after changes.
 - Commits are SSH-signed; branch names `feat/* fix/* chore/*`.
 

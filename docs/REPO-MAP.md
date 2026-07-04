@@ -32,7 +32,8 @@ Lost in the files? This is the index. Everything is grouped by **purpose**.
 | **`docs/requirements.md`** | FR/NFR/TC/BC (numbered, MVP/Future) |
 | `docs/mvp-capability-plan.md` | Capabilities → FR ownership |
 | `docs/features/*/spec.md` | Given/When/Then per capability |
-| `docs/adr/0001–0019` | Decisions (why it won; 0019 = specs approach + when to use OpenSpec) |
+| `docs/adr/0001–0021` | Decisions (why it won; 0019 = specs approach; 0021 = design-first UI workflow) |
+| **`docs/design-first-workflow.md`** | Design-first UI playbook (greenfield + brownfield) — portable reference |
 | `docs/domain-glossary.md`, `docs/dev-setup.md` | Vocabulary; how to build |
 
 ## ✅ Verification
