@@ -93,6 +93,14 @@ Hard-won invariants — each cost a real bug. Do not "simplify" them away.
 - **AI recap grounding is scoreline-only** — keep stage labels digit-free, and a
   non-grounded provider without a team registry must fall back to the template
   (never display raw model output).
+- **AI chat grounding must state the outcome explicitly — never let the model
+  infer who won.** WC 2026 is past the model's training cutoff, so every fact
+  comes from the tools. Given only a raw home:away `score`, the model inverted
+  win/loss (reported teams *losing* matches they won, e.g. Colombia). Fix: the
+  grounding `MatchFact` carries an explicit `winner` (or `"draw"`) and, for
+  knockouts, `advanced` — computed in Go from the authoritative scores +
+  `winner_team_id` (`ai_tools.go`), and the master prompt tells the model to use
+  those fields and never derive the result from the score itself.
 - **Admin "predict on behalf":** the `<select>` value is a string, the API sends
   the id as a number — compare as strings (`String(a) === b`).
 - **Bounds-check before indexing** (e.g. `medals[i]`) — the digest panicked with

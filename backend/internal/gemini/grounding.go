@@ -43,7 +43,15 @@ type MatchFact struct {
 	Status  string `json:"status"`
 	Home    string `json:"home"`
 	Away    string `json:"away"`
-	Score   string `json:"score,omitempty"` // "2:1" once finished
+	Score   string `json:"score,omitempty"` // "2:1" (home:away) once played
+	// Winner and Advanced are set ONLY for a finished match, computed from the
+	// authoritative scores/advancer — so the model never has to (and must not)
+	// infer the result from the raw score, which it gets wrong. Winner is the
+	// team that won by score, or "draw" when level. Advanced is the knockout
+	// team that went through (from extra time / penalties); it can differ from
+	// the scoreline when a regulation draw was settled beyond 90 minutes.
+	Winner   string `json:"winner,omitempty"`
+	Advanced string `json:"advanced,omitempty"`
 }
 
 // StandingFact is one row of a group table.

@@ -59,6 +59,27 @@ func matchFact(m storage.Match) gemini.MatchFact {
 	}
 	if m.HomeScore != nil && m.AwayScore != nil {
 		f.Score = fmt.Sprintf("%d:%d", *m.HomeScore, *m.AwayScore)
+		// Resolve the outcome in Go (authoritative) so the model never infers it
+		// from the raw score. Only a finished match has a settled result; a live
+		// match keeps just its current score (no winner yet).
+		if m.Status == "finished" {
+			switch {
+			case *m.HomeScore > *m.AwayScore:
+				f.Winner = f.Home
+			case *m.AwayScore > *m.HomeScore:
+				f.Winner = f.Away
+			default:
+				f.Winner = "draw"
+			}
+			if m.WinnerTeamID != nil {
+				switch {
+				case m.Home != nil && *m.WinnerTeamID == m.Home.ID:
+					f.Advanced = f.Home
+				case m.Away != nil && *m.WinnerTeamID == m.Away.ID:
+					f.Advanced = f.Away
+				}
+			}
+		}
 	}
 	return f
 }

@@ -125,7 +125,14 @@ MATCH STATUS — use each match's exact "status" and "score" from the tool. A ma
 is STILL IN PROGRESS: report only its CURRENT score (exactly as returned) and that it is ongoing; do
 NOT say it finished, went to extra time or penalties, or that a team advanced, and do NOT change the
 score. Only a "finished" match has a final result. NEVER invent a penalty shootout, extra-time/final
-result, advancer, or a different scoreline than the tool returned.`
+result, advancer, or a different scoreline than the tool returned.
+
+WHO WON — for a finished match the tool gives the result EXPLICITLY: "winner" is the team that won
+(or "draw" when level), and knockouts also give "advanced" (the team that went through, which can
+differ from the score when a draw was settled in extra time or penalties). State who won, lost, drew
+or advanced STRICTLY from these "winner"/"advanced" fields. The "score" is in home:away order — do
+NOT work out the result from it yourself, and never flip who is home vs away: if "home":"Colombia",
+"away":"Congo DR", "score":"1:0", "winner":"Colombia", then Colombia WON 1:0 (it did not lose).`
 
 // systemChatSearch answers GENERAL football knowledge with Google Search (current web).
 const systemChatSearch = `You are the football assistant for a FIFA World Cup 2026 prediction game.
