@@ -72,15 +72,22 @@ Hard-won invariants — each cost a real bug. Do not "simplify" them away.
 - **Knockout advancer +1** is awarded **only when both the prediction and the
   actual regulation result are draws** and the pick matches. A decisive result
   (either side) gets no +1 (`0:1` predicted `1:1` must score 0, not +1).
-- **Extra-time GOAL wins mis-score without a manual override.** The FIFA feed
-  (`fifa_types.go`) carries only the *final* `HomeTeamScore/AwayTeamScore`
-  (aet-inclusive) + a separate `HomeTeamPenaltyScore` — there is **no
-  regulation-90 field**. A knockout won by an ET goal therefore stores the aet
-  score (e.g. `3:2`), which the regulation-based scoring reads as *decisive*,
-  robbing correct `2:2`-draw + advancer predictions. Penalty draws are unaffected
-  (regulation = stored = `1:1`). Remedy = **manual override** (ADR-0006): set the
-  score to the *regulation* result, keep `winner_team_id` = advancer, then
-  `server recompute-scores`. (Applied to match #81 BEL–SEN on 2026-07-02.)
+- **Extra-time GOAL wins are auto-corrected from FIFA goal periods (ADR-0020).**
+  The FIFA calendar feed (`fifa_types.go`) carries only the *final*
+  `HomeTeamScore/AwayTeamScore` (aet-inclusive) + a separate penalty score —
+  there is **no regulation-90 field**. A knockout won by an ET goal would store
+  the aet score (e.g. `3:2`) and the regulation-based scoring would read it as
+  *decisive*, robbing correct `2:2`-draw + advancer predictions. Root fix: the
+  **live** goal events carry a `Period` (3/5 = regulation halves, 7/9 = extra
+  time), so `results.RegulationScore` recovers the 90-minute scoreline and
+  `winners.Run` writes it (`result_source='fifa_regulation'`, protected from the
+  next calendar sync) while keeping `winner_team_id` = advancer. Safeguard: only
+  trust the derivation when every goal has a period+side **and** the {3,5,7,9}
+  goals sum to the aet score — else keep the stored score (never zero a match
+  with a missing goal timeline). A **manual override** (ADR-0006) still wins and
+  remains the escape hatch for an incomplete-timeline straggler. (History: #81
+  BEL–SEN and #87 ARG–CPV were manually patched before the root fix landed
+  2026-07-04.)
 - **Bracket order = tree geometry**, not FIFA match number (feeder→parent slot);
   ordering by number misaligns the connectors.
 - **AI recap grounding is scoreline-only** — keep stage labels digit-free, and a

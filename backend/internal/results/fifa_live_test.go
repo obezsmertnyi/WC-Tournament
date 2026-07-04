@@ -94,6 +94,9 @@ func TestParseLiveMatch(t *testing.T) {
 		g.Minute != "23'" || g.TeamFifaID != "43922" {
 		t.Errorf("goal mapping mismatch: %+v", g)
 	}
+	if g.Period == nil || *g.Period != 3 {
+		t.Errorf("goal Period: got %v want 3", g.Period)
+	}
 
 	// Card: player resolved.
 	if len(lm.Cards) != 1 {

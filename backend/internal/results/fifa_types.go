@@ -55,6 +55,7 @@ type fifaLiveBooking struct {
 // fifaLiveGoal is a goal event.
 type fifaLiveGoal struct {
 	Type           *int   `json:"Type"`
+	Period         *int   `json:"Period"` // 3/5=regulation halves, 7/9=extra-time halves
 	IdPlayer       string `json:"IdPlayer"`
 	Minute         string `json:"Minute"`
 	IdAssistPlayer string `json:"IdAssistPlayer"`

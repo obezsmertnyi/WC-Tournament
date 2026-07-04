@@ -92,6 +92,11 @@ type LiveGoal struct {
 	AssistName string // "" when none
 	Minute     string
 	Type       *int // raw FIFA goal type (0 normal, etc.)
+	// Period is FIFA's phase code for the goal: 3/5 = regulation halves,
+	// 7/9 = extra-time halves. It is the only signal distinguishing a
+	// regulation goal from an extra-time one (Minute is fuzzy under stoppage);
+	// RegulationScore uses it to recover the 90-minute scoreline.
+	Period *int
 }
 
 // LiveCard is a booking event normalized with the resolved player name.
@@ -144,6 +149,50 @@ type LiveMatch struct {
 	AwayPenaltyScore   *int
 	AggregateHomeScore *int
 	AggregateAwayScore *int
+}
+
+// RegulationScore recovers the 90-minute (regulation) scoreline of a knockout
+// match from its goal events, counting only goals scored in regulation halves
+// (Period 3 or 5) per side. It is the root fix for extra-time GOAL wins: the
+// FIFA calendar feed reports only the final aet-inclusive score (e.g. a 2:2
+// regulation draw won 3:2 in extra time), which the regulation-based scoring
+// otherwise reads as decisive.
+//
+// finalHome/finalAway are the stored aet-inclusive scores. ok reports whether
+// the derivation is trustworthy: every goal must carry a Period and belong to a
+// known side, and the goals in periods 3/5/7/9 (regulation + extra time) must
+// sum exactly to the final aet score. When ok is false the caller must keep the
+// stored score rather than risk zeroing a match whose goal events are missing
+// or incomplete (many finished matches carry a winner but no goal timeline).
+func RegulationScore(goals []LiveGoal, finalHome, finalAway int) (regHome, regAway int, ok bool) {
+	var totHome, totAway int
+	for _, g := range goals {
+		if g.Period == nil {
+			return 0, 0, false // incomplete data — don't trust the derivation
+		}
+		p := *g.Period
+		reg := p == 3 || p == 5 // regulation first/second half
+		et := p == 7 || p == 9  // extra-time first/second half
+		if !reg && !et {
+			continue // shootout / other phases are not part of the aet scoreline
+		}
+		switch g.Side {
+		case "home":
+			totHome++
+			if reg {
+				regHome++
+			}
+		case "away":
+			totAway++
+			if reg {
+				regAway++
+			}
+		default:
+			return 0, 0, false // goal not attributable to a side
+		}
+	}
+	ok = totHome == finalHome && totAway == finalAway
+	return regHome, regAway, ok
 }
 
 // ResultsProvider is the decoupled source of calendar + results data.

@@ -114,6 +114,7 @@ func parseLiveMatch(resp fifaLiveResponse) *LiveMatch {
 				AssistName: playerName[g.IdAssistPlayer],
 				Minute:     g.Minute,
 				Type:       g.Type,
+				Period:     g.Period,
 			})
 		}
 		for _, b := range t.Bookings {

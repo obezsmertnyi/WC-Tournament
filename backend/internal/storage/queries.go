@@ -46,8 +46,10 @@ func (s *Store) teamIDByFifaID(ctx context.Context, q pgx.Tx, fifaID string) (in
 }
 
 // UpsertMatch inserts or updates a match keyed by fifa_id. It NEVER overwrites
-// a row whose result_source = 'manual' (admin outage fallback wins per
-// ADR-0006). Idempotent on fifa_id.
+// a row whose result_source = 'manual' (admin outage fallback wins per ADR-0006)
+// nor 'fifa_regulation' (a knockout scoreline already corrected to its
+// 90-minute value — the calendar carries the aet score, which would undo it;
+// see CorrectKnockoutRegulationScore). Idempotent on fifa_id.
 func (s *Store) UpsertMatch(ctx context.Context, q pgx.Tx, m UpsertMatch) error {
 	homeID, homeOK, err := s.teamIDByFifaID(ctx, q, m.HomeFifaID)
 	if err != nil {
@@ -100,7 +102,7 @@ func (s *Store) UpsertMatch(ctx context.Context, q pgx.Tx, m UpsertMatch) error 
 			placeholder_away = EXCLUDED.placeholder_away,
 			result_source    = 'fifa',
 			updated_at       = now()
-		WHERE matches.result_source <> 'manual'`
+		WHERE matches.result_source NOT IN ('manual', 'fifa_regulation')`
 	_, err = q.Exec(ctx, sql,
 		m.FifaID, m.FifaStageID, m.Stage, m.GroupLabel, m.MatchNumber,
 		homePtr, awayPtr, m.KickoffAt, m.Status,
@@ -599,12 +601,27 @@ func (s *Store) ListFinishedFifaRefs(ctx context.Context) ([]FinishedFifaRef, er
 	return out, rows.Err()
 }
 
-// ListKnockoutsNeedingWinner returns FIFA refs for finished knockout matches
-// whose actual advancer hasn't been resolved yet (winner_team_id IS NULL), so it
-// can be fetched from the live detail. Empty during the group stage.
-func (s *Store) ListKnockoutsNeedingWinner(ctx context.Context) ([]FinishedFifaRef, error) {
+// KnockoutRef is a finished knockout match awaiting advancer resolution, plus
+// the stored aet-inclusive score and result_source needed to derive and correct
+// the regulation scoreline (see results.RegulationScore).
+type KnockoutRef struct {
+	ID           int64
+	FifaID       string
+	FifaStageID  string
+	HomeScore    *int
+	AwayScore    *int
+	ResultSource string
+}
+
+// ListKnockoutsNeedingWinner returns finished knockout matches whose actual
+// advancer hasn't been resolved yet (winner_team_id IS NULL), so it can be
+// fetched from the live detail. The stored score + result_source ride along so
+// the caller can also correct an extra-time scoreline to its regulation value
+// in the same pass. Empty during the group stage.
+func (s *Store) ListKnockoutsNeedingWinner(ctx context.Context) ([]KnockoutRef, error) {
 	const sql = `
-		SELECT id, COALESCE(fifa_id, ''), COALESCE(fifa_stage_id, '')
+		SELECT id, COALESCE(fifa_id, ''), COALESCE(fifa_stage_id, ''),
+		       home_score, away_score, result_source
 		FROM matches
 		WHERE status = 'finished' AND stage <> 'group' AND winner_team_id IS NULL AND fifa_id <> ''
 		ORDER BY kickoff_at ASC NULLS LAST`
@@ -613,10 +630,10 @@ func (s *Store) ListKnockoutsNeedingWinner(ctx context.Context) ([]FinishedFifaR
 		return nil, fmt.Errorf("list knockouts needing winner: %w", err)
 	}
 	defer rows.Close()
-	var out []FinishedFifaRef
+	var out []KnockoutRef
 	for rows.Next() {
-		var r FinishedFifaRef
-		if err := rows.Scan(&r.ID, &r.FifaID, &r.FifaStageID); err != nil {
+		var r KnockoutRef
+		if err := rows.Scan(&r.ID, &r.FifaID, &r.FifaStageID, &r.HomeScore, &r.AwayScore, &r.ResultSource); err != nil {
 			return nil, fmt.Errorf("scan knockout ref: %w", err)
 		}
 		out = append(out, r)
@@ -629,6 +646,25 @@ func (s *Store) SetMatchWinner(ctx context.Context, matchID, winnerTeamID int64)
 	if _, err := s.pool.Exec(ctx,
 		`UPDATE matches SET winner_team_id = $2 WHERE id = $1`, matchID, winnerTeamID); err != nil {
 		return fmt.Errorf("set match winner %d: %w", matchID, err)
+	}
+	return nil
+}
+
+// CorrectKnockoutRegulationScore overwrites a knockout's stored scoreline with
+// its regulation (90-minute) score, derived from FIFA goal periods when the
+// match was won in extra time. result_source='fifa_regulation' marks the row so
+// the next calendar sync (which carries the aet score) does not clobber it back
+// — see UpsertMatch's guard. A manual admin override always wins (ADR-0006), so
+// the update never touches a row already marked 'manual'.
+func (s *Store) CorrectKnockoutRegulationScore(ctx context.Context, matchID int64, home, away int) error {
+	if _, err := s.pool.Exec(ctx, `
+		UPDATE matches SET
+			home_score    = $2,
+			away_score    = $3,
+			result_source = 'fifa_regulation',
+			updated_at    = now()
+		WHERE id = $1 AND result_source <> 'manual'`, matchID, home, away); err != nil {
+		return fmt.Errorf("correct knockout regulation score %d: %w", matchID, err)
 	}
 	return nil
 }

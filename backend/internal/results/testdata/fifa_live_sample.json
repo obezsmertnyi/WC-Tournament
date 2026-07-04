@@ -59,6 +59,7 @@
     "Goals": [
       {
         "Type": 0,
+        "Period": 3,
         "IdPlayer": "P1",
         "IdAssistPlayer": "P2",
         "Minute": "23'",
