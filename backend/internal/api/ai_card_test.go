@@ -112,3 +112,27 @@ func TestCardHandlerBeatsWriteTimeout(t *testing.T) {
 		}
 	})
 }
+
+func TestIsPlaceholderThumb(t *testing.T) {
+	// Wikipedia infobox kit templates the summary API returns for team articles.
+	bad := []string{
+		"https://upload.wikimedia.org/wikipedia/commons/8/8e/Kit_shorts_adidaswhite.png",
+		"https://upload.wikimedia.org/wikipedia/commons/1/12/Kit_body.svg",
+		"https://upload.wikimedia.org/wikipedia/commons/a/ab/Kit_left_arm.png",
+	}
+	for _, u := range bad {
+		if !isPlaceholderThumb(u) {
+			t.Errorf("expected %q to be rejected as a kit-template thumbnail", u)
+		}
+	}
+	// Real portraits/crests must pass through.
+	good := []string{
+		"https://upload.wikimedia.org/wikipedia/commons/c/c1/Lionel_Messi_20180626.jpg",
+		"https://upload.wikimedia.org/wikipedia/en/e/eb/Argentina_national_football_team_crest.png",
+	}
+	for _, u := range good {
+		if isPlaceholderThumb(u) {
+			t.Errorf("expected %q to be accepted", u)
+		}
+	}
+}

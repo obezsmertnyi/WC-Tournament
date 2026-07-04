@@ -83,11 +83,19 @@ func wikiImage(ctx context.Context, name string) string {
 		}
 		good := resp.StatusCode == http.StatusOK && json.NewDecoder(resp.Body).Decode(&d) == nil
 		resp.Body.Close()
-		if good && d.Thumbnail.Source != "" {
+		if good && d.Thumbnail.Source != "" && !isPlaceholderThumb(d.Thumbnail.Source) {
 			return d.Thumbnail.Source
 		}
 	}
 	return ""
+}
+
+// isPlaceholderThumb rejects Wikipedia infobox kit-template images
+// (Kit_body/Kit_shorts/Kit_socks/Kit_left_arm/…) that the summary API returns as
+// the lead thumbnail for many national-team and club articles — they render as a
+// meaningless kit diagram, worse than showing no image at all.
+func isPlaceholderThumb(u string) bool {
+	return strings.Contains(strings.ToLower(u), "/kit_")
 }
 
 // RegisterAIRoutes wires the football AI assistant (ADR-0017). Mount on the
