@@ -65,6 +65,16 @@ cd backend && go test -tags=evals ./...    # scoring evals
   implementing; honor existing tokens (`frontend/tailwind.config.js`) + real i18n
   copy; **no emoji** anywhere (app or docs) — use inline SVG icons or typographic
   marks. Playbook: `docs/design-first-workflow.md`.
+- **Multi-edition (ADR-0022): per-edition data is scoped by `tournament_id`; exactly
+  one edition is active (`tournaments.is_active`).** Phase 1 (schema + backfill,
+  active = WC2026) is live and non-breaking. Edition-scoping of queries/upserts, the
+  archived-edition write-guard, edition-qualified uniques, admin UI + switcher are
+  **PENDING** (Phases 2–4). **Until Phase 2 lands, reads are NOT yet edition-filtered,
+  so do NOT create a second edition on prod** — a second edition's rows would leak
+  into current views and every `fifa_id` lookup would be ambiguous (fifa_ids repeat
+  across editions). When you do add an edition-scoped query, filter by
+  `active_tournament_id()` and scope every `fifa_id` lookup to the edition. Runbook:
+  `docs/repeat-tournament-runbook.md`.
 - Major structural changes get an **ADR** first. Run `make ci` after changes.
 - Commits are SSH-signed; branch names `feat/* fix/* chore/*`.
 

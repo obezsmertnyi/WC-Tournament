@@ -81,14 +81,22 @@ usually ~6 months before kick-off). All steps are in the admin panel →
 
 ## Implementation status
 
-- **Phase 1 (done):** schema — `tournaments` entity + `tournament_id` scoping,
-  current data backfilled as the `WC2026` edition (active). No behavior change.
-- **Phase 2 (planned):** edition-aware queries + a write-guard that blocks play on
-  an archived edition; edition-qualified unique constraints.
+- **Phase 1 (done, shipped):** schema — `tournaments` entity + `tournament_id`
+  scoping, current data backfilled as the `WC2026` edition (active). A
+  `active_tournament_id()` DEFAULT routes new rows to the active edition. No
+  behavior change.
+- **Phase 2 (planned — one coupled unit, ~42 query sites):** edition-aware queries
+  (filter by `active_tournament_id()`), scope every `fifa_id` lookup to the
+  edition, edition-qualified unique constraints + the matching `ON CONFLICT`
+  targets, and the archived-edition write-guard. These must land **together**:
+  swapping the uniques enables repeated `fifa_id`s across editions, which makes any
+  unscoped lookup ambiguous. Best done as a single fully-verified pass.
 - **Phase 3 (planned):** the admin-panel **Tournaments** section + endpoints used
   by section B (create / load-fixtures / activate-archive).
 - **Phase 4 (planned):** the read-only edition switcher used to browse past
   editions.
 
-Until Phases 3–4 land, sections A/B describe the intended flow; the create/load/
-activate actions become available with Phase 3.
+> SAFETY: until Phase 2 lands, reads are not edition-filtered — **do not create a
+> second edition on prod yet** (its rows would leak into current views). Sections
+> A/B describe the intended flow; the create/load/activate actions arrive with
+> Phase 3.
