@@ -25,5 +25,6 @@ Each ADR captures one significant decision: its context, the choice, and the con
 | [0019](0019-file-based-specs-over-openspec.md) | File-based specs over the OpenSpec CLI — and when to choose OpenSpec | Accepted |
 | [0020](0020-regulation-score-from-fifa-periods.md) | Knockout regulation score from FIFA goal periods (ET-goal root fix) | Accepted |
 | [0021](0021-design-first-ui-workflow.md) | Design-first UI workflow — design artifact before implementation | Accepted |
+| [0022](0022-tournament-editions.md) | Multi-edition support — first-class `tournaments` entity, admin-managed | Accepted |
 
 New ADR: copy the structure of an existing one, take the next number, link it here.
