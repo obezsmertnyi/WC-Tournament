@@ -18,9 +18,12 @@ editions are **read-only and browsable** via an edition switcher.
 **Shared across editions (NOT scoped):** `users` (the same friends), and truly
 global settings.
 
-**Per-edition (scoped by `tournament_id`):** `teams`, `matches`, `predictions`,
-`points`, `tournament_picks`, `bonus_rules`, `champion_tiers`, edition-specific
-`audit_log` rows, and edition-specific `app_state` flags (namespaced per edition).
+**Per-edition:** `teams`, `matches`, `tournament_picks`, `bonus_rules`,
+`champion_tiers`, `audit_log` carry a `tournament_id`. `predictions`/`points` do
+**not** get their own column — a prediction's edition is definitionally its
+match's edition (`predictions.match_id → matches.tournament_id`), so they are
+scoped via the matches join rather than denormalized (avoids drift). Edition-
+specific `app_state` flags are namespaced per edition.
 
 ### Schema
 ```
@@ -58,12 +61,23 @@ tournaments(id, code UNIQUE, name, year, is_active, created_at, updated_at)
 - **Optional later:** an all-time "hall of fame" aggregating results across
   editions per user (the scoping makes this a straight cross-edition query).
 
-### Migration (backfill, no behavior change on landing)
-1. Create `tournaments`; insert `WC2026` as `is_active = true`.
+### Migration (phased; no behavior change on landing)
+**Phase 1 (migration `0011`, shipped) — purely additive:**
+1. Create `tournaments`; insert `WC2026` as `is_active = true` (partial unique
+   index enforces ≤1 active).
 2. Add `tournament_id` nullable to each scoped table; backfill every existing row
-   to the WC2026 id; then `SET NOT NULL` + add FK.
-3. Swap the edition-qualified unique constraints.
+   to the WC2026 id; then `SET NOT NULL` + FK.
+3. A `STABLE active_tournament_id()` function is each column's `DEFAULT`, so
+   existing INSERTs that omit `tournament_id` route to the active edition — the
+   app keeps working with **zero Go changes**.
+Existing UNIQUE constraints are LEFT AS-IS in phase 1: several upserts use
+`ON CONFLICT (fifa_id)` / `(user_id, kind)`, so the edition-qualified uniques
+(`(tournament_id, fifa_id)`, `(tournament_id, user_id, kind)`, `(tournament_id,
+kind)`) are swapped in **phase 2** together with those `ON CONFLICT` clauses.
 Single active edition = WC2026 ⇒ every current query behaves exactly as before.
+
+Operational steps to close one edition and open the next:
+[`docs/repeat-tournament-runbook.md`](../repeat-tournament-runbook.md).
 
 ## Consequences
 - True archive with full browsing, shared accounts, and a clean 2030 slate in one

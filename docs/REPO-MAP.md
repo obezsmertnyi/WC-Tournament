@@ -34,6 +34,7 @@ Lost in the files? This is the index. Everything is grouped by **purpose**.
 | `docs/features/*/spec.md` | Given/When/Then per capability |
 | `docs/adr/0001–0021` | Decisions (why it won; 0019 = specs approach; 0021 = design-first UI workflow) |
 | **`docs/design-first-workflow.md`** | Design-first UI playbook (greenfield + brownfield) — portable reference |
+| **`docs/repeat-tournament-runbook.md`** | How to archive an edition + open the next (2026→2030); ADR-0022 |
 | `docs/domain-glossary.md`, `docs/dev-setup.md` | Vocabulary; how to build |
 
 ## ✅ Verification
