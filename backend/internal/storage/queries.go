@@ -460,6 +460,39 @@ func (s *Store) ListUsersMissingPrediction(ctx context.Context, matchID int64, d
 	return out, rows.Err()
 }
 
+// ListUsersMissingBonus returns the nicknames of players who have NOT set all
+// three tournament bonuses (champion / finalist / top_scorer) yet — used by the
+// pre-deadline bonus reminder. Demo-aware like ListUsersMissingPrediction: in
+// demo mode only the rw tier (who can actually submit) is listed.
+func (s *Store) ListUsersMissingBonus(ctx context.Context, demoOn bool) ([]string, error) {
+	const sql = `
+		SELECT u.nickname
+		FROM users u
+		WHERE u.role <> 'admin'
+		  AND (NOT $1 OR u.access_level = 'rw')
+		  AND (
+		      SELECT count(DISTINCT tp.kind)
+		      FROM tournament_picks tp
+		      WHERE tp.user_id = u.id
+		        AND tp.kind IN ('champion', 'finalist', 'top_scorer')
+		  ) < 3
+		ORDER BY u.nickname ASC`
+	rows, err := s.pool.Query(ctx, sql, demoOn)
+	if err != nil {
+		return nil, fmt.Errorf("query users missing bonus: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			return nil, fmt.Errorf("scan missing bonus: %w", err)
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
 // GetAppState reads a key from the app_state kv table. Returns ("",false,nil)
 // when the key is absent.
 func (s *Store) GetAppState(ctx context.Context, key string) (string, bool, error) {

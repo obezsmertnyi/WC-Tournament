@@ -281,7 +281,11 @@ func runRemind(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("remind complete", slog.Int("sent", sent))
+	bonusSent, err := remind.NewBonus(store, tg, logger).Run(ctx, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	logger.Info("remind complete", slog.Int("sent", sent), slog.Bool("bonusReminder", bonusSent))
 	return nil
 }
 
@@ -537,6 +541,12 @@ func backgroundLoop(ctx context.Context, store *storage.Store, logger *slog.Logg
 				logger.Warn("periodic remind failed (continuing)", slog.Any("error", err))
 			} else if n > 0 {
 				logger.Info("periodic remind sent", slog.Int("sent", n))
+			}
+			// One-off nudge to set tournament bonuses before they lock at R16 start.
+			if sent, err := remind.NewBonus(store, tg, logger).Run(jobCtx, time.Now().UTC()); err != nil {
+				logger.Warn("periodic bonus remind failed (continuing)", slog.Any("error", err))
+			} else if sent {
+				logger.Info("bonus deadline reminder sent")
 			}
 			if n, err := announce.New(store, tg, logger).Run(jobCtx); err != nil {
 				logger.Warn("periodic announce failed (continuing)", slog.Any("error", err))
