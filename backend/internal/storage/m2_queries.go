@@ -627,7 +627,13 @@ func (s *Store) Leaderboard(ctx context.Context) ([]LeaderboardRow, error) {
 			WHERE tier_points IS NOT NULL AND awarded IS TRUE
 			GROUP BY user_id
 		) tp ON tp.user_id = u.id
+		-- In demo mode, preview-only tiers (none/ro) are NOT competitors — keep them
+		-- off the board, and therefore out of the Telegram digest and the AI
+		-- pool-leader too. When demo is off, every non-admin is a participant
+		-- (ADR-0012). Mirrors the demo-awareness of the pre-match/bonus reminders.
 		WHERE u.role <> 'admin'
+		  AND (u.access_level = 'rw'
+		       OR COALESCE((SELECT value FROM app_state WHERE key = 'demo_mode'), 'false') <> 'true')
 		ORDER BY total_points DESC, exact_count DESC, u.nickname ASC`
 	rows, err := s.pool.Query(ctx, sql)
 	if err != nil {
