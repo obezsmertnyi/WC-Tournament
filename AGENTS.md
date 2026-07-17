@@ -23,7 +23,7 @@ leaderboard + Telegram bot keep everyone in the loop. Bilingual (UA/EN),
 mobile-first. Live at `wc2026.mtgrd-das.app`.
 
 ## Stack (pinned)
-- **Backend:** Go `1.26.4` · Gin · `pgx/v5` · embedded SQL migrations · distroless image
+- **Backend:** Go `1.26.5` · Gin · `pgx/v5` · embedded SQL migrations · distroless image
 - **Frontend:** React 19 · Vite · TypeScript · Tailwind 3 · framer-motion · react-i18next · built on Node `26-alpine`
 - **DB:** Postgres `17`
 - **Auth:** Google OAuth (OIDC) + admin password · JWT cookie
