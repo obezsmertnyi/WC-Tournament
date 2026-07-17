@@ -195,6 +195,32 @@ func RegulationScore(goals []LiveGoal, finalHome, finalAway int) (regHome, regAw
 	return regHome, regAway, ok
 }
 
+// AetScore counts goals per side across regulation AND extra time
+// (Period ∈ {3,5,7,9}) — the full-time "after extra time" scoreline. ok is false
+// (and the caller should not trust the result) when a goal lacks a Period or a
+// side. It is the companion to RegulationScore: their difference reveals whether
+// a knockout was won by an extra-time goal.
+func AetScore(goals []LiveGoal) (home, away int, ok bool) {
+	for _, g := range goals {
+		if g.Period == nil {
+			return 0, 0, false
+		}
+		p := *g.Period
+		if p != 3 && p != 5 && p != 7 && p != 9 {
+			continue // shootout / other phases are not part of the aet scoreline
+		}
+		switch g.Side {
+		case "home":
+			home++
+		case "away":
+			away++
+		default:
+			return 0, 0, false
+		}
+	}
+	return home, away, true
+}
+
 // ResultsProvider is the decoupled source of calendar + results data.
 type ResultsProvider interface {
 	// Fixtures returns the full known calendar (schedule + any scores/status).

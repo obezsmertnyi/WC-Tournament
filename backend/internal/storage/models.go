@@ -32,6 +32,10 @@ type Match struct {
 	ResultSource    string
 	UpdatedAt       time.Time
 	WinnerTeamID    *int64 // knockout advancer (ET/penalties); nil for group or unresolved
+	// ResultDetail records how a knockout level after 90' was decided, for
+	// display/AI: 'et:H:A' (won in extra time, aet score) or 'pen:H:A' (penalty
+	// shootout score); "" when decided in normal time. See migration 0012.
+	ResultDetail string
 
 	// Joined team data (nil before the draw / when not yet assigned).
 	Home *Team

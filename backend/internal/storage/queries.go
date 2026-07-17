@@ -140,7 +140,7 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 			m.kickoff_at, m.status, m.home_score, m.away_score,
 			COALESCE(m.venue_stadium, ''), COALESCE(m.venue_city, ''), COALESCE(m.venue_country, ''),
 			COALESCE(m.placeholder_home, ''), COALESCE(m.placeholder_away, ''),
-			m.result_source, m.updated_at, m.winner_team_id,
+			m.result_source, m.updated_at, m.winner_team_id, COALESCE(m.result_detail, ''),
 			ht.id, COALESCE(ht.name, ''), COALESCE(ht.code, ''), COALESCE(ht.flag_url, ''),
 			at.id, COALESCE(at.name, ''), COALESCE(at.code, ''), COALESCE(at.flag_url, '')
 		FROM matches m
@@ -167,7 +167,7 @@ func (s *Store) ListMatches(ctx context.Context) ([]Match, error) {
 			&m.KickoffAt, &m.Status, &m.HomeScore, &m.AwayScore,
 			&m.VenueStadium, &m.VenueCity, &m.VenueCountry,
 			&m.PlaceholderHome, &m.PlaceholderAway,
-			&m.ResultSource, &m.UpdatedAt, &m.WinnerTeamID,
+			&m.ResultSource, &m.UpdatedAt, &m.WinnerTeamID, &m.ResultDetail,
 			&homeID, &hName, &hCode, &hFlag,
 			&awayID, &aName, &aCode, &aFlag,
 		); err != nil {
@@ -698,6 +698,20 @@ func (s *Store) CorrectKnockoutRegulationScore(ctx context.Context, matchID int6
 			updated_at    = now()
 		WHERE id = $1 AND result_source <> 'manual'`, matchID, home, away); err != nil {
 		return fmt.Errorf("correct knockout regulation score %d: %w", matchID, err)
+	}
+	return nil
+}
+
+// SetKnockoutResultDetail records how a knockout level after 90' was decided
+// ('et:H:A' / 'pen:H:A', or ” to clear) for display/AI grounding. It touches
+// ONLY result_detail — never the scoreline — so it is safe on a manual override
+// too (the aet/penalty detail is factual FIFA data, independent of the scored
+// regulation result). See migration 0012 and results.AetScore.
+func (s *Store) SetKnockoutResultDetail(ctx context.Context, matchID int64, detail string) error {
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE matches SET result_detail = NULLIF($2, ''), updated_at = now() WHERE id = $1`,
+		matchID, detail); err != nil {
+		return fmt.Errorf("set knockout result detail %d: %w", matchID, err)
 	}
 	return nil
 }

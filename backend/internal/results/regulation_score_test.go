@@ -101,3 +101,18 @@ func TestRegulationScore(t *testing.T) {
 		})
 	}
 }
+
+func TestAetScore(t *testing.T) {
+	// ARG 3:2 CPV: regulation 1:1 (P3,P5) + ET goals (P7,P9) -> aet 3:2.
+	h, a, ok := AetScore([]LiveGoal{
+		goal("home", 3), goal("home", 7), goal("home", 9),
+		goal("away", 5), goal("away", 7),
+	})
+	if !ok || h != 3 || a != 2 {
+		t.Errorf("aet: got %d:%d ok=%v want 3:2 true", h, a, ok)
+	}
+	// A missing period makes the tally untrustworthy.
+	if _, _, ok := AetScore([]LiveGoal{goal("home", 3), goalNilPeriod("away")}); ok {
+		t.Error("aet should be untrusted when a goal lacks a period")
+	}
+}

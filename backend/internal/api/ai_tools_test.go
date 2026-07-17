@@ -79,6 +79,30 @@ func TestMatchFactOutcome(t *testing.T) {
 	}
 }
 
+// TestMatchFactResolution pins how the stored result_detail code becomes the
+// grounding hint the AI uses to say exactly how a level knockout was decided
+// (instead of guessing "probably ET or penalties").
+func TestMatchFactResolution(t *testing.T) {
+	arg := &storage.Team{ID: 37, Name: "Argentina"}
+	cpv := &storage.Team{ID: 40, Name: "Cabo Verde"}
+	mk := func(detail string) storage.Match {
+		m := finishedMatch("r32", arg, cpv, 1, 1, &arg.ID)
+		m.ResultDetail = detail
+		return m
+	}
+	tests := []struct{ detail, wantRes, wantScore string }{
+		{"et:3:2", "extra_time", "3:2"},
+		{"pen:4:2", "penalties", "4:2"},
+		{"", "", ""},
+	}
+	for _, tt := range tests {
+		f := matchFact(mk(tt.detail))
+		if f.Resolution != tt.wantRes || f.ResolutionScore != tt.wantScore {
+			t.Errorf("detail %q -> %q/%q, want %q/%q", tt.detail, f.Resolution, f.ResolutionScore, tt.wantRes, tt.wantScore)
+		}
+	}
+}
+
 func finishedMatch(stage string, home, away *storage.Team, h, a int, winner *int64) storage.Match {
 	return storage.Match{
 		Stage:        stage,

@@ -52,6 +52,12 @@ type MatchFact struct {
 	// the scoreline when a regulation draw was settled beyond 90 minutes.
 	Winner   string `json:"winner,omitempty"`
 	Advanced string `json:"advanced,omitempty"`
+	// Resolution/ResolutionScore explain HOW a knockout level after 90' was
+	// decided, so the model states it exactly instead of guessing. Resolution is
+	// "extra_time" or "penalties" (absent = decided in normal time);
+	// ResolutionScore is the aet score (extra time) or the shootout score.
+	Resolution      string `json:"resolution,omitempty"`
+	ResolutionScore string `json:"resolutionScore,omitempty"`
 }
 
 // StandingFact is one row of a group table.

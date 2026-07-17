@@ -27,6 +27,7 @@ type Store interface {
 	TeamIDByFifaID(ctx context.Context, fifaID string) (int64, bool, error)
 	SetMatchWinner(ctx context.Context, matchID, winnerTeamID int64) error
 	CorrectKnockoutRegulationScore(ctx context.Context, matchID int64, home, away int) error
+	SetKnockoutResultDetail(ctx context.Context, matchID int64, detail string) error
 }
 
 // Provider fetches a match's live detail (WinnerTeamID).
@@ -73,6 +74,7 @@ func (r *Resolver) Run(ctx context.Context) (int, error) {
 			r.log.Warn("winners: set winner failed", slog.Int64("match", ref.ID), slog.Any("error", err))
 			continue
 		}
+		r.storeResultDetail(ctx, ref, detail)
 		r.correctRegulationScore(ctx, ref, detail)
 		resolved++
 	}
@@ -80,6 +82,29 @@ func (r *Resolver) Run(ctx context.Context) (int, error) {
 		r.log.Info("winners: knockout advancers resolved", slog.Int("count", resolved))
 	}
 	return resolved, nil
+}
+
+// storeResultDetail records HOW a knockout that was level after 90' was decided,
+// so the AI/display can state it precisely instead of guessing: 'pen:H:A' (won
+// on a shootout) or 'et:H:A' (won by an extra-time goal — H:A is the aet score).
+// It is factual FIFA data written for EVERY resolved knockout, including manual
+// overrides (it never touches the scoreline). "" (decided in normal time) clears
+// the field. Incomplete goal data (no periods) → no detail rather than a guess.
+func (r *Resolver) storeResultDetail(ctx context.Context, ref storage.KnockoutRef, detail *results.LiveMatch) {
+	var code string
+	switch {
+	case detail.HomePenaltyScore != nil && detail.AwayPenaltyScore != nil:
+		code = fmt.Sprintf("pen:%d:%d", *detail.HomePenaltyScore, *detail.AwayPenaltyScore)
+	default:
+		aetH, aetA, aetOK := results.AetScore(detail.Goals)
+		regH, regA, regOK := results.RegulationScore(detail.Goals, aetH, aetA)
+		if aetOK && regOK && (aetH != regH || aetA != regA) {
+			code = fmt.Sprintf("et:%d:%d", aetH, aetA)
+		}
+	}
+	if err := r.store.SetKnockoutResultDetail(ctx, ref.ID, code); err != nil {
+		r.log.Warn("winners: set result detail failed", slog.Int64("match", ref.ID), slog.Any("error", err))
+	}
 }
 
 // correctRegulationScore rewrites a just-resolved knockout's stored scoreline to

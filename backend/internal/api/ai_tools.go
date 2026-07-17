@@ -79,6 +79,16 @@ func matchFact(m storage.Match) gemini.MatchFact {
 					f.Advanced = f.Away
 				}
 			}
+			// How a level-after-90' knockout was decided (migration 0012):
+			// "et:H:A" (extra-time) or "pen:H:A" (shootout).
+			if method, score, found := strings.Cut(m.ResultDetail, ":"); found {
+				switch method {
+				case "et":
+					f.Resolution, f.ResolutionScore = "extra_time", score
+				case "pen":
+					f.Resolution, f.ResolutionScore = "penalties", score
+				}
+			}
 		}
 	}
 	return f

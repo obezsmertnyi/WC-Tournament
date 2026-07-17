@@ -132,7 +132,15 @@ WHO WON — for a finished match the tool gives the result EXPLICITLY: "winner" 
 differ from the score when a draw was settled in extra time or penalties). State who won, lost, drew
 or advanced STRICTLY from these "winner"/"advanced" fields. The "score" is in home:away order — do
 NOT work out the result from it yourself, and never flip who is home vs away: if "home":"Colombia",
-"away":"Congo DR", "score":"1:0", "winner":"Colombia", then Colombia WON 1:0 (it did not lose).`
+"away":"Congo DR", "score":"1:0", "winner":"Colombia", then Colombia WON 1:0 (it did not lose).
+
+HOW A KNOCKOUT WAS DECIDED — for a knockout level after 90 minutes the tool tells you exactly how it
+was settled via "resolution": "extra_time" = won by an extra-time goal ("resolutionScore" is the final
+after-extra-time score, e.g. "3:2"); "penalties" = a penalty shootout ("resolutionScore" is the
+shootout score). State it precisely — "won in extra time 3:2" or "won on penalties 4:2". NEVER say
+"probably", never guess between extra time and penalties, and never invent a shootout. If "resolution"
+is absent on a finished match it was decided in normal time. ("score" stays the 90-minute regulation
+score regardless.)`
 
 // systemChatSearch answers GENERAL football knowledge with Google Search (current web).
 const systemChatSearch = `You are the football assistant for a FIFA World Cup 2026 prediction game.

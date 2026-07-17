@@ -16,6 +16,7 @@ type fakeStore struct {
 	teamByFifa   map[string]int64
 	setWinner    map[int64]int64 // matchID -> winnerTeamID
 	correctScore map[int64][2]int
+	resultDetail map[int64]string
 }
 
 func newFakeStore(refs []storage.KnockoutRef) *fakeStore {
@@ -24,7 +25,13 @@ func newFakeStore(refs []storage.KnockoutRef) *fakeStore {
 		teamByFifa:   map[string]int64{"43922": 100, "43850": 200},
 		setWinner:    map[int64]int64{},
 		correctScore: map[int64][2]int{},
+		resultDetail: map[int64]string{},
 	}
+}
+
+func (f *fakeStore) SetKnockoutResultDetail(_ context.Context, matchID int64, detail string) error {
+	f.resultDetail[matchID] = detail
+	return nil
 }
 
 func (f *fakeStore) ListKnockoutsNeedingWinner(context.Context) ([]storage.KnockoutRef, error) {
@@ -84,6 +91,29 @@ func TestRun_CorrectsExtraTimeScoreToRegulation(t *testing.T) {
 	if got := store.correctScore[87]; got != [2]int{1, 1} {
 		t.Errorf("regulation correction: got %v want [1 1]", got)
 	}
+	if got := store.resultDetail[87]; got != "et:3:2" {
+		t.Errorf("result detail: got %q want et:3:2 (aet)", got)
+	}
+}
+
+func TestRun_ResultDetailPenalties(t *testing.T) {
+	store := newFakeStore([]storage.KnockoutRef{
+		{ID: 75, FifaID: "M75", FifaStageID: "S1", HomeScore: new(1), AwayScore: new(1), ResultSource: "fifa"},
+	})
+	hp, ap := 4, 2
+	prov := &fakeProvider{byMatch: map[string]*results.LiveMatch{
+		"M75": {WinnerTeamID: "43922", HomePenaltyScore: &hp, AwayPenaltyScore: &ap,
+			Goals: []results.LiveGoal{goal("home", 3), goal("away", 5)}}, // reg draw, no ET goals
+	}}
+	run(t, store, prov)
+
+	if got := store.resultDetail[75]; got != "pen:4:2" {
+		t.Errorf("penalty detail: got %q want pen:4:2", got)
+	}
+	// A penalty shootout leaves the regulation draw untouched (no correction).
+	if _, corrected := store.correctScore[75]; corrected {
+		t.Errorf("penalty-decided draw should not be re-scored: %v", store.correctScore[75])
+	}
 }
 
 func TestRun_SkipsManualOverride(t *testing.T) {
@@ -118,6 +148,9 @@ func TestRun_NoCorrectionWhenDecidedInRegulation(t *testing.T) {
 
 	if _, corrected := store.correctScore[5]; corrected {
 		t.Errorf("regulation win must not be corrected: %v", store.correctScore[5])
+	}
+	if got := store.resultDetail[5]; got != "" {
+		t.Errorf("regulation-decided match should have no result detail, got %q", got)
 	}
 }
 
