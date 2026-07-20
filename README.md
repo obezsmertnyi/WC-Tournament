@@ -2,9 +2,11 @@
 
 > A friends-only **FIFA World Cup 2026** score-prediction pool — predict match scores, earn points, climb a live leaderboard. A proof-of-concept for the friends group, built production-grade.
 
-### 🔗 Live site → **[wc2026.mtgrd-das.app](https://wc2026.mtgrd-das.app)**
+### Live site — offline (archived)
 
-[![Live](https://img.shields.io/badge/live-wc2026.mtgrd--das.app-C9A24B.svg?logo=googlechrome&logoColor=white)](https://wc2026.mtgrd-das.app)
+> The **2026 edition has concluded** and the demo server (`wc2026.mtgrd-das.app`) has been retired. The project is fully self-hostable from this repo: restore a backup with [`scripts/restore.sh`](scripts/restore.sh), or bring up a fresh stack with `docker compose up -d --build`. Final results are archived in the pool's spreadsheet alongside the 2018/2022 editions.
+
+[![status: archived](https://img.shields.io/badge/status-archived%20·%20demo%20offline-9AA0A6.svg)](#live-site--offline-archived)
 [![CI](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/ci.yml/badge.svg)](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/ci.yml)
 [![Release](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/release.yml/badge.svg)](https://github.com/obezsmertnyi/WC-Tournament/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
